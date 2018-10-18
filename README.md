@@ -1,5 +1,5 @@
 # Language
 
-Shared repository for open-sourced projects from the Google AI Language Team.
+Shared repository for open-sourced projects from the [Google AI Language])https://ai.google/research/teams/language/) team.
 
-NOTE: This contains test content only. Please check back later for updates.
+Please check back later for updates.
