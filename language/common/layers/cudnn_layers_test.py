@@ -58,7 +58,8 @@ class CudnnLayersTest(tf.test.TestCase):
     input_len = [4, 5, 2]
 
     # Make sure we fail explicitly if the specified devices can't be used.
-    config = tf.ConfigProto(allow_soft_placement=False)
+    config = tf.ConfigProto(
+        allow_soft_placement=False, log_device_placement=True)
 
     with tf.Graph().as_default():
       with tf.device("/gpu:0"):

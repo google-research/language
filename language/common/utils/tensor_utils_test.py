@@ -167,5 +167,95 @@ class TensorUtilsTest(tf.test.TestCase):
       projected_tensor = unflatten(flat_projected_tensor)
       self.assertAllEqual(tensor_utils.shape(projected_tensor), [4, 7, 6, 9])
 
+  def test_transpose_batch_time_rank_1(self):
+    with self.test_session(graph=tf.Graph()):
+      tensor = tf.constant([1, 2, 3])
+
+      transposed = tensor_utils.transpose_batch_time(tensor)
+
+      self.assertAllEqual(transposed.eval(), [1, 2, 3])
+
+  def test_transpose_batch_time_rank_2(self):
+    with self.test_session(graph=tf.Graph()):
+      tensor = tf.constant([[1, 2],
+                            [3, 4]])  # pyformat: disable
+
+      transposed = tensor_utils.transpose_batch_time(tensor)
+
+      self.assertAllEqual(transposed.eval(),
+                          [[1, 3],
+                           [2, 4]])  # pyformat: disable
+
+  def test_transpose_batch_time_rank_3(self):
+    with self.test_session(graph=tf.Graph()):
+      tensor = tf.constant([[[1, 2], [3, 4]],
+                            [[5, 6], [7, 8]]])  # pyformat: disable
+
+      transposed = tensor_utils.transpose_batch_time(tensor)
+
+      self.assertAllEqual(transposed.eval(),
+                          [[[1, 2], [5, 6]],
+                           [[3, 4], [7, 8]]])  # pyformat: disable
+
+  def test_transpose_batch_time_rank_unknown(self):
+    with self.test_session(graph=tf.Graph()):
+      tensor = tf.placeholder(tf.float32, shape=None)
+
+      with self.assertRaisesRegexp(ValueError, "Tensor with unknown rank"):
+        tensor_utils.transpose_batch_time(tensor)
+
+  def test_sequence_mask(self):
+    with self.test_session(graph=tf.Graph()):
+      lengths = tf.constant([1, 2, 3])
+
+      mask = tensor_utils.sequence_mask(lengths)
+      transposed_mask = tensor_utils.sequence_mask(lengths, transpose=True)
+
+      self.assertAllEqual(mask.eval(),
+                          [[True, False, False],
+                           [True, True, False],
+                           [True, True, True]])  # pyformat: disable
+
+      self.assertAllEqual(transposed_mask.eval(),
+                          [[True, True, True],
+                           [False, True, True],
+                           [False, False, True]])  # pyformat: disable
+
+  def test_sequence_mask_with_maxlen(self):
+    with self.test_session(graph=tf.Graph()):
+      lengths = tf.constant([1, 2])
+
+      mask = tensor_utils.sequence_mask(lengths, maxlen=3)
+      transposed_mask = tensor_utils.sequence_mask(
+          lengths, maxlen=3, transpose=True)
+
+      self.assertAllEqual(mask.eval(),
+                          [[True, False, False],
+                           [True, True, False]])  # pyformat: disable
+
+      self.assertAllEqual(transposed_mask.eval(),
+                          [[True, True],
+                           [False, True],
+                           [False, False]])  # pyformat: disable
+
+  def test_sequence_mask_with_dtype(self):
+    with self.test_session(graph=tf.Graph()):
+      lengths = tf.constant([1, 2, 3])
+
+      mask = tensor_utils.sequence_mask(lengths, dtype=tf.int32)
+      transposed_mask = tensor_utils.sequence_mask(
+          lengths, dtype=tf.int32, transpose=True)
+
+      self.assertAllEqual(mask.eval(),
+                          [[1, 0, 0],
+                           [1, 1, 0],
+                           [1, 1, 1]])  # pyformat: disable
+
+      self.assertAllEqual(transposed_mask.eval(),
+                          [[1, 1, 1],
+                           [0, 1, 1],
+                           [0, 0, 1]])  # pyformat: disable
+
+
 if __name__ == "__main__":
   tf.test.main()

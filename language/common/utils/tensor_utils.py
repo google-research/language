@@ -154,3 +154,58 @@ def flatten(t):
     else:
       return flat_t
   return t, _unflatten
+
+
+def transpose_batch_time(tensor):
+  """Transposes the batch and time dimensions of the `tensor`.
+
+  If the `tensor` has less than 2 dimensions, then no operation is performed.
+  Otherwise, swaps the first 2 dimensions, which are assumed to be the batch and
+  time dimensions.
+
+  Args:
+    tensor: Tensor to transpose.
+
+  Returns:
+    Possibly-transposed version of `tensor`.
+
+  Raises:
+    ValueError: If the `tensor` has unknown rank.
+  """
+  rank = tensor.shape.ndims
+  if rank is None:
+    raise ValueError("Tensor with unknown rank")
+  if rank < 2:
+    return tensor
+  return tf.transpose(tensor, perm=[1, 0] + range(2, rank))
+
+
+def sequence_mask(lengths, maxlen=None, dtype=tf.bool, transpose=False):
+  """Returns a sequence mask, like tf.sequence_mask().
+
+  Unlike tf.sequence_mask(), this can also generate a transposed mask, which is
+  convenient for working with time-major sequences.
+
+  Args:
+    lengths: <int>[batch_size] Sequence lengths.
+    maxlen: <int>[] Maximum length, or None to compute the max of `lengths`.
+    dtype: DType of the generated mask.
+    transpose: Whether to generate the transpose of the mask.
+
+  Returns:
+    <dtype>[maxlen, batch_size] Sequence mask.
+  """
+  with tf.name_scope("sequence_mask"):
+    if maxlen is None:
+      maxlen = tf.reduce_max(lengths)
+    positions = tf.range(maxlen, dtype=lengths.dtype)
+
+    positions_singleton_axis = 1 if transpose else 0
+    lengths_singleton_axis = 0 if transpose else 1
+    positions = tf.expand_dims(positions, axis=positions_singleton_axis)
+    lengths = tf.expand_dims(lengths, axis=lengths_singleton_axis)
+    mask = positions < lengths
+
+    if dtype != tf.bool:
+      mask = tf.cast(mask, dtype)
+    return mask
