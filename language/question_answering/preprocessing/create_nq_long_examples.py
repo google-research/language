@@ -21,7 +21,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from gzip import GzipFile
+import gzip
 import json
 import multiprocessing
 import os
@@ -29,6 +29,7 @@ import os
 from absl import app
 from absl import flags
 
+import six
 import tensorflow as tf
 
 FLAGS = flags.FLAGS
@@ -55,6 +56,8 @@ def _string_list_feature(values):
 def _generate_tf_examples(input_file):
   """Generate TF examples."""
   for line in input_file:
+    if not isinstance(line, six.text_type):
+      line = line.decode("utf-8")
     json_example = json.loads(line)
     long_answer_candidates = json_example["long_answer_candidates"]
 
@@ -100,7 +103,7 @@ def _create_long_answer_examples(input_path):
   output_basename = input_basename.replace(".jsonl.gz", ".long.tfr")
   output_path = os.path.join(FLAGS.output_dir, output_basename)
   tf.logging.info("Converting examples in %s to tf.Examples.", input_path)
-  with GzipFile(fileobj=tf.gfile.GFile(input_path)) as input_file:
+  with gzip.GzipFile(fileobj=tf.gfile.GFile(input_path, "rb")) as input_file:
     with tf.python_io.TFRecordWriter(output_path) as writer:
       for i, tf_example in enumerate(_generate_tf_examples(input_file)):
         writer.write(tf_example.SerializeToString())
