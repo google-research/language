@@ -88,7 +88,9 @@ def tuple_generator_builder(context,
             raise ValueError('illegal type_spec %r' % spec)
           buf.append(parsed_val)
         if normalize_outputs:
-          buf[-1] /= np.sum(buf[-1])
+          buf_sum = np.sum(buf[-1])
+          if buf_sum:
+            buf[-1] /= buf_sum
         yield tuple(buf)
       except (nql.EntityNameError, nql.TypeNameError) as ex:
         tf.logging.warn('Problem %r on line: %r', ex, line.strip())
@@ -161,9 +163,10 @@ def spec_as_shape(spec, context):
     return tf.TensorShape([context.get_max_id(spec)])
 
 
-def k_hot_array_from_string_list(
-    context, typename,
-    entity_names):
+# GOOGLE_INTERNAL: TODO(b/124102056) Consider moving into nql.
+def k_hot_array_from_string_list(context,
+                                 typename,
+                                 entity_names):
   """Create a numpy array encoding a k-hot set.
 
   Args:
@@ -172,22 +175,20 @@ def k_hot_array_from_string_list(
     entity_names: list of names of type typename
 
   Returns:
-    a k-hot-array representation of the set of entity_names. Unknown entity
-      names are mapped to the unknown-id of their type. Note this behavior
-      is undefined if the underlying context has an unfrozen SymbolTable for
-      these entities. Empty values are discarded with a warning. If no entities
-      are found a none-valued array is returned.
-
-  Throws:
-    KeyError: If the typename is invalid.
+    A k-hot-array representation of the set of entity_names. For frozen
+    dictionaries, unknown entity names are mapped to the unknown_id of their
+    type or discarded if the unknown_value of the type is None. Unknown entity
+    names will throw an nql.EntityNameException for non-frozen dictionaries.
+    It is possible for this method to return an all-zeros array.
   """
-  result = context.zeros_numpy_array(typename, as_matrix=False)
-  for e in entity_names:
-    if e:
-      try:
-        result += context.one_hot_numpy_array(e, typename, as_matrix=False)
-      except nql.EntityNameError:
-        pass
+  # Empty string is not a valid entity_name.
+  ids = [context.get_id(e, typename) for e in entity_names if e]
+  # None is not a valid id.
+  valid_ids = [x for x in ids if x is not None]
+  max_id = context.get_max_id(typename)
+  result = np.zeros((max_id,), dtype='float32')
+  if valid_ids:
+    result[valid_ids] = 1.
   return result
 
 

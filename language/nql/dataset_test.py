@@ -96,7 +96,7 @@ class TestTFDataset(tf.test.TestCase):
     }
     for (s, a) in instances:
       self.assertEqual(type(s), self.tf_string_type)
-      self.assertTrue(np.all(a == exp_values[s]))
+      np.testing.assert_array_equal(a, exp_values[s])
 
   def test_normalize(self):
     dset = dataset.tuple_dataset(
@@ -114,7 +114,25 @@ class TestTFDataset(tf.test.TestCase):
     }
     for (s, a) in instances:
       self.assertEqual(type(s), self.tf_string_type)
-      self.assertTrue(np.all(a == exp_values[s]))
+      np.testing.assert_array_equal(a, exp_values[s])
+
+  def test_normalize_empty(self):
+    dset = dataset.tuple_dataset(
+        self.context,
+        self.empty_examples, [str, 'uc_t'],
+        field_separator='|',
+        entity_separator=',',
+        normalize_outputs=True)
+    instances = self.as_list(dset)
+    self.assertEqual(len(instances), 3)
+    exp_values = {
+        b'a': NP_A,
+        b'b': NP_UNK,
+        b'c': NP_NONE,
+    }
+    for (s, a) in instances:
+      self.assertEqual(type(s), self.tf_string_type)
+      np.testing.assert_array_equal(a, exp_values[s])
 
   def test_handle_unk_entity(self):
     dset = dataset.tuple_dataset(
@@ -133,7 +151,7 @@ class TestTFDataset(tf.test.TestCase):
     }
     for (s, a) in instances:
       self.assertEqual(type(s), self.tf_string_type)
-      self.assertTrue(np.all(a == exp_values[s]))
+      np.testing.assert_array_equal(a, exp_values[s])
 
   def test_error_recovery(self):
     dset = dataset.tuple_dataset(
@@ -152,7 +170,7 @@ class TestTFDataset(tf.test.TestCase):
     }
     for (s, a) in instances:
       self.assertEqual(type(s), self.tf_string_type)
-      self.assertTrue(np.all(a == exp_values[s]))
+      np.testing.assert_array_equal(a, exp_values[s])
 
   def test_empty_recovery(self):
     dset = dataset.tuple_dataset(
@@ -170,8 +188,7 @@ class TestTFDataset(tf.test.TestCase):
     }
     for (s, a) in instances:
       self.assertEqual(type(s), self.tf_string_type)
-      print(a, exp_values[s])
-      self.assertTrue(np.all(a == exp_values[s]))
+      np.testing.assert_array_equal(a, exp_values[s])
 
   def test_idempotent_file_usage(self):
     data_tempfile = tempfile.mktemp('tuple_data')
@@ -198,7 +215,7 @@ class TestKhotOverFrozenWithNone(tf.test.TestCase):
   def testSafe(self):
     khot = dataset.k_hot_array_from_string_list(self.context, 'uc_t',
                                                 ['A', 'B', 'C', 'D', 'Z'])
-    self.assertTrue(np.all([1., 1., 1., 1.] == khot))
+    np.testing.assert_array_equal([1., 1., 1., 1.], khot)
 
 
 if __name__ == '__main__':

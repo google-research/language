@@ -509,7 +509,7 @@ class TestTrainable(TestOnGrid):
     # Check the deserialized values as ewqual
     self.context.deserialize_trained(filename)
     io_iv = self.context.get_initial_value('trained_distance_to')
-    self.assertTrue(np.all(iv.todense().ravel() == io_iv.todense().ravel()))
+    np.testing.assert_array_equal(iv.todense().ravel(), io_iv.todense().ravel())
 
   def test_gradients(self):
     x = self.context.one(cell(2, 2), 'place_t')

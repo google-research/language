@@ -55,7 +55,12 @@ flags.DEFINE_integer("train_num_precomputed", None,
 
 flags.DEFINE_string(
     "predict_file", None,
-    "NQ json for predictions. E.g., dev-v1.1.json or test-v1.1.json")
+    "NQ json for predictions. E.g., dev-v1.1.jsonl.gz or test-v1.1.jsonl.gz")
+
+flags.DEFINE_string(
+    "output_prediction_file", None,
+    "Where to print predictions in NQ prediction format, to be passed to"
+    "natural_questions.nq_eval.")
 
 flags.DEFINE_string(
     "init_checkpoint", None,
@@ -406,8 +411,8 @@ def create_example_from_jsonl(line):
   offset = 0
   for context in context_list:
     single_map.extend([-1, -1])
-    single_context.append(
-        "[ContextId=%d] %s" % (context["id"], context["type"]))
+    single_context.append("[ContextId=%d] %s" %
+                          (context["id"], context["type"]))
     offset += len(single_context[-1]) + 1
     if context["id"] == annotated_idx:
       answer["span_start"] += offset
@@ -1016,8 +1021,9 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
 
       total_loss = (start_loss + end_loss + answer_type_loss) / 3.0
 
-      train_op = optimization.create_optimizer(
-          total_loss, learning_rate, num_train_steps, num_warmup_steps, use_tpu)
+      train_op = optimization.create_optimizer(total_loss, learning_rate,
+                                               num_train_steps,
+                                               num_warmup_steps, use_tpu)
 
       output_spec = tf.contrib.tpu.TPUEstimatorSpec(
           mode=mode,
@@ -1034,8 +1040,8 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
       output_spec = tf.contrib.tpu.TPUEstimatorSpec(
           mode=mode, predictions=predictions, scaffold_fn=scaffold_fn)
     else:
-      raise ValueError(
-          "Only TRAIN and PREDICT modes are supported: %s" % (mode))
+      raise ValueError("Only TRAIN and PREDICT modes are supported: %s" %
+                       (mode))
 
     return output_spec
 
@@ -1269,8 +1275,8 @@ def compute_pred_dict(candidates_dict, dev_features, raw_results):
   # Cast example id to int32 for each example, similarly to the raw results.
   sess = tf.Session()
   all_candidates = candidates_dict.items()
-  example_ids = tf.to_int32(np.array(
-      [int(k) for k, _ in all_candidates])).eval(session=sess)
+  example_ids = tf.to_int32(np.array([int(k) for k, _ in all_candidates
+                                     ])).eval(session=sess)
   examples_by_id = zip(example_ids, all_candidates)
 
   # Cast unique_id also to int32 for features.
@@ -1367,8 +1373,8 @@ def main(_):
   num_warmup_steps = None
   if FLAGS.do_train:
     num_train_features = FLAGS.train_num_precomputed
-    num_train_steps = int(
-        num_train_features / FLAGS.train_batch_size * FLAGS.num_train_epochs)
+    num_train_steps = int(num_train_features / FLAGS.train_batch_size *
+                          FLAGS.num_train_epochs)
 
     num_warmup_steps = int(num_train_steps * FLAGS.warmup_proportion)
 
@@ -1403,6 +1409,10 @@ def main(_):
     estimator.train(input_fn=train_input_fn, max_steps=num_train_steps)
 
   if FLAGS.do_predict:
+    if not FLAGS.output_prediction_file:
+      raise ValueError(
+          "--output_prediction_file must be defined in predict mode.")
+
     eval_examples = read_nq_examples(
         input_file=FLAGS.predict_file, is_training=False)
     eval_writer = FeatureWriter(
@@ -1460,8 +1470,7 @@ def main(_):
     nq_pred_dict = compute_pred_dict(candidates_dict, eval_features,
                                      [r._asdict() for r in all_results])
     predictions_json = {"predictions": nq_pred_dict.values()}
-    output_prediction_file = os.path.join(FLAGS.output_dir, "predictions.json")
-    with tf.gfile.Open(output_prediction_file, "w") as f:
+    with tf.gfile.Open(FLAGS.output_prediction_file, "w") as f:
       json.dump(predictions_json, f, indent=4)
 
 
