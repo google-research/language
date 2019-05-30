@@ -410,7 +410,7 @@ def get_embeddings(modality, outer_scope, inner_scope="shared"):
   """Returns embeddings for the given modality stricly forcing reuse.
 
   Args:
-    modality: A tensor2tensro.utils.modality.Modality object.
+    modality: A tensor2tensor.utils.modality.Modality object.
     outer_scope: A variable scope object used as the outer scope.
     inner_scope: A string used as the inner-most variable scope name.
 
