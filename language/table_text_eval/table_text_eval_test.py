@@ -47,7 +47,7 @@ TEST_TABLE = [
     [["instruments"], ["drums"]],
 ]
 
-TEST_SCORES = [0.688, 0.746, 0.786]
+TEST_SCORES = [0.772, 0.836, 0.848]
 
 
 class ParentV1Test(tf.test.TestCase):
@@ -57,7 +57,7 @@ class ParentV1Test(tf.test.TestCase):
       print("prediction = %s" % " ".join(pred))
       _, _, parent_score, _ = table_text_eval.parent([pred], [[TEST_REF]],
                                                      [TEST_TABLE],
-                                                     lambda_weight=0.9)
+                                                     lambda_weight=None)
       print(parent_score)
       self.assertAlmostEqual(score, parent_score, places=3)
 
