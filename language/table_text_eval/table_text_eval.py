@@ -86,9 +86,59 @@ def _table_reader(table_file):
       yield [(member.split() for member in entry.split("|||"))
              for entry in entries]
 
+def _entailment_probability_fn(counts):
+  """Returns function for computing entailment probability."""
 
-def _entailment_probability(ngram, table, smoothing=0.0, stopwords=None):
-  """Returns the probability that the given n-gram is entailed by the table.
+  def _entailment_probability(ngram, table):
+    """Returns probability of ngram being entailed by the table.
+
+    Uses the co-occurrence counts given along with the lexical
+    entailment model described in:
+
+      Glickman, Oren, Ido Dagan, and Moshe Koppel.
+      "A lexical alignment model for probabilistic textual entailment."
+      Machine Learning Challenges.
+      Springer, Berlin, Heidelberg, 2006. 287-298.
+
+    E.g.:
+      >>> _entailment_probability(["michael", "dahlquist"],
+                                  [(["name"], ["michael", "dahlquist"])])
+      >>> 1.0
+
+    Args:
+      ngram: List of tokens.
+      table: List of either (attribute, value) pairs or (head, relation, tail)
+        triples. Each member of the pair / triple is assumed to already be
+        tokenized into a list of strings.
+      counts: Dict mapping unigrams / bigrams (joined using "|||") to their
+        counts.
+
+    Returns:
+      prob: Float probability of ngram being entailed by the table.
+    """
+    table_toks = set()
+    for f, v in table:
+      table_toks.add("_".join(f))
+      table_toks.update(v)
+    probability = 1.
+    for xtok in ngram:
+      if xtok in table_toks:
+        continue
+      max_p = 0.
+      for btok in table_toks:
+        if btok not in counts:
+          continue
+        p = float(counts.get(btok + "|||" + xtok, 0.)) / counts[btok]
+        if p > max_p:
+          max_p = p
+      probability *= max_p
+    return math.pow(probability, 1. / len(ngram))
+
+  return _entailment_probability
+
+
+def _overlap_probability(ngram, table, smoothing=0.0, stopwords=None):
+  """Returns the probability that the given n-gram overlaps with the table.
 
   A simple implementation which checks how many tokens in the n-gram are also
   among the values in the table. For tables with (attribute, value) pairs on the
@@ -96,8 +146,8 @@ def _entailment_probability(ngram, table, smoothing=0.0, stopwords=None):
   concatenation of `head` and `tail` are considered.
 
   E.g.:
-    >>> _entailment_probability(["michael", "dahlquist"],
-                                [(["name"], ["michael", "dahlquist"])])
+    >>> _overlap_probability(["michael", "dahlquist"],
+                             [(["name"], ["michael", "dahlquist"])])
     >>> 1.0
 
   Args:
@@ -220,7 +270,7 @@ def parent(predictions,
            lambda_weight=0.5,
            smoothing=0.00001,
            max_order=4,
-           entailment_fn=_entailment_probability,
+           entailment_fn=_overlap_probability,
            mention_fn=_mention_probability):
   """Metric for comparing predictions to references given tables.
 
@@ -241,7 +291,7 @@ def parent(predictions,
     max_order: Maximum order of the ngrams to use.
     entailment_fn: A python function for computing the probability that an
       ngram is entailed by the table. Its signature should match that of
-      `_entailment_probability` above.
+      `_overlap_probability` above.
     mention_fn: A python function for computing the probability that a
       table entry is mentioned in the text. Its signature should
         match that of `_mention_probability` above.
@@ -254,6 +304,7 @@ def parent(predictions,
   """
   precisions, recalls, all_f_scores = [], [], []
   reference_recalls, table_recalls = [], []
+  all_lambdas = []
   for prediction, list_of_references, table in zip(
       predictions, references, tables):
     c_prec, c_rec, c_f = [], [], []
@@ -329,9 +380,16 @@ def parent(predictions,
       if ref_rec[-1] == 0. or table_rec[-1] == 0.:
         c_rec.append(0.)
       else:
+        if lambda_weight is None:
+          lw = sum([mention_fn(entry, reference) for entry in table]) / len(
+              table)
+          lw = 1. - lw
+        else:
+          lw = lambda_weight
+        all_lambdas.append(lw)
         c_rec.append(math.exp(
-            (1. - lambda_weight) * math.log(ref_rec[-1]) +
-            (lambda_weight) * math.log(table_rec[-1])))
+            (1. - lw) * math.log(ref_rec[-1]) +
+            (lw) * math.log(table_rec[-1])))
 
       # F-score.
       c_f.append((2. * c_prec[-1] * c_rec[-1]) /
