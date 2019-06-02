@@ -47,10 +47,19 @@ flags.DEFINE_string("data_dir", None,
                     "Directory containing the JSON file with the data. Output "
                     "correlations will also be stored here.")
 
+flags.DEFINE_string("save_output", None,
+                    "Directory to store correlations to.")
+
 flags.DEFINE_integer("num_bootstrap", 500,
                      "Number of bootstrap iterations.")
 
-LAMBDAS = np.arange(0.1, 1.0, 0.1)
+flags.DEFINE_string("entailment_fn", "overlap",
+                    "Method for estimating entailment between ngram and "
+                    "table. Either 'overlap' or 'entailment'.")
+
+flags.DEFINE_string("entailment_counts", None,
+                    "JSON file containing co-occurrence counts for computing "
+                    "entailment. Only needed if entailment_fn is 'entailment'.")
 
 
 def _table(table):
@@ -69,7 +78,6 @@ def _text(x):
 def main(_):
   keys_to_exclude = ["reference"]
   input_json = os.path.join(FLAGS.data_dir, "webnlg_submissions.json")
-  save_output = os.path.join(FLAGS.data_dir, "correlations.json")
 
   # Read raw data
   with tf.gfile.Open(input_json, "r") as f:
@@ -78,10 +86,20 @@ def main(_):
   uniq_keys.add("reference")
   uniq_keys = list(uniq_keys)
 
+  if FLAGS.entailment_fn=="entailment":
+    assert FLAGS.entailment_counts is not None
+    logging.info("Reading %s...", FLAGS.entailment_counts)
+    with tf.gfile.Open(FLAGS.entailment_counts) as f:
+      cooccur_counts = json.load(f)
+    entail_method = table_text_eval._entailment_probability_fn(
+        cooccur_counts)
+  else:
+    entail_method = table_text_eval._overlap_probability
+
   # Compute scores for each lambda.
   # pylint: disable=g-complex-comprehension
   logging.info("Computing scores for each system.")
-  all_parent_scores = {k: {lbd: [] for lbd in LAMBDAS} for k in uniq_keys}
+  all_parent_scores = {k: [] for k in uniq_keys}
   for key in uniq_keys:
     if key in keys_to_exclude:
       continue
@@ -89,16 +107,15 @@ def main(_):
     references = [[_text(reference) for reference in item["references"]]
                   for item in eval_data]
     tables = [_table(item["table"]) for item in eval_data]
-    for lbd in LAMBDAS:
-      logging.info("System %s Lambda %.1f", key, lbd)
-      _, _, _, parent_scores = table_text_eval.parent(
-          sentences, references, tables, lambda_weight=lbd)
-      all_parent_scores[key][lbd] = parent_scores
+    logging.info("System %s", key)
+    _, _, _, parent_scores = table_text_eval.parent(
+        sentences, references, tables, lambda_weight=None,
+        entailment_fn=entail_method)
+    all_parent_scores[key] = parent_scores
   logging.info("Done.")
 
   # Bootstrap sampling.
-  metrics = ["grammar", "fluency", "semantics"] + [
-      "parent-%.1f" % lbd for lbd in LAMBDAS]
+  metrics = ["grammar", "fluency", "semantics", "parent"]
   human_metrics = ["grammar", "fluency", "semantics"]
   metric_to_scores = {m: {k: [] for k in uniq_keys} for m in metrics}
   metric_to_correlations = {m: {m_: [] for m_ in metrics} for m in metrics}
@@ -116,8 +133,6 @@ def main(_):
     key_to_grammar = {k: [] for k in uniq_keys}
     key_to_fluency = {k: [] for k in uniq_keys}
     key_to_semantics = {k: [] for k in uniq_keys}
-    key_to_sentences = {k: [] for k in uniq_keys}
-    key_to_references = {k: [] for k in uniq_keys}
     for ii in bootstrap_sample:
       for k in uniq_keys:
         if k in keys_to_exclude:
@@ -125,12 +140,8 @@ def main(_):
         key_to_grammar[k].append(float(eval_data[ii][k + "-grammar"]))
         key_to_fluency[k].append(float(eval_data[ii][k + "-fluency"]))
         key_to_semantics[k].append(float(eval_data[ii][k + "-semantics"]))
-        key_to_sentences[k].append(_text(eval_data[ii][k + "-pred"]))
-        key_to_references[k].append(
-            [_text(reference) for reference in eval_data[ii]["references"]])
     key_to_parent = {
-        k: {lbd: [all_parent_scores[k][lbd][n] for n in bootstrap_sample]
-            for lbd in LAMBDAS}
+        k: [all_parent_scores[k][n] for n in bootstrap_sample]
         for k in uniq_keys if k not in keys_to_exclude}
 
     # Compute average scores.
@@ -144,9 +155,7 @@ def main(_):
       metric_to_scores["semantics"][k].append(sum(key_to_semantics[k]) /
                                               len(key_to_semantics[k]))
       # PARENT.
-      for lbd in LAMBDAS:
-        metric_to_scores["parent-%.1f" % lbd][k].append(
-            np.mean(key_to_parent[k][lbd]))
+      metric_to_scores["parent"][k].append(np.mean(key_to_parent[k]))
 
     # Correlations.
     for m1 in metrics:
@@ -188,7 +197,7 @@ def main(_):
   json.dump(
       {m: {m_: str(v_) for m_, v_ in v.iteritems()}
        for m, v in metric_to_correlations.iteritems()},
-      tf.gfile.Open(save_output, "w"))
+      tf.gfile.Open(FLAGS.save_output + ".correlations.json", "w"))
 
 
 if __name__ == "__main__":
