@@ -53,14 +53,6 @@ flags.DEFINE_string("save_output", None,
 flags.DEFINE_integer("num_bootstrap", 500,
                      "Number of bootstrap iterations.")
 
-flags.DEFINE_string("entailment_fn", "overlap",
-                    "Method for estimating entailment between ngram and "
-                    "table. Either 'overlap' or 'entailment'.")
-
-flags.DEFINE_string("entailment_counts", None,
-                    "JSON file containing co-occurrence counts for computing "
-                    "entailment. Only needed if entailment_fn is 'entailment'.")
-
 
 def _table(table):
   """Convert table to field, value format."""
@@ -86,12 +78,12 @@ def main(_):
   uniq_keys.add("reference")
   uniq_keys = list(uniq_keys)
 
-  if FLAGS.entailment_fn=="entailment":
-    assert FLAGS.entailment_counts is not None
-    logging.info("Reading %s...", FLAGS.entailment_counts)
-    with tf.gfile.Open(FLAGS.entailment_counts) as f:
+  if FLAGS.entailment_fn=="cooccurrence":
+    assert FLAGS.cooccurrence_counts is not None
+    logging.info("Reading %s...", FLAGS.cooccurrence_counts)
+    with tf.gfile.Open(FLAGS.cooccurrence_counts) as f:
       cooccur_counts = json.load(f)
-    entail_method = table_text_eval._entailment_probability_fn(
+    entail_method = table_text_eval._cooccur_probability_fn(
         cooccur_counts)
   else:
     entail_method = table_text_eval._overlap_probability
