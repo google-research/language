@@ -58,13 +58,15 @@ flags.DEFINE_string("bootstrap_file", None,
 flags.DEFINE_string("save_output", None,
                     "File to save correlations to.")
 
-flags.DEFINE_string("entailment_fn", "overlap",
-                    "Method for estimating entailment between ngram and "
-                    "table. Either 'overlap' or 'entailment'.")
+flags.DEFINE_string(
+    "entailment_fn", "overlap",
+    "Method for estimating entailment between ngram and "
+    "table. Either 'overlap' or 'entailment'.")
 
-flags.DEFINE_string("entailment_counts", None,
-                    "JSON file containing co-occurrence counts for computing "
-                    "entailment. Only needed if entailment_fn is 'entailment'.")
+flags.DEFINE_string(
+    "entailment_counts", None,
+    "JSON file containing co-occurrence counts for computing "
+    "entailment. Only needed if entailment_fn is 'entailment'.")
 
 
 def main(_):
@@ -76,13 +78,13 @@ def main(_):
 
   uniq_keys = raw_data["all_sentences"].keys()
 
-  if FLAGS.entailment_fn=="entailment":
+  # pylint: disable=protected-access
+  if FLAGS.entailment_fn == "entailment":
     assert FLAGS.entailment_counts is not None
     logging.info("Reading %s...", FLAGS.entailment_counts)
     with tf.gfile.Open(FLAGS.entailment_counts) as f:
       cooccur_counts = json.load(f)
-    entail_method = table_text_eval._entailment_probability_fn(
-        cooccur_counts)
+    entail_method = table_text_eval._entailment_probability_fn(cooccur_counts)
   else:
     entail_method = table_text_eval._overlap_probability
 
@@ -111,15 +113,15 @@ def main(_):
     bootstrap_sample = bootstrap[ii]["ids"]
     quality_scores = bootstrap[ii]["human_eval"]
     key_to_parent = {
-        k: [all_parent_scores[k][n] for n in bootstrap_sample]
-        for k in uniq_keys if k != "reference"}
+        k: [all_parent_scores[k][n] for n in bootstrap_sample
+           ] for k in uniq_keys if k != "reference"
+    }
 
     # Scores.
     for k in uniq_keys:
       if k == "reference":
         continue
-      metric_to_scores["parent"][k].append(
-          np.mean(key_to_parent[k]))
+      metric_to_scores["parent"][k].append(np.mean(key_to_parent[k]))
       metric_to_scores["human"][k].append(quality_scores[k])
 
     # Correlations.
