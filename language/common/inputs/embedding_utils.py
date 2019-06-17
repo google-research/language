@@ -34,8 +34,13 @@ class PretrainedWordEmbeddings(object):
   object obtained via get_params().
   """
 
-  def __init__(self, embeddings_path, max_vocab_size, num_oov_buckets=1,
-               lowercase=False, vocab_path=None):
+  def __init__(self,
+               embeddings_path,
+               max_vocab_size,
+               num_oov_buckets=1,
+               lowercase=False,
+               vocab_path=None,
+               skip_header=False):
     """Read and store embeddings for a text file up to a maximum number.
 
     Args:
@@ -51,10 +56,12 @@ class PretrainedWordEmbeddings(object):
           greater than one, then each OOV bucket is randomly sampled from a
           normal distribution.
       lowercase: Boolean indicating whether embeddings shouled be lowercased. In
-          the case of duplicates due to lower caseing, we use the first one.
+          the case of duplicates due to lower casing, we use the first one.
       vocab_path: String for path to an optional vocabulary file. If provided,
           loads embeddings only from the vocabulary. Otherwise, loads
           `max_vocab_size` embeddings from the embeddings file in order.
+      skip_header: Boolean indicating whether the first line is a header that
+          should be skipped.
 
     Raises:
       ValueError: If embeddings_path does not contain any embeddings or
@@ -79,9 +86,11 @@ class PretrainedWordEmbeddings(object):
 
     vocab = set()
     with tf.gfile.Open(embeddings_path) as embeddings_file:
-      for line in embeddings_file:
+      for i, line in enumerate(embeddings_file):
         if max_vocab_size is not None and len(vocab) >= max_vocab_size:
           break
+        if i == 0 and skip_header:
+          continue
         word_end_ix = line.find(" ")
         word = line[:word_end_ix]
 
