@@ -40,6 +40,9 @@ for table, text in dataset:
       counts[btok + "|||" + xtok] += 1  
 ```
 
+Pre-computed co-occurrence counts for the WikiBio and WebNLG datasets are
+included at the data links below.
+
 ## Reproducing the Paper's Results
 
 This folder also contains the scripts for reproducing the correlation numbers
