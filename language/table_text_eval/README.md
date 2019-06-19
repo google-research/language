@@ -53,11 +53,12 @@ for PARENT in the paper.
 For WikiBio due to legal constraints we cannot directly release the human annotated
 pairwise judgments. So we are releasing a pre-processed version where we compute
 the aggregated score for each model across 500 bootstrap samples and release
-only the aggregated scores.
+only the aggregated scores:
 
-You can find the pre-processed data [here]() for the "Systems" category
-and [here]() for the "Hyperparams" category in the paper. There are two
-files for each category -- `bootstrap.json` and `processed_data.json`.
+1. WikiBio-Systems -- [bootstrap.json](https://storage.googleapis.com/table-text-eval/wikibio-systems/bootstrap.json), [processed_data.json](https://storage.googleapis.com/table-text-eval/wikibio-systems/processed_data.json).
+2. WikiBio-Hyperparams -- [bootstrap.json](https://storage.googleapis.com/table-text-eval/wikibio-hyperparams/bootstrap.json), [processed_data.json](https://storage.googleapis.com/table-text-eval/wikibio-hyperparams/processed_data.json).
+3. WikiBio [co-occurrence counts (gzipped)](https://storage.googleapis.com/table-text-eval/co-occurrence-counts/wikibio_cooccurrence_counts.json.gz)
+
 These can be used to compute the correlations for PARENT:
 
 ```
@@ -72,17 +73,23 @@ The correlations across all the bootstrap samples will be stored in
 
 ### WebNLG Experiments
 
-For WebNLG, a pre-processed version of the data available from the
-[WebNLG challenge](http://webnlg.loria.fr/pages/results.html) can be
-found [here](). Download the data and unzip it to a folder `<data_dir>`.
+For WebNLG, first download the challenge results from the official repository
+[here](https://gitlab.com/shimorina/webnlg-human-evaluation).
+Then use the script provided here to pre-process it:
+
+```
+python preprocess_webnlg.py <path_to_repo> <webnlg_submissions.json>
+```
 
 To compute the correlations of PARENT for this data:
 
 ```
 python webnlg_correlations.py \  
-  --data_dir=<data_dir> \  
+  --data_dir=<dir_containing_webnlg_submissions.json> \  
   --save_output=<output_file>  
 ```
+
+Co-occurrence counts for the WebNLG data are available [here (gzipped)](https://storage.googleapis.com/table-text-eval/co-occurrence-counts/webnlg_cooccurrence_counts.json.gz).
 
 ## Citation
 
