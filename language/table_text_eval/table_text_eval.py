@@ -91,6 +91,7 @@ def _table_reader(table_file):
   with io.open(table_file) as f:
     for line in f:
       entries = line.lower().split("\t")
+      # pylint: disable=g-complex-comprehension
       yield [(member.split() for member in entry.split("|||"))
              for entry in entries]
 
@@ -176,6 +177,7 @@ def _overlap_probability(ngram, table, smoothing=0.0, stopwords=None):
   Returns:
     prob: Float probability of ngram being entailed by the table.
   """
+  # pylint: disable=g-complex-comprehension
   if len(table[0]) == 2:
     table_values = set([tok for _, value in table for tok in value])
   else:
@@ -396,15 +398,15 @@ def parent(predictions,
         c_rec.append(0.)
       else:
         if lambda_weight is None:
-          lw = sum([mention_fn(entry, reference) for entry in table]) / len(
-              table)
+          lw = sum([mention_fn(entry, reference) for entry in table
+                   ]) / len(table)
           lw = 1. - lw
         else:
           lw = lambda_weight
         all_lambdas.append(lw)
-        c_rec.append(math.exp(
-            (1. - lw) * math.log(ref_rec[-1]) +
-            (lw) * math.log(table_rec[-1])))
+        c_rec.append(
+            math.exp((1. - lw) * math.log(ref_rec[-1]) +
+                     (lw) * math.log(table_rec[-1])))
 
       # F-score.
       c_f.append((2. * c_prec[-1] * c_rec[-1]) /
