@@ -103,15 +103,15 @@ def main(_):
     bootstrap_sample = bootstrap[ii]["ids"]
     quality_scores = bootstrap[ii]["human_eval"]
     key_to_parent = {
-        k: [all_parent_scores[k][n] for n in bootstrap_sample]
-        for k in uniq_keys if k != "reference"}
+        k: [all_parent_scores[k][n] for n in bootstrap_sample
+           ] for k in uniq_keys if k != "reference"
+    }
 
     # Scores.
     for k in uniq_keys:
       if k == "reference":
         continue
-      metric_to_scores["parent"][k].append(
-          np.mean(key_to_parent[k]))
+      metric_to_scores["parent"][k].append(np.mean(key_to_parent[k]))
       metric_to_scores["human"][k].append(quality_scores[k])
 
     # Correlations.

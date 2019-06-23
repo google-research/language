@@ -27,7 +27,7 @@ import tensorflow as tf
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string("input_data_pattern", None, "Input data pattern. "
-                    "Assumed to be recordio.")
+                    "Assumed to be jsonl.gz format.")
 
 flags.DEFINE_string("context_export_dir", None,
                     "SavedModel path for context model.")

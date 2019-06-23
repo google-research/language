@@ -170,7 +170,7 @@ class NeuralQueryExpression(object):
     Args:
       type_name1: A string name for a type
       type_name2: A string name for a type
-      operation: A string decription of the operation.
+      operation: A string description of the operation.
 
     Raises:
       TypeCompatibilityError: If incomptaible.
@@ -631,57 +631,76 @@ class NeuralQueryContext(object):
                type_name,
                simplify_unitsize_minibatch = True
               ):
-    """Make an evaluated NeuralQueryExpression human-readable.
+    """Return top-k (entity-name, weight) tuples for each row of a matrix.
 
     Args:
       k: integer
-      matrix: numpy matrix
-      type_name: string name of type associated with matrix
+      matrix: numpy ndarray of shape (num_entity_sets, entity_index) with values
+        being the weights.
+      type_name: string name of the type associated with columns of this matrix.
       simplify_unitsize_minibatch: if true and as_dicts is also true, and the
         minibatch size is 1, then just return the single row dictionary.
 
     Returns:
       similar to as_dicts but returns lists of top-scoring k items
     """
-
-    def top_k(k, d):
-      return sorted(d.items(), key=lambda t: -t[1])[:k]
-
-    dict_result = self.as_dicts(
-        matrix,
-        type_name,
-        simplify_unitsize_minibatch=simplify_unitsize_minibatch)
-    if isinstance(dict_result, dict):
-      return top_k(k, dict_result)
+    if k < 1:
+      raise ValueError('k must be positive but it is %d' % k)
+    result = []
+    num_entity_sets = matrix.shape[0]
+    # Find the indices with the highest valued weights.
+    top_k_idx = np.flip(np.argsort(matrix, axis=1)[:, -k:], axis=1)
+    row_index = np.arange(num_entity_sets).repeat(k)
+    column_index = top_k_idx.reshape(-1)
+    # Slice, reshape, and sort descending.
+    top_k_weights = np.flip(
+        np.sort(
+            matrix[row_index, column_index].reshape(num_entity_sets, k),
+            axis=1),
+        axis=1)
+    # Convert column indices into entities.
+    for indices, weights in zip(top_k_idx, top_k_weights):
+      entities = [
+          self.get_entity_name(entity_index, type_name)
+          for entity_index in indices
+      ]
+      result.append(list(zip(entities, weights)))
+    if simplify_unitsize_minibatch and len(result) == 1:
+      return result[0]
     else:
-      return [top_k(k, d) for d in dict_result]
+      return result
 
-  def as_dicts(self,
-               matrix,
-               type_name,
-               simplify_unitsize_minibatch = True
-              ):
-    """Make an evaluated NeuralQueryExpression human-readable.
+  def as_dicts(
+      self,
+      matrix,
+      type_name,
+      simplify_unitsize_minibatch = True,
+      threshold = 0.0,
+  ):
+    """Return dicts mapping entity-names to weights for each row of a matrix.
 
     Args:
-      matrix: numpy matrix
+      matrix: numpy ndarray of shape (num_entity_sets, entity_index) with values
+        being the weights.
       type_name: string name of type associated with matrix
       simplify_unitsize_minibatch: if true and as_dicts is also true, and the
         minibatch size is 1, then just return the single row dictionary.
+      threshold: only values with weights above this threshold are returned.
 
     Returns:
       dictionary structure or list of dictionaries.
     """
     num_entity_sets = matrix.shape[0]
-    row_indices, col_indices = np.nonzero(matrix)
     result = [{} for _ in range(num_entity_sets)]
-    for k in range(row_indices.shape[0]):
-      set_index = row_indices[k]
-      entity_index = col_indices[k]
-      weight = matrix[set_index, entity_index]
-      entity_name = self.get_entity_name(entity_index, type_name)
-      result[set_index][entity_name] = weight
-    if simplify_unitsize_minibatch and num_entity_sets == 1:
+    (row_indices, entity_indices) = np.nonzero(matrix > threshold)
+    weights = matrix[(row_indices, entity_indices)].tolist()
+    entities = [
+        self.get_entity_name(entity_index, type_name)
+        for entity_index in entity_indices
+    ]
+    for (row, entity, weight) in zip(row_indices, entities, weights):
+      result[row][entity] = weight
+    if simplify_unitsize_minibatch and len(result) == 1:
       return result[0]
     else:
       return result
@@ -1285,11 +1304,12 @@ class NeuralQueryContext(object):
                                   'Unknown relation in line: %r' % line.strip())
       rel_domain = self.get_domain(rel_name)
       rel_range = self.get_range(rel_name)
-      i = self._get_insert_id(parts[1], rel_domain)
-      j = self._get_insert_id(parts[2], rel_range)
-      domain_buf[rel_name].append(i)
-      range_buf[rel_name].append(j)
-      data_buf[rel_name].append(weight)
+      i = self._get_insert_id_if_unfrozen(parts[1], rel_domain)
+      j = self._get_insert_id_if_unfrozen(parts[2], rel_range)
+      if i is not None and j is not None:
+        domain_buf[rel_name].append(i)
+        range_buf[rel_name].append(j)
+        data_buf[rel_name].append(weight)
     if freeze:
       for rel_name in data_buf:
         self.freeze(self.get_domain(rel_name))
@@ -1438,11 +1458,13 @@ class NeuralQueryContext(object):
         self._cached_tensor[rel_name] = sparse_tensor
     return self._cached_tensor[rel_name]
 
-  def _get_insert_id(self, entity_name, type_name):
+  def _get_insert_id_if_unfrozen(self, entity_name,
+                                 type_name):
     """Retrieve the index of entity with given name and type.
 
-    Insert the entity in the appropriate symbol table if it has not yet been
-    added.
+    Insert the entity in the appropriate symbol table if both:
+      1. It has not already been added
+      2. The table is not frozen.
 
     Args:
       entity_name: string name of the entity
@@ -1451,7 +1473,11 @@ class NeuralQueryContext(object):
     Returns:
       integer id for the entity
     """
-    return self._symtab[type_name].get_insert_id(entity_name)
+    table = self._symtab[type_name]
+    if table.is_frozen():
+      return table.get_id(entity_name)
+    else:
+      return table.get_insert_id(entity_name)
 
   def get_id(self, entity_name, type_name):
     """Retrieve the index of entity with given name and type.

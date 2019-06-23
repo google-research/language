@@ -39,12 +39,15 @@ class SymbolTable(object):
 
     After a table is frozen, subsequent calls to insert() will not change the
     table, and calls to get_id(s) will return the id for the unknown word marker
-    for any s that did not have an id when the table was frozen.
+    for any s that did not have an id when the table was frozen. If the table
+    is already frozen this action is a no-op.
 
     Args:
       unknown_marker: string  Unknown words or words added after a freeze are
         mapped to the unknown marker. If None, do not use an unknown value.
     """
+    if self._frozen:
+      return
     if unknown_marker:
       self.insert(unknown_marker)
       self._unk = self._id_dict[unknown_marker]
@@ -187,6 +190,14 @@ class SymbolTable(object):
       dict version of a SymbolTable.
     """
     return vars(self)
+
+  def is_frozen(self):
+    """Determine if the table is frozen.
+
+    Returns:
+      True if the table is frozen.
+    """
+    return self._frozen
 
 
 def create_from_dict(symbol_table_dict):

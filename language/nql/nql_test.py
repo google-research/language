@@ -117,6 +117,18 @@ class TestLoad(tf.test.TestCase):
     self.assertEqual(self.context.get_unk_id('bat_r'), None)
 
   def test_load_kg_and_freeze(self):
+    self.context.declare_entity_type('fz_d')
+    self.context.declare_entity_type(
+        'fz_r', fixed_vocab=['x', 'y', 'z'], unknown_marker=None)
+    self.context.declare_relation('fz_rel', 'fz_d', 'fz_r')
+    kg_lines = [['fz_rel', 'a', 'x', '1.0'], ['fz_rel', 'a', 'y'],
+                ['fz_rel', 'b', 'z', '2.0'], ['fz_rel', 'c', 'K']]
+    self.context.load_kg(lines=self._tabify(kg_lines), freeze=True)
+    self.assertEqual((4, 3), self.context.get_shape('fz_rel'))
+    self.assertEqual(self.context.get_unk_id('fz_d'), 3)
+    self.assertEqual(self.context.get_unk_id('fz_r'), None)
+
+  def test_load_kg_frozen_symbtable(self):
     kg_lines = [['foo', 'a', 'x', '1.0'], ['foo', 'a', 'y'],
                 ['foo', 'b', 'z', '2.0'], ['bat', 'dracula', 'true'],
                 ['bat', 'louisville slugger', 'true', '0.1']]
