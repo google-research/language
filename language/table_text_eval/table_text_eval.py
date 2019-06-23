@@ -54,8 +54,16 @@ flags.DEFINE_string("tables", None,
 flags.DEFINE_float("smoothing", 0.00001,
                    "Constant to replace 0 precision and recall scores with.")
 
-flags.DEFINE_float("lambda_weight", 0.5,
+flags.DEFINE_float("lambda_weight", None,
                    "Weighting factor for recall computed against the table.")
+
+flags.DEFINE_string("entailment_fn", "overlap",
+                    "Method for estimating entailment between ngram and "
+                    "table. Either 'overlap' or 'cooccurrence'.")
+
+flags.DEFINE_string("cooccurrence_counts", None,
+                    "JSON file containing co-occurrence counts for computing "
+                    "entailment. Only needed if entailment_fn is 'cooccurrence'.")
 
 
 def _text_reader(text_file):
@@ -86,10 +94,10 @@ def _table_reader(table_file):
       yield [(member.split() for member in entry.split("|||"))
              for entry in entries]
 
-def _entailment_probability_fn(counts):
+def _cooccur_probability_fn(counts):
   """Returns function for computing entailment probability."""
 
-  def _entailment_probability(ngram, table):
+  def _cooccur_probability(ngram, table):
     """Returns probability of ngram being entailed by the table.
 
     Uses the co-occurrence counts given along with the lexical
@@ -101,7 +109,7 @@ def _entailment_probability_fn(counts):
       Springer, Berlin, Heidelberg, 2006. 287-298.
 
     E.g.:
-      >>> _entailment_probability(["michael", "dahlquist"],
+      >>> _cooccur_probability(["michael", "dahlquist"],
                                   [(["name"], ["michael", "dahlquist"])])
       >>> 1.0
 
@@ -117,9 +125,16 @@ def _entailment_probability_fn(counts):
       prob: Float probability of ngram being entailed by the table.
     """
     table_toks = set()
-    for f, v in table:
-      table_toks.add("_".join(f))
-      table_toks.update(v)
+    for item in table:
+      if len(item) == 2:
+        # attribute, value
+        table_toks.add("_".join(item[0]))
+        table_toks.update(item[1])
+      else:
+        # head, relation, tail
+        table_toks.update(item[0] +
+                          ["_".join(item[1])] +
+                          item[2])
     probability = 1.
     for xtok in ngram:
       if xtok in table_toks:
@@ -134,7 +149,7 @@ def _entailment_probability_fn(counts):
       probability *= max_p
     return math.pow(probability, 1. / len(ngram))
 
-  return _entailment_probability
+  return _cooccur_probability
 
 
 def _overlap_probability(ngram, table, smoothing=0.0, stopwords=None):
@@ -415,11 +430,21 @@ def main(_):
   generation_it = _text_reader(FLAGS.generations)
   table_it = _table_reader(FLAGS.tables)
 
+  if FLAGS.entailment_fn=="cooccurrence":
+    assert FLAGS.cooccurrence_counts is not None
+    logging.info("Reading %s...", FLAGS.cooccurrence_counts)
+    with tf.gfile.Open(FLAGS.cooccurrence_counts) as f:
+      cooccur_counts = json.load(f)
+    entail_method = _cooccur_probability_fn(cooccur_counts)
+  else:
+    entail_method = _overlap_probability
+
   precision, recall, f_score, all_f = parent(generation_it,
                                              reference_it,
                                              table_it,
                                              lambda_weight=FLAGS.lambda_weight,
-                                             smoothing=FLAGS.smoothing)
+                                             smoothing=FLAGS.smoothing,
+                                             entailment_fn=entail_method)
 
   logging.info("Evaluated %d examples.", len(all_f))
   logging.info("Precision = %.4f Recall = %.4f F-score = %.4f",
