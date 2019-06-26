@@ -16,7 +16,8 @@ r"""Script to compute metric.
 
 The <reference_file> and <generation_file> should contain references and
 generations, respectively, one per line. The <table_file> should contain the
-ground truth tables corresponding to these in each line.
+ground truth tables corresponding to these in each line. Multiple references
+should be separated by <TAB>s on the same line.
 
 There are two formats supported for the tables:
 1. For tables similar to those in WikiBio, with pairs of attributes and values:
@@ -34,16 +35,19 @@ from __future__ import print_function
 
 import collections
 import io
+import json
 import logging
 import math
 
 from absl import app
 from absl import flags
+import tensorflow as tf
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string("references", None,
-                    "Text file containing references, one per line.")
+flags.DEFINE_string(
+    "references", None, "Text file containing references, one per line. "
+    "Multiple references should be separated by a <TAB>.")
 
 flags.DEFINE_string("generations", None,
                     "Text file containing generations, one per line.")
@@ -54,11 +58,22 @@ flags.DEFINE_string("tables", None,
 flags.DEFINE_float("smoothing", 0.00001,
                    "Constant to replace 0 precision and recall scores with.")
 
-flags.DEFINE_float("lambda_weight", 0.5,
+flags.DEFINE_float("lambda_weight", None,
                    "Weighting factor for recall computed against the table.")
 
+flags.DEFINE_string(
+    "entailment_fn", "overlap",
+    "Method for estimating entailment between ngram and "
+    "table. Either 'overlap' or 'cooccurrence'.")
 
-def _text_reader(text_file):
+flags.DEFINE_string(
+    "cooccurrence_counts", None,
+    "JSON file containing co-occurrence counts for computing "
+    "entailment. Only needed if entailment_fn is "
+    "'cooccurrence'.")
+
+
+def _text_reader(text_file, multiple=False):
   """Yields lines from the text file.
 
   Performs lowercasing and white-space tokenization on each line before
@@ -66,10 +81,14 @@ def _text_reader(text_file):
 
   Args:
     text_file: String filename.
+    multiple: Whether multiple references / generations are expected in a line.
   """
   with io.open(text_file) as f:
     for line in f:
-      yield line.lower().split()
+      if multiple:
+        yield [item.lower().split() for item in line.strip().split("\t")]
+      else:
+        yield line.strip().lower().split()
 
 
 def _table_reader(table_file):
@@ -84,15 +103,24 @@ def _table_reader(table_file):
     for line in f:
       entries = line.lower().split("\t")
       # pylint: disable=g-complex-comprehension
-      yield [(member.split() for member in entry.split("|||"))
-             for entry in entries]
+      table = [
+          [member.split() for member in entry.split("|||")] for entry in entries
+      ]
+      yield table
 
 
-def _entailment_probability_fn(counts):
-  """Returns function for computing entailment probability."""
+def cooccur_probability_fn(counts):
+  """Returns function for computing entailment probability.
 
-  # pylint: disable=g-doc-args
-  def _entailment_probability(ngram, table):
+  Args:
+    counts: Dict mapping unigrams / bigrams (joined using "|||") to their
+      counts.
+
+  Returns:
+    Function handle to compute entailment probability.
+  """
+
+  def _cooccur_probability(ngram, table):
     """Returns probability of ngram being entailed by the table.
 
     Uses the co-occurrence counts given along with the lexical
@@ -104,7 +132,7 @@ def _entailment_probability_fn(counts):
       Springer, Berlin, Heidelberg, 2006. 287-298.
 
     E.g.:
-      >>> _entailment_probability(["michael", "dahlquist"],
+      >>> _cooccur_probability(["michael", "dahlquist"],
                                   [(["name"], ["michael", "dahlquist"])])
       >>> 1.0
 
@@ -113,16 +141,19 @@ def _entailment_probability_fn(counts):
       table: List of either (attribute, value) pairs or (head, relation, tail)
         triples. Each member of the pair / triple is assumed to already be
         tokenized into a list of strings.
-      counts: Dict mapping unigrams / bigrams (joined using "|||") to their
-        counts.
 
     Returns:
       prob: Float probability of ngram being entailed by the table.
     """
     table_toks = set()
-    for f, v in table:
-      table_toks.add("_".join(f))
-      table_toks.update(v)
+    for item in table:
+      if len(item) == 2:
+        # attribute, value
+        table_toks.add("_".join(item[0]))
+        table_toks.update(item[1])
+      else:
+        # head, relation, tail
+        table_toks.update(item[0] + ["_".join(item[1])] + item[2])
     probability = 1.
     for xtok in ngram:
       if xtok in table_toks:
@@ -137,10 +168,10 @@ def _entailment_probability_fn(counts):
       probability *= max_p
     return math.pow(probability, 1. / len(ngram))
 
-  return _entailment_probability
+  return _cooccur_probability
 
 
-def _overlap_probability(ngram, table, smoothing=0.0, stopwords=None):
+def overlap_probability(ngram, table, smoothing=0.0, stopwords=None):
   """Returns the probability that the given n-gram overlaps with the table.
 
   A simple implementation which checks how many tokens in the n-gram are also
@@ -149,7 +180,7 @@ def _overlap_probability(ngram, table, smoothing=0.0, stopwords=None):
   concatenation of `head` and `tail` are considered.
 
   E.g.:
-    >>> _overlap_probability(["michael", "dahlquist"],
+    >>> overlap_probability(["michael", "dahlquist"],
                              [(["name"], ["michael", "dahlquist"])])
     >>> 1.0
 
@@ -274,7 +305,7 @@ def parent(predictions,
            lambda_weight=0.5,
            smoothing=0.00001,
            max_order=4,
-           entailment_fn=_overlap_probability,
+           entailment_fn=overlap_probability,
            mention_fn=_mention_probability):
   """Metric for comparing predictions to references given tables.
 
@@ -295,7 +326,7 @@ def parent(predictions,
     max_order: Maximum order of the ngrams to use.
     entailment_fn: A python function for computing the probability that an
       ngram is entailed by the table. Its signature should match that of
-      `_overlap_probability` above.
+      `overlap_probability` above.
     mention_fn: A python function for computing the probability that a
       table entry is mentioned in the text. Its signature should
         match that of `_mention_probability` above.
@@ -415,15 +446,26 @@ def parent(predictions,
 
 
 def main(_):
-  reference_it = _text_reader(FLAGS.references)
+  reference_it = _text_reader(FLAGS.references, multiple=True)
   generation_it = _text_reader(FLAGS.generations)
   table_it = _table_reader(FLAGS.tables)
 
-  precision, recall, f_score, all_f = parent(generation_it,
-                                             reference_it,
-                                             table_it,
-                                             lambda_weight=FLAGS.lambda_weight,
-                                             smoothing=FLAGS.smoothing)
+  if FLAGS.entailment_fn == "cooccurrence":
+    assert FLAGS.cooccurrence_counts is not None
+    logging.info("Reading %s...", FLAGS.cooccurrence_counts)
+    with tf.gfile.Open(FLAGS.cooccurrence_counts) as f:
+      cooccur_counts = json.load(f)
+    entail_method = cooccur_probability_fn(cooccur_counts)
+  else:
+    entail_method = overlap_probability
+
+  precision, recall, f_score, all_f = parent(
+      generation_it,
+      reference_it,
+      table_it,
+      lambda_weight=FLAGS.lambda_weight,
+      smoothing=FLAGS.smoothing,
+      entailment_fn=entail_method)
 
   logging.info("Evaluated %d examples.", len(all_f))
   logging.info("Precision = %.4f Recall = %.4f F-score = %.4f",

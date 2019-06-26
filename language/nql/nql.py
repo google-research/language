@@ -206,9 +206,9 @@ class NeuralQueryExpression(object):
     Raises:
       RelationNameError: If the relation cannot be found.
     """
-    if (isinstance(rel_specification, str)
-        & self.context.is_relation(rel_specification)
-        & (inverted == +1 or inverted == -1)):
+    if (isinstance(rel_specification, str) and
+        self.context.is_relation(rel_specification) and
+        (inverted == +1 or inverted == -1)):
       what_to_follow = rel_specification + ('_inverse' if inverted < 0 else '')
       with tf.name_scope('follow_%s' % what_to_follow):
         return self._follow_named_rel(rel_specification, inverted)
@@ -241,11 +241,11 @@ class NeuralQueryExpression(object):
     g = self.context.get_group(rel_expr.type_name)
     if inverted == +1:
       with tf.name_scope('follow_group_%s' % rel_expr.type_name):
-        return (self.follow(g.subject_rel, -1).follow(g.weight_rel) * \
+        return (self.follow(g.subject_rel, -1) * \
                 rel_expr.follow(g.relation_rel, -1)).follow(g.object_rel)
     else:
       with tf.name_scope('follow_group_%s_inverse' % rel_expr.type_name):
-        return (self.follow(g.object_rel, -1).follow(g.weight_rel) * \
+        return (self.follow(g.object_rel, -1) * \
                 rel_expr.follow(g.relation_rel, -1)).follow(g.subject_rel)
 
   def _follow_named_rel(self, rel_name,
@@ -1279,7 +1279,7 @@ class NeuralQueryContext(object):
     domain_buf = empty_buffer()
     range_buf = empty_buffer()
     data_buf = empty_buffer()
-    for line in nql_io.lines_in_all(files, lines):
+    for lid, line in enumerate(nql_io.lines_in_all(files, lines)):
       # format: relation entity1 entity2 [weight]
       parts = line.strip().split('\t')
       rel_name = parts[0]
@@ -1310,6 +1310,8 @@ class NeuralQueryContext(object):
         domain_buf[rel_name].append(i)
         range_buf[rel_name].append(j)
         data_buf[rel_name].append(weight)
+      if lid % 1000000 == 0:
+        tf.logging.info('%d facts loaded', lid)
     if freeze:
       for rel_name in data_buf:
         self.freeze(self.get_domain(rel_name))
@@ -1443,7 +1445,7 @@ class NeuralQueryContext(object):
       if self.is_dense(rel_name):
         if self.is_trainable(rel_name):
           self._cached_tensor[rel_name] = tf.Variable(
-              m, trainable=True, name='nlq/' + rel_name)
+              m, trainable=True, name='nql/' + rel_name)
         else:
           self._cached_tensor[rel_name] = tf.constant(m)
       else:

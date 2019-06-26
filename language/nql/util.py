@@ -130,16 +130,24 @@ class ModelBuilder(object):
   adds model.loss and model.train_op.
   """
 
-  def build_context(self, params=None):
+  def build_context(self,
+                    context_factory=nql.NeuralQueryContext,
+                    gpus=1,
+                    params=None):
     """Create a new NeuralQueryContext and configure it.
 
     Args:
+      context_factory: factory to construct the NQL context
+      gpus: number of gpus available for computation
       params: optional parameters to be passed to config_context
 
     Returns:
       The newly configured context.
     """
-    context = nql.NeuralQueryContext()
+    if gpus <= 1:
+      context = context_factory()
+    else:
+      context = context_factory(gpus=gpus)
     self.config_context(context, params)
     return context
 
@@ -207,8 +215,8 @@ class ModelBuilder(object):
     """Produce an Estimator for this Model.
 
     Args:
-      model_dir: passed in to Estimator - location of tmp files
-        used by Estimator to checkpoint models
+      model_dir: passed in to Estimator - location of tmp files used by
+        Estimator to checkpoint models
       params: passed in to estimator - dict of model_fn parameters
 
     Returns:
@@ -413,10 +421,8 @@ def labels_of_top_ranked_predictions_in_batch(labels, predictions):
   indices_of_top_preds = tf.cast(tf.argmax(input=predictions, axis=1), tf.int32)
   batch_size = tf.reduce_sum(input_tensor=tf.ones_like(indices_of_top_preds))
   row_indices = tf.range(batch_size)
-  thresholded_labels = tf.where(
-      labels > 0.0,
-      tf.ones_like(labels),
-      tf.zeros_like(labels))
+  thresholded_labels = tf.where(labels > 0.0, tf.ones_like(labels),
+                                tf.zeros_like(labels))
   label_indices_to_gather = tf.transpose(
       a=tf.stack([row_indices, indices_of_top_preds]))
   return tf.gather_nd(thresholded_labels, label_indices_to_gather)

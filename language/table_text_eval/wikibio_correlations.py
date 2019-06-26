@@ -58,16 +58,6 @@ flags.DEFINE_string("bootstrap_file", None,
 flags.DEFINE_string("save_output", None,
                     "File to save correlations to.")
 
-flags.DEFINE_string(
-    "entailment_fn", "overlap",
-    "Method for estimating entailment between ngram and "
-    "table. Either 'overlap' or 'entailment'.")
-
-flags.DEFINE_string(
-    "entailment_counts", None,
-    "JSON file containing co-occurrence counts for computing "
-    "entailment. Only needed if entailment_fn is 'entailment'.")
-
 
 def main(_):
   # Read the data.
@@ -78,15 +68,14 @@ def main(_):
 
   uniq_keys = raw_data["all_sentences"].keys()
 
-  # pylint: disable=protected-access
-  if FLAGS.entailment_fn == "entailment":
-    assert FLAGS.entailment_counts is not None
-    logging.info("Reading %s...", FLAGS.entailment_counts)
-    with tf.gfile.Open(FLAGS.entailment_counts) as f:
+  if FLAGS.entailment_fn == "cooccurrence":
+    assert FLAGS.cooccurrence_counts is not None
+    logging.info("Reading %s...", FLAGS.cooccurrence_counts)
+    with tf.gfile.Open(FLAGS.cooccurrence_counts) as f:
       cooccur_counts = json.load(f)
-    entail_method = table_text_eval._entailment_probability_fn(cooccur_counts)
+    entail_method = table_text_eval.cooccur_probability_fn(cooccur_counts)
   else:
-    entail_method = table_text_eval._overlap_probability
+    entail_method = table_text_eval.overlap_probability
 
   # Compute PARENT scores for each lambda.
   # pylint: disable=g-complex-comprehension
