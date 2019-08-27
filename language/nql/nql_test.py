@@ -60,6 +60,13 @@ class TestDeclaredTypes(tf.test.TestCase):
     self.assertEqual(len(instances), 10)
     self.assertEqual(self.context.get_max_id('id_t'), 10)
 
+  def test_construct_relation_group_before_relations_defined(self):
+    self.context.declare_relation('r1', 'foo_t', 'bar_t')
+    self.context.declare_relation('r2', 'foo_t', 'bar_t')
+    self.assertRaises(nql.RelationNameError,
+                      self.context.construct_relation_group, 'r_g', 'foo_t',
+                      'bar_t')
+
   def get_instances(self, type_name):
     result = []
     for i in range(self.context.get_max_id(type_name)):
@@ -104,6 +111,8 @@ class TestLoad(tf.test.TestCase):
         list(self.context.query_kg('foo', 'a')), [('x', 1.0), ('y', 1.0)])
     self.assertEqual(
         list(self.context.query_kg('foo', 'z', as_object=True)), [('b', 2.0)])
+    self.assertEqual(self.context.get_symbols('foo_d'), ['a', 'b'])
+    self.assertEqual(self.context.get_symbols('foo_r'), ['x', 'y', 'z'])
     tmp = sorted(list(self.context.query_kg('bat', 'true', as_object=True)))
     self.assertEqual(tmp[0][0], 'dracula')
     self.assertEqual(tmp[1][0], 'louisville slugger')
@@ -133,6 +142,9 @@ class TestLoad(tf.test.TestCase):
                 ['foo', 'b', 'z', '2.0'], ['bat', 'dracula', 'true'],
                 ['bat', 'louisville slugger', 'true', '0.1']]
     self.context.load_kg(lines=self._tabify(kg_lines), freeze=True)
+    self.assertEqual(self.context.get_symbols('foo_d'), ['a', 'b', '<UNK>'])
+    self.assertEqual(
+        self.context.get_symbols('foo_r'), ['x', 'y', 'z', '<UNK>'])
     self.assertEqual((3, 4), self.context.get_shape('foo'))
     self.assertEqual((3, 2), self.context.get_shape('bat'))
     self.assertEqual(self.context.get_unk_id('foo_d'), 2)

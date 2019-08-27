@@ -141,7 +141,7 @@ class NeuralQueryExpression(object):
       A Tensorflow expression that computes this NeuralQueryExpression's value.
     """
     if isinstance(self._tf, tf.Tensor) or isinstance(self._tf, tf.Variable):
-      return self._tf
+      return self._tf  # pytype: disable=bad-return-type
     else:
       return tf.constant(self._tf)
 
@@ -277,6 +277,18 @@ class NeuralQueryExpression(object):
     provenance = NQExprProvenance(
         operation='follow', args=(rel_name, inverted), inner=self.provenance)
     return self.context.as_nql(output_expr, output_type_name, provenance)
+
+  def _as_graph_element(self):
+    # Enables implicit conversion of NQL expressions to TF tensors.
+    # See https://www.tensorflow.org/api_docs/python/tf/Graph#as_graph_element
+    return self.tf
+
+  def __repr__(self):
+    return ('<NeuralQueryExpression(%s) at %s>' %
+            (self.type_name, hex(id(self))))
+
+  def _ipython_display_(self):
+    print(repr(self))
 
   def __getattr__(self,
                   rel_name):
@@ -483,7 +495,7 @@ class NeuralQueryExpression(object):
     """Evaluate the Tensorflow expression associated with this NeuralQueryExpression.
 
     Args:
-      session: tf.Session used to evaluate
+      session: tf.Session used to evaluate if not in eager mode
       as_dicts: if true, convert each row of the minibatch to to a dictionary
         where the keys are entity names, and the values are weights for those
         entities.  Each 'row dictionary' is returned in an array. If as_dicts is
@@ -498,7 +510,12 @@ class NeuralQueryExpression(object):
       Result of evaluating the underlying NeuralQueryExpression, in a format
       determined by as_dicts, simplify_unitsize_minibatch, and as_top.
     """
-    result = self.tf.eval(feed_dict=feed_dict, session=session)
+    if tf.executing_eagerly():
+      if session is not None:
+        raise ValueError('Passed in session in while eager mode.')
+      result = self.tf.numpy()
+    else:
+      result = self.tf.eval(feed_dict=feed_dict, session=session)
     if as_top > 0:
       return self.context.as_top_k(
           as_top,
@@ -994,6 +1011,7 @@ class NeuralQueryContext(object):
 
     Raises:
       ValueError: If dense relations are specified as they cannot be handled.
+      RelationNameError: If a relation in the group hasn't been defined
     """
     if not group_members:
       group_members = sorted([
@@ -1022,7 +1040,13 @@ class NeuralQueryContext(object):
     self.declare_relation(group.weight_rel, group.triple_type,
                           group.triple_type)
     # relation i in this group has num_rows[i] rows
-    num_rows = [self._np_initval[r].data.shape[0] for r in group.members]
+    try:
+      num_rows = [self._np_initval[r].data.shape[0] for r in group.members]
+    except KeyError as err:
+      raise RelationNameError(
+          str(err), 'An undefined relation was encountered. '
+          'All relations in a relation group must be defined before calling '
+          'construct_relation_group.')
     total_num_rows = sum(num_rows)
     # names of all those triples
     self.extend_type(
@@ -1127,7 +1151,7 @@ class NeuralQueryContext(object):
       a dense 1-D Tensor holding weights for relation triples, or
     None if the relation is not traininable.
     """
-    return self._declaration[rel_name].underlying_parameter
+    return self._declaration[rel_name].underlying_parameter  # pytype: disable=bad-return-type
 
   def get_initializers(self):
     """Tensorflow initializers for all relation parameters.
@@ -1458,7 +1482,7 @@ class NeuralQueryContext(object):
           sparse_tensor = tf.SparseTensor(data_m, data_var, [n_rows, n_cols])
           self._declaration[rel_name].underlying_parameter = data_var
         self._cached_tensor[rel_name] = sparse_tensor
-    return self._cached_tensor[rel_name]
+    return self._cached_tensor[rel_name]  # pytype: disable=bad-return-type
 
   def _get_insert_id_if_unfrozen(self, entity_name,
                                  type_name):
@@ -1502,6 +1526,17 @@ class NeuralQueryContext(object):
     except KeyError:
       raise EntityNameError(entity_name, type_name, 'No entity mapping')
 
+  def get_symbols(self, type_name):
+    """Retrieve all symbols for a given type.
+
+    Args:
+      type_name: string name of declared type
+
+    Returns:
+      a list of symbols of the given type.
+    """
+    return self._symtab[type_name].get_symbols()
+
   def get_entity_name(self, entity_id, type_name):
     """Retrieve the string name the entity with given index and type.
 
@@ -1510,7 +1545,7 @@ class NeuralQueryContext(object):
       type_name: string name of declared type
 
     Returns:
-      string name for entity`
+      string name for entity
     """
     return self._symtab[type_name].get_symbol(entity_id)
 
@@ -1589,13 +1624,13 @@ def matmul_any_tensor_dense_tensor(a,
   Raises
     ValueError: If a or b are of the wrong type.
   """
-  _check_type('b', b, tf.Tensor)
+  b = tf.convert_to_tensor(b)
   if a_is_sparse:
     _check_type('a', a, tf.SparseTensor)
     a1 = tf.sparse.transpose(a) if transpose_a else a
     return tf.transpose(a=tf.sparse.sparse_dense_matmul(a1, tf.transpose(a=b)))
   else:
-    _check_type('a', a, tf.Tensor)
+    a = tf.convert_to_tensor(a)
     return tf.transpose(
         a=tf.matmul(a, tf.transpose(a=b), transpose_a=transpose_a))
 

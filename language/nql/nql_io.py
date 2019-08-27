@@ -75,9 +75,9 @@ def _read_numpy_item(input_file):
   """
   if isinstance(input_file, str):
     with tf.io.gfile.GFile(input_file, 'rb') as fh:
-      item = numpy.load(fh).item()
+      item = numpy.load(fh, allow_pickle=True).item()
   else:
-    item = numpy.load(input_file).item()
+    item = numpy.load(input_file, allow_pickle=True).item()
   return item
 
 

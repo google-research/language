@@ -25,13 +25,15 @@ import tensorflow as tf
 
 
 
-def tuple_generator_builder(context,
-                            tuple_input,
-                            type_specs,
-                            normalize_outputs = True,
-                            field_separator = '\t',
-                            entity_separator = ' || '
-                           ):
+def tuple_generator_builder(
+    context,
+    tuple_input,
+    type_specs,
+    normalize_outputs = True,
+    field_separator = '\t',
+    entity_separator = ' || ',
+    start_line = 0,
+    end_line = None):
   """Create iterator over tuples produced by parsing lines from a file.
 
   The lines are delimited by field_separator, with each being a different type
@@ -58,6 +60,8 @@ def tuple_generator_builder(context,
     normalize_outputs: treat the last line as a label and L1-normalize it
     field_separator: string to separate fields
     entity_separator: string to separate entity names
+    start_line: Begin returning values at this row.
+    end_line: Stop returning values before this row.
 
   Returns:
     a function taking no arguments that returns an Iterable[Tuple[Any]]
@@ -70,13 +74,19 @@ def tuple_generator_builder(context,
     """Closure produced by tuple_generator_builder."""
     line_iter = tf.io.gfile.GFile(tuple_input) if isinstance(
         tuple_input, str) else tuple_input
-    for line in line_iter:
+    line_number = 0
+    for line_number, line in enumerate(line_iter):
+      if line_number < start_line:
+        continue
+      if end_line and line_number >= end_line:
+        break
+      line = line.strip('\r\n')
+      parts = line.split(field_separator)
+      if len(parts) != len(type_specs):
+        raise ValueError('line (%d) does not have %d fields: %r' %
+                         (line_number, len(type_specs), line))
+      buf = []
       try:
-        parts = line.strip().split(field_separator)
-        if len(parts) != len(type_specs):
-          raise ValueError('line does not have %d fields: %r' %
-                           (len(type_specs), line.strip()))
-        buf = []
         for i in range(len(parts)):
           spec = type_specs[i]
           if isinstance(spec, str) and context.is_type(spec):
@@ -93,7 +103,7 @@ def tuple_generator_builder(context,
             buf[-1] /= buf_sum
         yield tuple(buf)
       except (nql.EntityNameError, nql.TypeNameError) as ex:
-        tf.logging.warn('Problem %r on line: %r', ex, line.strip())
+        tf.logging.warn('Problem %r on line (%d): %r', ex, line_number, line)
 
   return tuple_generator
 
@@ -103,7 +113,9 @@ def tuple_dataset(context,
                   type_specs,
                   normalize_outputs = True,
                   field_separator = '\t',
-                  entity_separator = ' || '):
+                  entity_separator = ' || ',
+                  start_line = 0,
+                  end_line = None):
   """Produce a dataset by parsing lines from a file.
 
   Lines are formatted as described in documents for tuple_generator_builder.
@@ -115,6 +127,8 @@ def tuple_dataset(context,
     normalize_outputs: passed to tuple_generator_builder
     field_separator: passed to tuple_generator_builder
     entity_separator: passed to tuple_generator_builder
+    start_line: passed to tuple_generator_builder
+    end_line: passed to tuple_generator_builder
 
   Returns:
     tf.Data.Dataset over tuples, with one component for tab-separated field
@@ -123,7 +137,7 @@ def tuple_dataset(context,
   return tf.data.Dataset.from_generator(
       tuple_generator_builder(context, tuple_input, type_specs,
                               normalize_outputs, field_separator,
-                              entity_separator),
+                              entity_separator, start_line, end_line),
       tuple([spec_as_tf_type(spec) for spec in type_specs]),
       tuple([spec_as_shape(spec, context) for spec in type_specs]))
 

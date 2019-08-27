@@ -96,7 +96,7 @@ class BestSavedModelAndCheckpointExporter(tf.estimator.BestExporter):
                           self._best_eval_result[self._metric_name]),
         path=os.path.join(export_path, "best_metric.txt"))
     file_utils.set_file_contents(
-        data=exported_dir + "\n",
+        data="%s\n" % exported_dir,
         path=os.path.join(export_path, "best_saved_model.txt"))
 
     return exported_dir

@@ -70,6 +70,26 @@ class TestTFDataset(tf.test.TestCase):
         normalize_outputs=False)
     self.assertEqual(len(self.as_list(dset)), len(self.clean_examples))
 
+  def test_start_line(self):
+    dset = dataset.tuple_dataset(
+        self.context,
+        self.clean_examples, [str, str],
+        field_separator='|',
+        entity_separator=',',
+        normalize_outputs=False,
+        start_line=1)
+    self.assertEqual(len(self.as_list(dset)), len(self.clean_examples) - 1)
+
+  def test_end_line(self):
+    dset = dataset.tuple_dataset(
+        self.context,
+        self.clean_examples, [str, str],
+        field_separator='|',
+        entity_separator=',',
+        normalize_outputs=False,
+        end_line=1)
+    self.assertEqual(len(self.as_list(dset)), 1)
+
   def test_repeat(self):
     dset = dataset.tuple_dataset(
         self.context,
