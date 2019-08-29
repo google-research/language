@@ -120,8 +120,8 @@ def _compile_data(tmp_dir, datasets, filename):
       for d in datasets:
         logging.info("Loading %s-%s...", d["src_lang"], d["tgt_lang"])
         # Load source and target lines.
-        src_fpath = os.path.join(FLAGS.europarl_orig_data_path + d["src_fname"])
-        tgt_fpath = os.path.join(FLAGS.europarl_orig_data_path + d["tgt_fname"])
+        src_fpath = os.path.join(FLAGS.europarl_orig_data_path, d["src_fname"])
+        tgt_fpath = os.path.join(FLAGS.europarl_orig_data_path, d["tgt_fname"])
         src_lines = _parse_lines(src_fpath)
         tgt_lines = _parse_lines(tgt_fpath)
         assert len(src_lines) == len(tgt_lines)

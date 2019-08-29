@@ -159,8 +159,8 @@ def parse_lines(path):
 def generate_lines_for_shared_vocab(datasets, datapath, parse_lines_fn):
   """Generate lines for a shared vocabulary generation."""
   for d in datasets:
-    src_fpath = os.path.join(datapath + d["src_fname"])
-    tgt_fpath = os.path.join(datapath + d["tgt_fname"])
+    src_fpath = os.path.join(datapath, d["src_fname"])
+    tgt_fpath = os.path.join(datapath, d["tgt_fname"])
     src_lines = parse_lines_fn(src_fpath)
     tgt_lines = parse_lines_fn(tgt_fpath)
     for src_line, tgt_line in zip(src_lines, tgt_lines):
