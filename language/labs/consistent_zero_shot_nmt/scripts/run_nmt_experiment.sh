@@ -12,26 +12,29 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#!/bin/bash
+#!/usr/bin/env bash
 
-NAME=basic-multilingual-nmt-iwslt17-nonoverlap
-PROBLEM=translate_iwslt17_nonoverlap
-MODEL=basic_multilingual_nmt
-CONF=basic_gnmt_luong_att
+set -e
 
-OUT_DIR=$1
-DATA_DIR=$2
+# Parse cmd arguments.
+SCRIPTS_DIR="$( dirname "${BASH_SOURCE[0]}" )"
+source "${SCRIPTS_DIR}/parse-args.sh"
 
-rm -rf $OUT_DIR
+rm -rf ${EXP_OUTPUT_DIR}
+
+# Additional parameters.
+EXP_HPARAMS=""
+EXP_TRAIN_STEPS=1000000
+EXP_LOCAL_EVAL_FREQ=500
 
 python -m language.labs.consistent_zero_shot_nmt.bin.t2t_trainer \
-  --problem=$PROBLEM \
-  --model=$MODEL \
-  --hparams="decoder_type=basic,decoder_continuous=False,scheduled_training=False" \
-  --hparams_set=$CONF \
-  --data_dir=$DATA_DIR \
-  --train_steps=10000 \
-  --output_dir=$OUT_DIR \
+  --problem=${EXP_PROBLEM_NAME} \
+  --model=${EXP_MODEL_NAME} \
+  --hparams=${EXP_HPARAMS} \
+  --hparams_set=${EXP_CONF_NAME} \
+  --data_dir=${EXP_DATASET_DIR}/tfrecords \
+  --train_steps=${EXP_TRAIN_STEPS} \
+  --output_dir=${EXP_OUTPUT_DIR} \
+  --local_eval_frequency=${EXP_LOCAL_EVAL_FREQ} \
   --schedule=train_and_evaluate \
-  --local_eval_frequency=500 \
   --alsologtostderr

@@ -18,6 +18,7 @@
 EXP_DATA_DIR="/tmp/data"
 EXP_RESULTS_DIR="/tmp/results"
 EXP_DATASET_NAME="iwslt17-official"
+EXP_CONF_NAME="basic_gnmt_luong_att"
 EXP_MODEL_NAME="basic_multilingual_nmt"
 EXP_PROBLEM_NAME="translate_iwslt17_nonoverlap"
 
@@ -33,6 +34,9 @@ while [[ $# -gt 0 ]]; do
     --dataset-name=*)
       EXP_DATASET_NAME=${1#*=}
       ;;
+    --conf-name=*)
+      EXP_CONF_NAME=${1#*=}
+      ;;
     --model-name=*)
       EXP_MODEL_NAME=${1#*=}
       ;;
@@ -41,7 +45,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     # Help.
     -h|--help)
-      echo "Available arguments: --data-dir, --output-dir, --dataset-name, --model-name, --problem-name."
+      echo "Available arguments: --data-dir, --output-dir, --dataset-name, --conf-name, --model-name, --problem-name."
       exit 1
       ;;
     # Unsupported arguments.
@@ -55,7 +59,7 @@ done
 
 # Set derived parameters.
 EXP_DATASET_DIR="${EXP_DATA_DIR}/${EXP_DATASET_NAME}"
-EXP_OUTPUT_DIR="${EXP_RESULTS_DIR}/${EXP_PROBLEM_NAME}/${EXP_MODEL_NAME}"
+EXP_OUTPUT_DIR="${EXP_RESULTS_DIR}/${EXP_PROBLEM_NAME}/${EXP_MODEL_NAME}/${CONF_NAME}"
 
 # Print arguments.
 EXP_VARS=$(set | grep -e "^EXP_")
