@@ -14,18 +14,23 @@
 # limitations under the License.
 #!/bin/bash
 
-PROBLEM=translate_europarl_nonoverlap
-DATA_DIR=$1
-TMP_DIR=$2
-EUROPARL_ORIG_DATA_PATH=$3
-EUROPARL_OVERLAP_DATA_PATH=$4
+set -e
 
-mkdir -p $DATA_DIR $TMP_DIR
+# Parse cmd arguments.
+SCRIPTS_DIR="$( dirname "${BASH_SOURCE[0]}" )"
+source "${SCRIPTS_DIR}/parse-args.sh"
+
+ORIG_DATA_PATH="${EXP_DATASET_DIR}/original"
+OVERLAP_DATA_PATH="${EXP_DATASET_DIR}/overlap"
+TFRECORD_DATA_PATH="${EXP_DATASET_DIR}/tfrecords"
+TMP_DIR="${EXP_DATASET_DIR}/tmp"
+
+mkdir -p $TFRECORD_DATA_PATH $TMP_DIR
 
 python -m language.labs.consistent_zero_shot_nmt.bin.t2t_datagen \
-  --data_dir=$DATA_DIR \
-  --europarl_orig_data_path=$EUROPARL_ORIG_DATA_PATH \
-  --europarl_overlap_data_path=$EUROPARL_OVERLAP_DATA_PATH \
-  --problem=$PROBLEM \
-  --tmp_dir=$TMP_DIR \
+  --data_dir=${TFRECORD_DATA_PATH} \
+  --europarl_orig_data_path=${ORIG_DATA_PATH} \
+  --europarl_overlap_data_path=${OVERLAP_DATA_PATH} \
+  --problem=${EXP_PROBLEM_NAME} \
+  --tmp_dir=${TMP_DIR} \
   --alsologtostderr
