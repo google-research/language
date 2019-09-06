@@ -16,10 +16,10 @@ export NQ_DATA_DIR=$DATA_DIR/natural_questions/v1.0
 **Preprocess data for the long answer model:**
 
 ```
-python -m language.question_answering.preprocessing.create_nq_long_examples \
+python -m language.question_answering.decatt_docreader.preprocessing.create_nq_long_examples \
   --input_pattern=$NQ_DATA_DIR/dev/nq-dev-*.jsonl.gz \
   --output_dir=$NQ_DATA_DIR/dev
-python -m language.question_answering.preprocessing.create_nq_long_examples \
+python -m language.question_answering.decatt_docreader.preprocessing.create_nq_long_examples \
   --input_pattern=$NQ_DATA_DIR/train/nq-train-*.jsonl.gz \
   --output_dir=$NQ_DATA_DIR/train
 ```
@@ -27,10 +27,10 @@ python -m language.question_answering.preprocessing.create_nq_long_examples \
 **Preprocess data for the short answer pipeline model:**
 
 ```
-python -m language.question_answering.preprocessing.create_nq_short_pipeline_examples \
+python -m language.question_answering.decatt_docreader.preprocessing.create_nq_short_pipeline_examples \
   --input_pattern=$NQ_DATA_DIR/dev/nq-dev-*.jsonl.gz \
   --output_dir=$NQ_DATA_DIR/dev
-python -m language.question_answering.preprocessing.create_nq_short_pipeline_examples \
+python -m language.question_answering.decatt_docreader.preprocessing.create_nq_short_pipeline_examples \
   --input_pattern=$NQ_DATA_DIR/train/nq-train-*.jsonl.gz \
   --output_dir=$NQ_DATA_DIR/train
 ```
@@ -52,7 +52,7 @@ mkdir -p $MODELS_DIR
 **Train the long answer model.**
 
 ```
-python -m language.question_answering.experiments.nq_long_experiment \
+python -m language.question_answering.decatt_docreader.experiments.nq_long_experiment \
   --embeddings_path=$DATA_DIR/glove.840B.300d.txt \
   --nq_long_train_pattern=$NQ_DATA_DIR/train/nq-train-*.long.tfr \
   --nq_long_eval_pattern=$NQ_DATA_DIR/dev/nq-dev-*.long.tfr \
@@ -64,7 +64,7 @@ python -m language.question_answering.experiments.nq_long_experiment \
 **Train the short answer pipeline model.**
 
 ```
-python -m language.question_answering.experiments.nq_short_pipeline_experiment \
+python -m language.question_answering.decatt_docreader.experiments.nq_short_pipeline_experiment \
   --embeddings_path=$DATA_DIR/glove.840B.300d.txt \
   --nq_short_pipeline_train_pattern=$NQ_DATA_DIR/train/nq-train-*.short_pipeline.tfr \
   --nq_short_pipeline_eval_pattern=$NQ_DATA_DIR/dev/nq-dev-*.short_pipeline.tfr \

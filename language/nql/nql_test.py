@@ -240,6 +240,14 @@ class TestOnGrid(tf.test.TestCase):
       y_vec = self.session.run(y.tf)
       self.assertEqual(self._vec2cell(y_vec), cell(i, j))
 
+  def test_frozen_grid_context(self):
+    self.context.freeze('place_t')
+    x = self.context.one(cell(2, 2), 'place_t')
+    for (d, (i, j)) in zip('nsew', [(1, 2), (3, 2), (2, 3), (2, 1)]):
+      y = x.follow(d)
+      y_vec = self.session.run(y.tf)
+      self.assertEqual(self._vec2cell(y_vec), cell(i, j))
+
   def test_or(self):
     x = self.context.one(cell(2, 2), 'place_t')
 

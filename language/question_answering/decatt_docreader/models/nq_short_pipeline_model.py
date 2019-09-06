@@ -25,9 +25,9 @@ from language.common.inputs import dataset_utils
 from language.common.inputs import embedding_utils
 from language.common.layers import common_layers
 from language.common.utils import tensor_utils
-from language.question_answering.datasets import nq_short_pipeline_dataset
-from language.question_answering.layers import document_reader
-from language.question_answering.utils import span_utils
+from language.question_answering.decatt_docreader.datasets import nq_short_pipeline_dataset
+from language.question_answering.decatt_docreader.layers import document_reader
+from language.question_answering.decatt_docreader.utils import span_utils
 import tensorflow as tf
 
 flags.DEFINE_string("embeddings_path", None, "Path to pretrained embeddings.")

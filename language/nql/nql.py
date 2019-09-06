@@ -1233,7 +1233,24 @@ class NeuralQueryContext(object):
     Args:
       type_name: string name of a type.
     """
+    previous_size = self._symtab[type_name].get_max_id()
     self._symtab[type_name].freeze()
+    # Check if the size of this symbol table has increased
+    if self._symtab[type_name].get_max_id() != previous_size:
+      for rel_name in self.get_relation_names():
+        if (type_name == self.get_domain(rel_name) or
+            type_name == self.get_range(rel_name)):
+          # Resize relation matrices involving this type to match its new size
+          new_size = (self.get_max_id(self.get_domain(rel_name)),
+                      self.get_max_id(self.get_range(rel_name)))
+          if (not scipy.sparse.issparse(self._np_initval[rel_name]) and
+              not self._np_initval[rel_name].flags['OWNDATA']):
+            # Copy the matrix if it doesn't own its own data
+            self._np_initval[rel_name] = self._np_initval[rel_name].copy()
+          self._np_initval[rel_name].resize(new_size)
+          # Remove cached tensor if it exists
+          if rel_name in self._cached_tensor:
+            del self._cached_tensor[rel_name]
 
   def get_shape(self, rel_name):
     """Return the shape of the matrix defining this relation.
@@ -1338,8 +1355,8 @@ class NeuralQueryContext(object):
         tf.logging.info('%d facts loaded', lid)
     if freeze:
       for rel_name in data_buf:
-        self.freeze(self.get_domain(rel_name))
-        self.freeze(self.get_range(rel_name))
+        self._symtab[self.get_domain(rel_name)].freeze()
+        self._symtab[self.get_range(rel_name)].freeze()
     # clear buffers and create a coo_matrix for each relation
     for rel_name in data_buf:
       num_domain = self.get_max_id(self.get_domain(rel_name))
@@ -1624,13 +1641,11 @@ def matmul_any_tensor_dense_tensor(a,
   Raises
     ValueError: If a or b are of the wrong type.
   """
-  b = tf.convert_to_tensor(b)
   if a_is_sparse:
     _check_type('a', a, tf.SparseTensor)
     a1 = tf.sparse.transpose(a) if transpose_a else a
     return tf.transpose(a=tf.sparse.sparse_dense_matmul(a1, tf.transpose(a=b)))
   else:
-    a = tf.convert_to_tensor(a)
     return tf.transpose(
         a=tf.matmul(a, tf.transpose(a=b), transpose_a=transpose_a))
 

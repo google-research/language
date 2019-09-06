@@ -23,9 +23,9 @@ from absl import flags
 from language.common.inputs import dataset_utils
 from language.common.inputs import embedding_utils
 from language.common.utils import tensor_utils
-from language.question_answering.datasets import nq_long_dataset
-from language.question_answering.models import nq_long_decatt_model
-from language.question_answering.utils import nq_long_utils
+from language.question_answering.decatt_docreader.datasets import nq_long_dataset
+from language.question_answering.decatt_docreader.models import nq_long_decatt_model
+from language.question_answering.decatt_docreader.utils import nq_long_utils
 
 import tensorflow as tf
 

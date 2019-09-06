@@ -17,7 +17,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from language.question_answering.utils import span_utils
+from language.question_answering.decatt_docreader.utils import span_utils
 import numpy as np
 import tensorflow as tf
 

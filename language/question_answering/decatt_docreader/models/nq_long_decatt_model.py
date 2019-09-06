@@ -19,7 +19,7 @@ from __future__ import print_function
 from absl import flags
 
 from language.common.utils import tensor_utils
-from language.question_answering.layers import decomposable_attention as decatt
+from language.question_answering.decatt_docreader.layers import decomposable_attention as decatt
 
 import tensorflow as tf
 
