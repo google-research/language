@@ -123,6 +123,7 @@ class TranslateMultilingualProblem(translate.TranslateProblem):
 
   def _generate_text_for_vocab(self, data_dir, tmp_dir,
                                datapath, parse_lines_fn):
+    del data_dir, tmp_dir  # Unused.
     return generate_lines_for_shared_vocab(
         datasets=self.vocab_data_files(),
         datapath=datapath,
@@ -133,6 +134,7 @@ class TranslateMultilingualProblem(translate.TranslateProblem):
     raise NotImplementedError("Abstract Method")
 
 
+# pylint: disable=abstract-method
 class TranslateMultilingualLmProblem(TranslateMultilingualProblem):
   """Base class for multilingual (auxiliary) LM problems."""
 
