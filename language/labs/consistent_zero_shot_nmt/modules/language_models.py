@@ -38,7 +38,7 @@ class BaseLanguageModel(base.AbstractNMTModule):
   def __init__(self, name="BaseLanguageModel"):
     super(BaseLanguageModel, self).__init__(name=name)
 
-  def _build(self, inputs, inputs_length, mode, hparams, trainable=False):
+  def _build(self, inputs, inputs_length, mode, hparams, trainable=False):  # pylint: disable=arguments-differ
     # Build encoded sequences.
     outputs, _ = self._build_encoded_sequences(
         sequences=inputs,

@@ -24,11 +24,12 @@ import re
 from absl import flags
 from absl import logging
 
-from language.labs.consistent_zero_shot_nmt.data_generators import translate_multilingual
+import tensorflow as tf
+
 from tensor2tensor.data_generators import problem
 from tensor2tensor.utils import registry
 
-import tensorflow as tf
+from language.labs.consistent_zero_shot_nmt.data_generators import translate_multilingual
 
 FLAGS = flags.FLAGS
 
@@ -227,8 +228,7 @@ class TranslateIwslt17(translate_multilingual.TranslateMultilingualProblem):
     """Files to be passed to compile_data."""
     if dataset_split == problem.DatasetSplit.TRAIN:
       return _IWSLT17_TRAIN_DATASETS
-    else:
-      return _IWSLT17_TEST_DATASETS
+    return _IWSLT17_TEST_DATASETS
 
   def generate_samples(self, data_dir, tmp_dir, dataset_split):
     auxiliary_tags = ["<de>", "<it>", "<nl>", "<ro>"]
@@ -255,8 +255,7 @@ class TranslateIwslt17Nonoverlap(TranslateIwslt17):
       return [
           dict(list(d.items()) + list(o.items()))
           for d, o in zip(_IWSLT17_TRAIN_DATASETS, _IWSLT17_TRAIN_REMOVE_SETS)]
-    else:
-      return _IWSLT17_TEST_DATASETS
+    return _IWSLT17_TEST_DATASETS
 
 
 @registry.register_problem
@@ -267,8 +266,7 @@ class TranslateIwslt17Autoenc(TranslateIwslt17):
     """Files to be passed to compile_data."""
     if dataset_split == problem.DatasetSplit.TRAIN:
       return _IWSLT17_TRAIN_DATASETS + _IWSLT17_AUTOENC_DATASETS
-    else:
-      return _IWSLT17_TEST_DATASETS
+    return _IWSLT17_TEST_DATASETS
 
 
 @registry.register_problem
@@ -282,5 +280,4 @@ class TranslateIwslt17NonoverlapAutoenc(TranslateIwslt17Nonoverlap):
           dict(list(d.items()) + list(o.items()))
           for d, o in zip(_IWSLT17_TRAIN_DATASETS, _IWSLT17_TRAIN_REMOVE_SETS)]
       return data_files_nonoverlap + _IWSLT17_AUTOENC_DATASETS
-    else:
-      return _IWSLT17_TEST_DATASETS
+    return _IWSLT17_TEST_DATASETS

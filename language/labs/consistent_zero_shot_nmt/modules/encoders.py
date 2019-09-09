@@ -21,10 +21,11 @@ from __future__ import print_function
 import abc
 import collections
 
+import tensorflow as tf
+
 from language.labs.consistent_zero_shot_nmt.modules import base
 from language.labs.consistent_zero_shot_nmt.utils import common_utils as U
 from language.labs.consistent_zero_shot_nmt.utils import model_utils
-import tensorflow as tf
 
 
 __all__ = [
@@ -54,7 +55,7 @@ class BaseRNNEncoder(base.AbstractNMTModule):
   def __init__(self, name="BaseRNNEncoder"):
     super(BaseRNNEncoder, self).__init__(name=name)
 
-  def _build(self, inputs, inputs_length, mode, hparams):
+  def _build(self, inputs, inputs_length, mode, hparams):  # pylint: disable=arguments-differ
 
     # Build encoded sequences.
     # TODO(alshedivat): remove this spurious variable scope eventually.

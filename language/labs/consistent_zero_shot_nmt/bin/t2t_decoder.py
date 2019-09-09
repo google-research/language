@@ -34,12 +34,7 @@ from __future__ import print_function
 import os
 from absl import flags
 
-# This import triggers the decorations that register the problems.
-import language.labs.consistent_zero_shot_nmt.data_generators.translate_europarl  # pylint: disable=unused-import
-import language.labs.consistent_zero_shot_nmt.data_generators.translate_iwslt17  # pylint: disable=unused-import
-import language.labs.consistent_zero_shot_nmt.data_generators.translate_uncorpus  # pylint: disable=unused-import
-import language.labs.consistent_zero_shot_nmt.models.agreement  # pylint: disable=unused-import
-import language.labs.consistent_zero_shot_nmt.models.basic  # pylint: disable=unused-import
+import tensorflow as tf
 
 from tensor2tensor.bin import t2t_trainer
 from tensor2tensor.data_generators import problem  # pylint: disable=unused-import
@@ -49,7 +44,12 @@ from tensor2tensor.utils import registry
 from tensor2tensor.utils import trainer_lib
 from tensor2tensor.utils import usr_dir
 
-import tensorflow as tf
+# This import triggers the decorations that register the problems.
+import language.labs.consistent_zero_shot_nmt.data_generators.translate_europarl  # pylint: disable=unused-import
+import language.labs.consistent_zero_shot_nmt.data_generators.translate_iwslt17  # pylint: disable=unused-import
+import language.labs.consistent_zero_shot_nmt.data_generators.translate_uncorpus  # pylint: disable=unused-import
+import language.labs.consistent_zero_shot_nmt.models.agreement  # pylint: disable=unused-import
+import language.labs.consistent_zero_shot_nmt.models.basic  # pylint: disable=unused-import
 
 FLAGS = flags.FLAGS
 

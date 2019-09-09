@@ -35,12 +35,10 @@ import tempfile
 
 from absl import flags
 
-# This import triggers the decorations that register the problems.
-import language.labs.consistent_zero_shot_nmt.data_generators.translate_europarl  # pylint: disable=unused-import
-import language.labs.consistent_zero_shot_nmt.data_generators.translate_iwslt17  # pylint: disable=unused-import
-import language.labs.consistent_zero_shot_nmt.data_generators.translate_uncorpus  # pylint: disable=unused-import
-
 import numpy as np
+
+# Improrting here to prevent pylint from ungrouped-imports warning.
+import tensorflow as tf  # pylint: disable=g-import-not-at-top
 
 from tensor2tensor import problems as problems_lib  # pylint: disable=unused-import
 from tensor2tensor.data_generators import generator_utils
@@ -57,8 +55,10 @@ try:
 except ImportError:
   pass
 
-# Improrting here to prevent pylint from ungrouped-imports warning.
-import tensorflow as tf  # pylint: disable=g-import-not-at-top
+# This import triggers the decorations that register the problems.
+import language.labs.consistent_zero_shot_nmt.data_generators.translate_europarl  # pylint: disable=unused-import
+import language.labs.consistent_zero_shot_nmt.data_generators.translate_iwslt17  # pylint: disable=unused-import
+import language.labs.consistent_zero_shot_nmt.data_generators.translate_uncorpus  # pylint: disable=unused-import
 
 FLAGS = flags.FLAGS
 

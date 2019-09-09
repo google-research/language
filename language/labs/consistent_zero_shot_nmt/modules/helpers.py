@@ -51,6 +51,7 @@ class ContinuousEmbeddingTrainingHelper(tf.contrib.seq2seq.TrainingHelper):
       return sample_ids
 
   def next_inputs(self, time, outputs, state, sample_ids, name=None):
+    del sample_ids  # Unused.
     with tf.name_scope(name, "TrainingHelperNextInputs", [time, outputs]):
       next_time = time + 1
       finished = (next_time >= self._sequence_length)
@@ -119,6 +120,7 @@ class ScheduledContinuousEmbeddingTrainingHelper(
       return sample_ids
 
   def next_inputs(self, time, outputs, state, sample_ids, name=None):
+    """Compute the next inputs and state."""
     del sample_ids  # Unused.
     with tf.name_scope(name, "ScheduledContinuousEmbeddingNextInputs",
                        [time, outputs, state]):
@@ -152,7 +154,7 @@ class GreedyContinuousEmbeddingHelper(tf.contrib.seq2seq.GreedyEmbeddingHelper):
   """Greedy decoding helper with continuous reuse of embeddings."""
 
   def sample(self, time, outputs, state, name=None):
-    del time  # Unused.
+    del time, name  # Unused.
     if isinstance(state, tuple):
       # TODO(alshedivat): fix the if statement as it works only with GNMT.
       sample_ids = tf.cast(tf.argmax(outputs, axis=-1), tf.int32)
@@ -161,7 +163,7 @@ class GreedyContinuousEmbeddingHelper(tf.contrib.seq2seq.GreedyEmbeddingHelper):
     return sample_ids
 
   def next_inputs(self, time, outputs, state, sample_ids, name=None):
-    del time  # Unused.
+    del time, name  # Unused.
     finished = tf.equal(sample_ids, self._end_token)
     all_finished = tf.reduce_all(finished)
     next_inputs = tf.cond(
@@ -181,7 +183,7 @@ class FixedContinuousEmbeddingHelper(tf.contrib.seq2seq.GreedyEmbeddingHelper):
     self._num_steps = num_steps
 
   def sample(self, time, outputs, state, name=None):
-    del time  # Unused.
+    del time, name  # Unused.
     if isinstance(state, tuple):
       # TODO(alshedivat): fix the if statement as it works only with GNMT.
       sample_ids = tf.cast(tf.argmax(outputs, axis=-1), tf.int32)
@@ -190,6 +192,8 @@ class FixedContinuousEmbeddingHelper(tf.contrib.seq2seq.GreedyEmbeddingHelper):
     return sample_ids
 
   def next_inputs(self, time, outputs, state, sample_ids, name=None):
+    """Compute next inputs and state."""
+    del sample_ids, name  # Unused.
     next_time = time + 1
     finished = (next_time >= self._num_steps)
     all_finished = tf.reduce_all(finished)

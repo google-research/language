@@ -24,11 +24,12 @@ import os
 from absl import flags
 from absl import logging
 
-from language.labs.consistent_zero_shot_nmt.data_generators import translate_multilingual
+import tensorflow as tf
+
 from tensor2tensor.data_generators import problem
 from tensor2tensor.utils import registry
 
-import tensorflow as tf
+from language.labs.consistent_zero_shot_nmt.data_generators import translate_multilingual
 
 FLAGS = flags.FLAGS
 
@@ -235,8 +236,7 @@ class TranslateUncorpusExp1(
     """Files to be passed to compile_data."""
     if dataset_split == problem.DatasetSplit.TRAIN:
       return _UNC_TRAIN_DATASETS_EXP1
-    else:
-      return _UNC_TEST_DATASETS_EXP1
+    return _UNC_TEST_DATASETS_EXP1
 
   def generate_samples(self, data_dir, tmp_dir, dataset_split):
     auxiliary_tags = ["<es>", "<fr>"]
@@ -263,8 +263,7 @@ class TranslateUncorpusExp2(
     """Files to be passed to compile_data."""
     if dataset_split == problem.DatasetSplit.TRAIN:
       return _UNC_TRAIN_DATASETS_EXP2
-    else:
-      return _UNC_TEST_DATASETS_EXP2
+    return _UNC_TEST_DATASETS_EXP2
 
   def generate_samples(self, data_dir, tmp_dir, dataset_split):
     auxiliary_tags = ["<es>", "<fr>", "<ru>"]
@@ -291,8 +290,7 @@ class TranslateUncorpusExp1Lm(
     """Files to be passed to compile_data."""
     if dataset_split == problem.DatasetSplit.TRAIN:
       return _UNC_TRAIN_DATASETS_EXP1_LM
-    else:
-      return _UNC_TEST_DATASETS_EXP1_LM
+    return _UNC_TEST_DATASETS_EXP1_LM
 
   def generate_samples(self, data_dir, tmp_dir, dataset_split):
     compile_data_fn = functools.partial(_compile_data,
@@ -317,8 +315,7 @@ class TranslateUncorpusExp2Lm(
     """Files to be passed to compile_data."""
     if dataset_split == problem.DatasetSplit.TRAIN:
       return _UNC_TRAIN_DATASETS_EXP2_LM
-    else:
-      return _UNC_TEST_DATASETS_EXP2_LM
+    return _UNC_TEST_DATASETS_EXP2_LM
 
   def generate_samples(self, data_dir, tmp_dir, dataset_split):
     compile_data_fn = functools.partial(_compile_data,

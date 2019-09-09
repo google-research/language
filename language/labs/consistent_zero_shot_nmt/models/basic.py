@@ -20,18 +20,18 @@ from __future__ import print_function
 
 import collections
 
-from language.labs.consistent_zero_shot_nmt.modules import decoders
-from language.labs.consistent_zero_shot_nmt.modules import encoders
-from language.labs.consistent_zero_shot_nmt.utils import common_utils as U
-from language.labs.consistent_zero_shot_nmt.utils import model_utils
-from language.labs.consistent_zero_shot_nmt.utils import t2t_tweaks  # pylint: disable=unused-import
+import tensorflow as tf
 
 from tensor2tensor.layers import common_hparams
 from tensor2tensor.layers import common_layers
 from tensor2tensor.utils import registry
 from tensor2tensor.utils import t2t_model
 
-import tensorflow as tf
+from language.labs.consistent_zero_shot_nmt.modules import decoders
+from language.labs.consistent_zero_shot_nmt.modules import encoders
+from language.labs.consistent_zero_shot_nmt.utils import common_utils as U
+from language.labs.consistent_zero_shot_nmt.utils import model_utils
+from language.labs.consistent_zero_shot_nmt.utils import t2t_tweaks  # pylint: disable=unused-import
 
 
 @registry.register_model
@@ -170,6 +170,7 @@ class BasicMultilingualNmt(t2t_model.T2TModel):
     return logits
 
   def body(self, features):
+    """Process features and produce outputs."""
     # Preprocess features.
     inputs, inputs_length, targets, targets_length = self._preprocess(features)
 

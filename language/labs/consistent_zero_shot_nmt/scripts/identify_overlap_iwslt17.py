@@ -90,12 +90,12 @@ def main(argv):
     src_pvt_fname = "train.tags.{src_lang}-{tgt_lang}.{tgt_lang}".format(
         src_lang=src, tgt_lang=pvt)
     src_pvt_lines = _parse_lines(
-      os.path.join(FLAGS.input_data_dir, src_pvt_fname))
+        os.path.join(FLAGS.input_data_dir, src_pvt_fname))
     # Load pvt-tgt corpus.
     tgt_pvt_fname = "train.tags.{src_lang}-{tgt_lang}.{src_lang}".format(
         src_lang=pvt, tgt_lang=tgt)
     tgt_pvt_lines = _parse_lines(
-      os.path.join(FLAGS.input_data_dir, tgt_pvt_fname))
+        os.path.join(FLAGS.input_data_dir, tgt_pvt_fname))
     # Identify overlapping lines and randomly split between src-pvt and pvt-tgt.
     overlap_in_pvt = list(set(src_pvt_lines) & set(tgt_pvt_lines))
     random.shuffle(overlap_in_pvt)

@@ -23,11 +23,12 @@ import os
 from absl import flags
 from absl import logging
 
-from language.labs.consistent_zero_shot_nmt.data_generators import translate_multilingual
+import tensorflow as tf
+
 from tensor2tensor.data_generators import problem
 from tensor2tensor.utils import registry
 
-import tensorflow as tf
+from language.labs.consistent_zero_shot_nmt.data_generators import translate_multilingual
 
 FLAGS = flags.FLAGS
 
@@ -177,8 +178,7 @@ class TranslateEuroparl(translate_multilingual.TranslateMultilingualProblem):
     """Files to be passed to compile_data."""
     if dataset_split == problem.DatasetSplit.TRAIN:
       return _EPL_TRAIN_DATASETS
-    else:
-      return _EPL_TEST_DATASETS
+    return _EPL_TEST_DATASETS
 
   def generate_samples(self, data_dir, tmp_dir, dataset_split):
     auxiliary_tags = ["<de>", "<es>", "<fr>"]
@@ -205,5 +205,4 @@ class TranslateEuroparlNonoverlap(TranslateEuroparl):
       return [
           dict(list(d.items()) + list(o.items()))
           for d, o in zip(_EPL_TRAIN_DATASETS, _EPL_TRAIN_REMOVE_SETS)]
-    else:
-      return _EPL_TEST_DATASETS
+    return _EPL_TEST_DATASETS

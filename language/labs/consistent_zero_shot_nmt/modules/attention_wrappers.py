@@ -248,5 +248,4 @@ class FixedMemoryAttentionWrapper(attention_wrapper.AttentionWrapper):
 
     if self._output_attention:
       return attention, next_state
-    else:
-      return cell_output, next_state
+    return cell_output, next_state

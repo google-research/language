@@ -20,16 +20,15 @@ from __future__ import print_function
 
 import os
 
+import tensorflow as tf
+
 from tensor2tensor.data_generators import problem
 from tensor2tensor.data_generators import text_encoder
 from tensor2tensor.data_generators import text_problems
 from tensor2tensor.data_generators import translate
 from tensor2tensor.layers import modalities
 from tensor2tensor.utils import metrics
-
 from tensor2tensor.utils import mlperf_log
-
-import tensorflow as tf
 
 
 # Length of the language tag strings.
@@ -75,6 +74,7 @@ class TranslateMultilingualProblem(translate.TranslateProblem):
     return data_fields, data_items_to_decoders
 
   def hparams(self, defaults, unused_model_hparams):
+    """Update hyper parameters."""
     super(TranslateMultilingualProblem, self).hparams(
         defaults, unused_model_hparams)
     p = defaults
@@ -102,6 +102,8 @@ class TranslateMultilingualProblem(translate.TranslateProblem):
   def _generate_samples(self, data_dir, tmp_dir, dataset_split,
                         auxiliary_tags=None,
                         compile_data_fn=None):
+    """Compile data and return an iterator over samples."""
+    del data_dir  # Unused.
     if auxiliary_tags is None:
       auxiliary_tags = LANG_TAGS
     if compile_data_fn is None:
