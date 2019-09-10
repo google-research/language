@@ -69,7 +69,7 @@ class CrossEntropyLoss(BaseLoss):
     super(CrossEntropyLoss, self).__init__(name=name)
     self._sparse = sparse
 
-  def _build(self, logits, targets, target_lens, normalize_by_length=False):
+  def _build(self, logits, targets, target_lens, normalize_by_length=False):  # pylint: disable=arguments-differ
     """Builds the cross entropy loss.
 
     Args:
@@ -138,7 +138,7 @@ class DistanceLoss(BaseLoss):
     super(DistanceLoss, self).__init__(name=name)
     self._dist_fn = dist_fn
 
-  def _build(self, labels, predictions):
+  def _build(self, labels, predictions):  # pylint: disable=arguments-differ
     """Builds a distance-based loss.
 
     Args:
@@ -161,7 +161,7 @@ class CrossAttentionDistanceLoss(DistanceLoss):
   def __init__(self, dist_fn, name="CrossAttentionDistanceLoss"):
     super(CrossAttentionDistanceLoss, self).__init__(dist_fn=dist_fn, name=name)
 
-  def _build(self, a, b):
+  def _build(self, a, b):  # pylint: disable=arguments-differ
     # Normalize inputs.
     a_normed = tf.nn.l2_normalize(a, axis=-1)
     b_normed = tf.nn.l2_normalize(b, axis=-1)

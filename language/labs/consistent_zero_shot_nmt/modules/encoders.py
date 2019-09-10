@@ -54,7 +54,7 @@ class BaseRNNEncoder(base.AbstractNMTModule):
   def __init__(self, name="BaseRNNEncoder"):
     super(BaseRNNEncoder, self).__init__(name=name)
 
-  def _build(self, inputs, inputs_length, mode, hparams):
+  def _build(self, inputs, inputs_length, mode, hparams):  # pylint: disable=arguments-differ
 
     # Build encoded sequences.
     # TODO(alshedivat): remove this spurious variable scope eventually.

@@ -18,17 +18,16 @@ from __future__ import division
 from __future__ import print_function
 
 from absl import flags
-
-# This import triggers the decorations that register the problems.
 import language.labs.consistent_zero_shot_nmt.data_generators.translate_europarl  # pylint: disable=unused-import
 import language.labs.consistent_zero_shot_nmt.data_generators.translate_iwslt17  # pylint: disable=unused-import
 import language.labs.consistent_zero_shot_nmt.data_generators.translate_uncorpus  # pylint: disable=unused-import
 import language.labs.consistent_zero_shot_nmt.models.agreement  # pylint: disable=unused-import
 import language.labs.consistent_zero_shot_nmt.models.basic  # pylint: disable=unused-import
 import language.labs.consistent_zero_shot_nmt.utils.t2t_tweaks  # pylint: disable=unused-import
-
 from tensor2tensor.bin import t2t_trainer
 import tensorflow as tf
+
+# This import triggers the decorations that register the problems.
 
 FLAGS = flags.FLAGS
 

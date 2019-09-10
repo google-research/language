@@ -26,7 +26,6 @@ from language.labs.consistent_zero_shot_nmt.utils import common_utils as U
 from language.labs.consistent_zero_shot_nmt.utils import model_utils
 from tensor2tensor.data_generators import text_encoder
 from tensor2tensor.layers import common_layers
-
 import tensorflow as tf
 
 
@@ -43,6 +42,7 @@ class BasicRNNDecoder(base.AbstractNMTModule):
   def __init__(self, name="BasicRNNDecoder"):
     super(BasicRNNDecoder, self).__init__(name=name)
 
+  # pylint: disable=arguments-differ
   def _build(self, embeddings, inputs, inputs_length, hiddens, hiddens_length,
              enc_state, mode, hparams, decoder_hparams=None):
     if decoder_hparams is None:
@@ -89,6 +89,8 @@ class BasicRNNDecoder(base.AbstractNMTModule):
 
   def _build_attention(self, memory, memory_sequence_length, mode, hparams):
     """Builds attention mechanism for attending over the hiddens."""
+    del mode  # Unused.
+
     return attention_mechanisms.get(
         attention_type=hparams.attention_mechanism,
         num_units=hparams.attention_layer_size,
@@ -131,6 +133,8 @@ class BasicRNNDecoder(base.AbstractNMTModule):
 
   def _build_init_state(self, batch_size, enc_state, rnn_cell, mode, hparams):
     """Builds initial states for the given RNN cells."""
+    del mode  # Unused.
+
     # Build init state.
     init_state = rnn_cell.zero_state(batch_size, tf.float32)
 
@@ -218,6 +222,7 @@ class AttentiveRNNDecoder(BasicRNNDecoder):
     super(AttentiveRNNDecoder, self).__init__(name=name)
 
   def _wrap_with_attention(self, cell, memory, hparams):
+    """Wraps RNN cell and memory with attention."""
     # Get decoding attention mechanism.
     with tf.variable_scope("decoding_attention", reuse=tf.AUTO_REUSE):
       attention_mechanism = attention_wrappers.FixedMemoryLuongAttention(

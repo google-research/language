@@ -19,11 +19,11 @@ from __future__ import division
 from __future__ import print_function
 
 from language.labs.consistent_zero_shot_nmt.models import losses
-
 import tensorflow as tf
 
 
 class LossesTest(tf.test.TestCase):
+  """Tests for losses."""
 
   def test_l2_distance(self):
     """Tests l2 distance."""

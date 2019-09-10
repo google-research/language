@@ -32,15 +32,13 @@ from __future__ import division
 from __future__ import print_function
 
 import os
-from absl import flags
 
-# This import triggers the decorations that register the problems.
+from absl import flags
 import language.labs.consistent_zero_shot_nmt.data_generators.translate_europarl  # pylint: disable=unused-import
 import language.labs.consistent_zero_shot_nmt.data_generators.translate_iwslt17  # pylint: disable=unused-import
 import language.labs.consistent_zero_shot_nmt.data_generators.translate_uncorpus  # pylint: disable=unused-import
 import language.labs.consistent_zero_shot_nmt.models.agreement  # pylint: disable=unused-import
 import language.labs.consistent_zero_shot_nmt.models.basic  # pylint: disable=unused-import
-
 from tensor2tensor.bin import t2t_trainer
 from tensor2tensor.data_generators import problem  # pylint: disable=unused-import
 from tensor2tensor.data_generators import text_encoder
@@ -48,8 +46,9 @@ from tensor2tensor.utils import decoding
 from tensor2tensor.utils import registry
 from tensor2tensor.utils import trainer_lib
 from tensor2tensor.utils import usr_dir
-
 import tensorflow as tf
+
+# This import triggers the decorations that register the problems.
 
 FLAGS = flags.FLAGS
 
@@ -125,10 +124,13 @@ def score_file(filename):
     batch_inputs = tf.reshape(inputs_ph, [1, -1, 1, 1])  # Make it 4D.
   targets_ph = tf.placeholder(dtype=tf.int32)  # Just length dimension.
   batch_targets = tf.reshape(targets_ph, [1, -1, 1, 1])  # Make it 4D.
-  features = {
-      "inputs": batch_inputs,
-      "targets": batch_targets,
-  } if has_inputs else {"targets": batch_targets}
+  if has_inputs:
+    features = {
+        "inputs": batch_inputs,
+        "targets": batch_targets,
+    }
+  else:
+    features = {"targets": batch_targets}
 
   # Prepare the model and the graph when model runs on features.
   model = registry.model(FLAGS.model)(hparams, tf.estimator.ModeKeys.EVAL)
@@ -159,10 +161,10 @@ def score_file(filename):
       if has_inputs:
         inputs_numpy = encoders["inputs"].encode(inputs) + [text_encoder.EOS_ID]
       # Prepare the feed.
-      feed = {
-          inputs_ph: inputs_numpy,
-          targets_ph: targets_numpy
-      } if has_inputs else {targets_ph: targets_numpy}
+      if has_inputs:
+        feed = {inputs_ph: inputs_numpy, targets_ph: targets_numpy}
+      else:
+        feed = {targets_ph: targets_numpy}
       # Get the score.
       np_loss = sess.run(losses["training"], feed)
       results.append(np_loss)

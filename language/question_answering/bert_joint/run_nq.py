@@ -1236,15 +1236,17 @@ def compute_predictions(example):
         score = summary.short_span_score - summary.cls_token_score
         predictions.append((score, summary, start_span, end_span))
 
-  score, summary, start_span, end_span = sorted(predictions, reverse=True)[0]
-  short_span = Span(start_span, end_span)
+  short_span = Span(-1, -1)
   long_span = Span(-1, -1)
-  for c in example.candidates:
-    start = short_span.start_token_idx
-    end = short_span.end_token_idx
-    if c["top_level"] and c["start_token"] <= start and c["end_token"] >= end:
-      long_span = Span(c["start_token"], c["end_token"])
-      break
+  if predictions:
+    score, summary, start_span, end_span = sorted(predictions, reverse=True)[0]
+    short_span = Span(start_span, end_span)
+    for c in example.candidates:
+      start = short_span.start_token_idx
+      end = short_span.end_token_idx
+      if c["top_level"] and c["start_token"] <= start and c["end_token"] >= end:
+        long_span = Span(c["start_token"], c["end_token"])
+        break
 
   summary.predicted_label = {
       "example_id": example.example_id,
@@ -1400,9 +1402,9 @@ def main(_):
     tf.logging.info("  Num split examples = %d", num_train_features)
     tf.logging.info("  Batch size = %d", FLAGS.train_batch_size)
     tf.logging.info("  Num steps = %d", num_train_steps)
-    train_filename = FLAGS.train_precomputed_file
+    train_filenames = tf.gfile.Glob(FLAGS.train_precomputed_file)
     train_input_fn = input_fn_builder(
-        input_file=train_filename,
+        input_file=train_filenames,
         seq_length=FLAGS.max_seq_length,
         is_training=True,
         drop_remainder=True)

@@ -19,9 +19,7 @@ from __future__ import division
 from __future__ import print_function
 
 from tensor2tensor.layers import common_layers
-
 import tensorflow as tf
-
 
 __all__ = [
     "GNMTAttentionMultiCell",

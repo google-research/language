@@ -19,6 +19,7 @@ from __future__ import division
 from __future__ import print_function
 
 import functools
+
 from language.labs.consistent_zero_shot_nmt.data_generators import translate_multilingual
 from language.labs.consistent_zero_shot_nmt.models import basic
 from language.labs.consistent_zero_shot_nmt.models import losses
@@ -28,9 +29,7 @@ from language.labs.consistent_zero_shot_nmt.modules import language_models
 from language.labs.consistent_zero_shot_nmt.utils import model_utils
 from tensor2tensor.layers import common_layers
 from tensor2tensor.utils import registry
-
 import tensorflow as tf
-
 
 __all__ = [
     "AgreementMultilingualNmt",
@@ -48,6 +47,7 @@ class AgreementMultilingualNmt(basic.BasicMultilingualNmt):
   def _build_inputs_and_targets(
       self, from_seqs=None, from_tags=None, to_seqs=None, to_tags=None):
     """Given from and to sequences and tags, construct inputs and targets."""
+    del from_tags  # Unused.
     if from_seqs is not None:
       inputs = from_seqs
       inputs_length = common_layers.length_from_embedding(inputs)
@@ -297,6 +297,8 @@ class AgreementMultilingualNmt(basic.BasicMultilingualNmt):
     return aux_loss
 
   def get_encode_func(self, inputs, inputs_length):
+    """Return a closure for encoding."""
+
     def encode_func():
       """A closure that builds encoder outputs."""
       return self.encoder(
@@ -315,6 +317,8 @@ class AgreementMultilingualNmt(basic.BasicMultilingualNmt):
                       decoder_hparams=None,
                       impute_finished=False,
                       decoder_iterations=None):
+    """Return a closure for decoding."""
+
     def decode_func():
       """A closure that builds decoder outputs."""
       dec_outputs, _, dec_lengths = tf.contrib.seq2seq.dynamic_decode(

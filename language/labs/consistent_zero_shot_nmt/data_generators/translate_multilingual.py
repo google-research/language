@@ -26,9 +26,7 @@ from tensor2tensor.data_generators import text_problems
 from tensor2tensor.data_generators import translate
 from tensor2tensor.layers import modalities
 from tensor2tensor.utils import metrics
-
 from tensor2tensor.utils import mlperf_log
-
 import tensorflow as tf
 
 
@@ -75,6 +73,7 @@ class TranslateMultilingualProblem(translate.TranslateProblem):
     return data_fields, data_items_to_decoders
 
   def hparams(self, defaults, unused_model_hparams):
+    """Update hyper parameters."""
     super(TranslateMultilingualProblem, self).hparams(
         defaults, unused_model_hparams)
     p = defaults
@@ -102,6 +101,8 @@ class TranslateMultilingualProblem(translate.TranslateProblem):
   def _generate_samples(self, data_dir, tmp_dir, dataset_split,
                         auxiliary_tags=None,
                         compile_data_fn=None):
+    """Compile data and return an iterator over samples."""
+    del data_dir  # Unused.
     if auxiliary_tags is None:
       auxiliary_tags = LANG_TAGS
     if compile_data_fn is None:
@@ -121,6 +122,7 @@ class TranslateMultilingualProblem(translate.TranslateProblem):
 
   def _generate_text_for_vocab(self, data_dir, tmp_dir,
                                datapath, parse_lines_fn):
+    del data_dir, tmp_dir  # Unused.
     return generate_lines_for_shared_vocab(
         datasets=self.vocab_data_files(),
         datapath=datapath,
@@ -131,6 +133,7 @@ class TranslateMultilingualProblem(translate.TranslateProblem):
     raise NotImplementedError("Abstract Method")
 
 
+# pylint: disable=abstract-method
 class TranslateMultilingualLmProblem(TranslateMultilingualProblem):
   """Base class for multilingual (auxiliary) LM problems."""
 
@@ -159,8 +162,8 @@ def parse_lines(path):
 def generate_lines_for_shared_vocab(datasets, datapath, parse_lines_fn):
   """Generate lines for a shared vocabulary generation."""
   for d in datasets:
-    src_fpath = os.path.join(datapath + d["src_fname"])
-    tgt_fpath = os.path.join(datapath + d["tgt_fname"])
+    src_fpath = os.path.join(datapath, d["src_fname"])
+    tgt_fpath = os.path.join(datapath, d["tgt_fname"])
     src_lines = parse_lines_fn(src_fpath)
     tgt_lines = parse_lines_fn(tgt_fpath)
     for src_line, tgt_line in zip(src_lines, tgt_lines):

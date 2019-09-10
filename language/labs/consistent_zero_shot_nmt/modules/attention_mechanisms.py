@@ -21,7 +21,6 @@ from __future__ import print_function
 from language.labs.consistent_zero_shot_nmt.utils import common_utils as U
 import tensorflow as tf
 
-
 __all__ = [
     "get",
 ]

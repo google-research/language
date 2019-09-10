@@ -22,11 +22,9 @@ import os
 
 from absl import flags
 from absl import logging
-
 from language.labs.consistent_zero_shot_nmt.data_generators import translate_multilingual
 from tensor2tensor.data_generators import problem
 from tensor2tensor.utils import registry
-
 import tensorflow as tf
 
 FLAGS = flags.FLAGS
@@ -120,8 +118,8 @@ def _compile_data(tmp_dir, datasets, filename):
       for d in datasets:
         logging.info("Loading %s-%s...", d["src_lang"], d["tgt_lang"])
         # Load source and target lines.
-        src_fpath = os.path.join(FLAGS.europarl_orig_data_path + d["src_fname"])
-        tgt_fpath = os.path.join(FLAGS.europarl_orig_data_path + d["tgt_fname"])
+        src_fpath = os.path.join(FLAGS.europarl_orig_data_path, d["src_fname"])
+        tgt_fpath = os.path.join(FLAGS.europarl_orig_data_path, d["tgt_fname"])
         src_lines = _parse_lines(src_fpath)
         tgt_lines = _parse_lines(tgt_fpath)
         assert len(src_lines) == len(tgt_lines)
@@ -177,8 +175,7 @@ class TranslateEuroparl(translate_multilingual.TranslateMultilingualProblem):
     """Files to be passed to compile_data."""
     if dataset_split == problem.DatasetSplit.TRAIN:
       return _EPL_TRAIN_DATASETS
-    else:
-      return _EPL_TEST_DATASETS
+    return _EPL_TEST_DATASETS
 
   def generate_samples(self, data_dir, tmp_dir, dataset_split):
     auxiliary_tags = ["<de>", "<es>", "<fr>"]
@@ -205,5 +202,4 @@ class TranslateEuroparlNonoverlap(TranslateEuroparl):
       return [
           dict(list(d.items()) + list(o.items()))
           for d, o in zip(_EPL_TRAIN_DATASETS, _EPL_TRAIN_REMOVE_SETS)]
-    else:
-      return _EPL_TEST_DATASETS
+    return _EPL_TEST_DATASETS

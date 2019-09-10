@@ -12,14 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Identifies overlapping sentences in the Europarl training parallel corpora.
+"""Identifies overlapping sentences in the training parallel corpora in IWSLT17.
 """
 
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os
 import random
+import re
 
 from absl import app
 from absl import flags
@@ -34,14 +36,13 @@ flags.DEFINE_string("input_data_dir", "", "Input data directory.")
 flags.DEFINE_string("output_data_dir", "", "Overlap data directory.")
 
 _ZEROSHOT_DIRECTIONS = [
-    ("de", "es"),
-    ("de", "fr"),
-    ("es", "fr"),
+    ("de", "nl"),
+    ("it", "ro"),
 ]
 
 _ZEROSHOT_PIVOTS = [
-    ("en",),
-    ("en",),
+    ("en", "it", "ro"),
+    ("en", "de", "nl"),
 ]
 
 _OVERLAP_DIRECTIONS = [
@@ -50,13 +51,30 @@ _OVERLAP_DIRECTIONS = [
     for pvt in pivots
 ]
 
+_ALLOWED_TAGS = {"description", "seg", "title"}
+_FLAT_HTML_REGEX = re.compile(r"<([^ ]*).*>(.*)</(.*)>")
+_WHOLE_TAG_REGEX = re.compile(r"<[^<>]*>\Z")
+
+random.seed(42)
+
 
 def _parse_lines(path):
-  """Parses lines from UNCorpus dataset."""
+  """Parses lines from IWSLT17 dataset."""
   lines = []
   with gfile.GFile(path) as fp:
     for line in fp:
-      lines.append(line.strip())
+      line = line.strip()
+      # Skip lines that are tags entirely.
+      if _WHOLE_TAG_REGEX.match(line):
+        continue
+      # Try to parse as content between an opening and closing tags.
+      match = _FLAT_HTML_REGEX.match(line)
+      # Always append text not contained between the tags.
+      if match is None:
+        lines.append(line)
+      elif (match.group(1) == match.group(3) and
+            match.group(1).lower() in _ALLOWED_TAGS):
+        lines.append(match.group(2).strip())
   return lines
 
 
@@ -69,13 +87,15 @@ def main(argv):
   for src, pvt, tgt in _OVERLAP_DIRECTIONS:
     logging.info("Processing %s-%s-%s...", src, pvt, tgt)
     # Load src-pvt corpus.
-    src_pvt_fname = "europarl-v7.{src_lang}-{tgt_lang}.{tgt_lang}".format(
+    src_pvt_fname = "train.tags.{src_lang}-{tgt_lang}.{tgt_lang}".format(
         src_lang=src, tgt_lang=pvt)
-    src_pvt_lines = _parse_lines(FLAGS.input_data_dir + src_pvt_fname)
+    src_pvt_lines = _parse_lines(
+        os.path.join(FLAGS.input_data_dir, src_pvt_fname))
     # Load pvt-tgt corpus.
-    tgt_pvt_fname = "europarl-v7.{src_lang}-{tgt_lang}.{src_lang}".format(
+    tgt_pvt_fname = "train.tags.{src_lang}-{tgt_lang}.{src_lang}".format(
         src_lang=pvt, tgt_lang=tgt)
-    tgt_pvt_lines = _parse_lines(FLAGS.input_data_dir + tgt_pvt_fname)
+    tgt_pvt_lines = _parse_lines(
+        os.path.join(FLAGS.input_data_dir, tgt_pvt_fname))
     # Identify overlapping lines and randomly split between src-pvt and pvt-tgt.
     overlap_in_pvt = list(set(src_pvt_lines) & set(tgt_pvt_lines))
     random.shuffle(overlap_in_pvt)
@@ -90,7 +110,7 @@ def main(argv):
     logging.info("Writing remove.(%s-%s).%s...", src, pvt, pvt)
     for s, t in [(src, pvt), (pvt, src)]:
       fname = "remove.{src}-{tgt}.{lang}".format(src=s, tgt=t, lang=pvt)
-      with gfile.GFile(FLAGS.output_data_dir + fname, "w") as fp:
+      with gfile.GFile(os.path.join(FLAGS.output_data_dir, fname), "w") as fp:
         for line in overlaps[(src, pvt)]:
           fp.write(line + "\n")
 

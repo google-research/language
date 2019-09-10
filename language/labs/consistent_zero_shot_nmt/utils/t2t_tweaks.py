@@ -23,14 +23,11 @@ import os
 from absl import flags
 from language.labs.consistent_zero_shot_nmt.data_generators import translate_multilingual
 import numpy as np
-
 from tensor2tensor.data_generators import text_encoder
 from tensor2tensor.utils import decoding
 from tensor2tensor.utils import t2t_model
 from tensor2tensor.utils import trainer_lib
-
 import tensorflow as tf
-
 
 FLAGS = flags.FLAGS
 
