@@ -88,8 +88,8 @@ _EPL_TEST_DATASETS = [
     {
         "src_lang": "<" + src_lang + ">",
         "tgt_lang": "<" + tgt_lang + ">",
-        "src_fname": "wmt06/dev/dev2006.{src_lang}".format(src_lang=src_lang),
-        "tgt_fname": "wmt06/dev/dev2006.{tgt_lang}".format(tgt_lang=tgt_lang),
+        "src_fname": "wmt07/dev/dev2006.{src_lang}".format(src_lang=src_lang),
+        "tgt_fname": "wmt07/dev/dev2006.{tgt_lang}".format(tgt_lang=tgt_lang),
     }
     for src_lang, tgt_lang in _EPL_TEST_LANG_PAIRS
 ]
