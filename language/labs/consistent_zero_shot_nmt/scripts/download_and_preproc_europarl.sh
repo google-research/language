@@ -70,7 +70,7 @@ if [ ! -d "${EXP_DATASET_DIR}/overlap" ]; then
   echo "Extracting overlapping sentences..."
   mkdir -p "${EXP_DATASET_DIR}/overlap"
   python "${SCRIPTS_DIR}/identify_overlap_europarl.py" \
-    --input_data_dir "${EXP_DATASET_DIR}/original/" \
+    --input_data_dir "${EXP_DATASET_DIR}/original/parallel" \
     --output_data_dir "${EXP_DATASET_DIR}/overlap/"
 fi
 
