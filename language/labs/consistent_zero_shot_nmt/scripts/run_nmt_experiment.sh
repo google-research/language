@@ -24,7 +24,7 @@ rm -rf ${EXP_OUTPUT_DIR}
 
 # Additional parameters.
 EXP_HPARAMS=""
-EXP_TRAIN_STEPS=1000000
+EXP_TRAIN_STEPS=500000
 EXP_LOCAL_EVAL_FREQ=500
 
 python -m language.labs.consistent_zero_shot_nmt.bin.t2t_trainer \
