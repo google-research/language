@@ -28,6 +28,7 @@ from tensor2tensor.utils import decoding
 from tensor2tensor.utils import t2t_model
 from tensor2tensor.utils import trainer_lib
 import tensorflow as tf
+from tensorflow.contrib import learn as contrib_learn
 
 FLAGS = flags.FLAGS
 
@@ -238,9 +239,9 @@ def create_experiment(
   if additional_eval_hooks:
     eval_hooks += additional_eval_hooks
 
-  train_hooks = tf.contrib.learn.monitors.replace_monitors_with_hooks(
+  train_hooks = contrib_learn.monitors.replace_monitors_with_hooks(
       train_hooks, estimator)
-  eval_hooks = tf.contrib.learn.monitors.replace_monitors_with_hooks(
+  eval_hooks = contrib_learn.monitors.replace_monitors_with_hooks(
       eval_hooks, estimator)
 
   train_spec = tf.estimator.TrainSpec(

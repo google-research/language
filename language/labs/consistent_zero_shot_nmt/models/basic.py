@@ -30,6 +30,7 @@ from tensor2tensor.layers import common_layers
 from tensor2tensor.utils import registry
 from tensor2tensor.utils import t2t_model
 import tensorflow as tf
+from tensorflow.contrib import seq2seq as contrib_seq2seq
 
 
 @registry.register_model
@@ -199,7 +200,7 @@ class BasicMultilingualNmt(t2t_model.T2TModel):
         enc_state=enc_outputs.final_state,
         mode=self._hparams.mode,
         hparams=self._hparams)
-    dec_outputs, _, _ = tf.contrib.seq2seq.dynamic_decode(decoder=decoder)
+    dec_outputs, _, _ = contrib_seq2seq.dynamic_decode(decoder=decoder)
 
     return tf.expand_dims(dec_outputs.rnn_output, axis=2)
 

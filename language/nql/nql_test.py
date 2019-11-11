@@ -73,6 +73,41 @@ class TestDeclaredTypes(tf.test.TestCase):
       result.append(self.context.get_entity_name(i, type_name))
     return result
 
+  def test_as_nql_before_type_defined(self):
+    tf_expr = tf.constant([0, 0, 1])
+    with self.assertRaises(nql.TypeNameError):
+      self.context.as_nql(tf_expr, 'vowel_t')
+
+  def test_as_nql_after_type_defined(self):
+    tf_expr = tf.constant([[0, 0, 1, 0, 0, 0]])
+    self.context.declare_entity_type('vowel_t', fixed_vocab='aeiou')
+    nql_expr = self.context.as_nql(tf_expr, 'vowel_t')
+    self.assertEqual(nql_expr.type_name, 'vowel_t')
+
+  def test_as_nql_before_type_frozen(self):
+    tf_expr = tf.constant([[0, 0, 1]])
+    self.context.declare_entity_type('vowel_t')
+    nql_expr = self.context.as_nql(tf_expr, 'vowel_t')
+    self.assertEqual(nql_expr.type_name, 'vowel_t')
+
+  def test_as_nql_with_wrong_size(self):
+    tf_expr = tf.constant([0, 0, 1])
+    self.context.declare_entity_type('vowel_t', fixed_vocab='aeiou')
+    with self.assertRaises(ValueError):
+      self.context.as_nql(tf_expr, 'vowel_t')
+
+  def test_as_nql_with_wrong_rank(self):
+    tf_expr = tf.placeholder(tf.float32, shape=(None, None, None))
+    self.context.declare_entity_type('vowel_t', fixed_vocab='aeiou')
+    with self.assertRaises(ValueError):
+      self.context.as_nql(tf_expr, 'vowel_t')
+
+  def test_as_nql_with_rank_2(self):
+    tf_expr = tf.constant([[0, 0, 1, 0, 0, 0]])
+    self.context.declare_entity_type('vowel_t', fixed_vocab='aeiou')
+    nql_expr = self.context.as_nql(tf_expr, 'vowel_t')
+    self.assertEqual(nql_expr.type_name, 'vowel_t')
+
 
 class TestLoad(tf.test.TestCase):
 
@@ -403,7 +438,7 @@ class TestOnGrid(tf.test.TestCase):
     all_cells = self.context.all('place_t')
     num_cells = tf.reduce_sum(input_tensor=all_cells.tf)
     num_black_cells = tf.reduce_sum(input_tensor=black_cells.tf)
-    self.assertEqual(self.session.run(num_cells), 16.0)
+    self.assertEqual(self.session.run(num_cells), 17.0)
     self.assertEqual(self.session.run(num_black_cells), 8.0)
 
   def test_grid_conditionals(self):
@@ -642,6 +677,32 @@ class TestFollowGroup(TestOnGrid):
     v1 = x.n(-1).eval(self.session)
     v2 = x.follow(rel_n, -1).eval(self.session)
     self.assertEqual(v1, v2)
+
+  def test_redefining_group(self):
+    self.context.construct_relation_group('new_dir_g', 'place_t', 'place_t')
+    with self.assertRaises(nql.RelationNameError):
+      self.context.construct_relation_group('new_dir_g', 'place_t', 'place_t',
+                                            ['w', 'e'])
+
+  def test_group_rel_from_variable(self):
+    x = self.context.one(cell(2, 2), 'place_t')
+    initializer = tf.glorot_uniform_initializer()(
+        [1, self.context.get_max_id('dir_g')])
+    dir_tf_var = tf.Variable(initializer)
+    dir_nql_exp = self.context.as_nql(dir_tf_var, 'dir_g')
+    y = x.follow(dir_nql_exp)
+    self.session.run(dir_tf_var.initializer)
+    y.eval(self.session)
+
+  def test_group_rel_from_ph(self):
+    ph = tf.placeholder(
+        tf.float32, shape=(None, self.context.get_max_id('place_t')))
+    x = self.context.as_nql(ph, 'place_t')
+    initializer = tf.glorot_uniform_initializer()(
+        [1, self.context.get_max_id('dir_g')])
+    dir_tf_var = tf.Variable(initializer)
+    dir_nql_exp = self.context.as_nql(dir_tf_var, 'dir_g')
+    x.follow(dir_nql_exp)  # This test ensures this doesn't throw an error.
 
 
 class TestMinibatchOnGrid(TestOnGrid):

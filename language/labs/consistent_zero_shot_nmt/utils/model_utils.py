@@ -20,6 +20,9 @@ from __future__ import print_function
 
 from tensor2tensor.layers import common_layers
 import tensorflow as tf
+from tensorflow.contrib import framework as contrib_framework
+from tensorflow.contrib import rnn as contrib_rnn
+from tensorflow.contrib import seq2seq as contrib_seq2seq
 
 __all__ = [
     "GNMTAttentionMultiCell",
@@ -49,35 +52,29 @@ def _single_cell(unit_type,
 
   # Cell Type
   if unit_type == "lstm":
-    single_cell = tf.contrib.rnn.LSTMCell(
-        num_units,
-        forget_bias=forget_bias,
-        trainable=trainable)
+    single_cell = contrib_rnn.LSTMCell(
+        num_units, forget_bias=forget_bias, trainable=trainable)
   elif unit_type == "gru":
-    single_cell = tf.contrib.rnn.GRUCell(
-        num_units,
-        trainable=trainable)
+    single_cell = contrib_rnn.GRUCell(num_units, trainable=trainable)
   elif unit_type == "layer_norm_lstm":
-    single_cell = tf.contrib.rnn.LayerNormBasicLSTMCell(
+    single_cell = contrib_rnn.LayerNormBasicLSTMCell(
         num_units,
         forget_bias=forget_bias,
         layer_norm=True,
         trainable=trainable)
   elif unit_type == "nas":
-    single_cell = tf.contrib.rnn.NASCell(
-        num_units,
-        trainable=trainable)
+    single_cell = contrib_rnn.NASCell(num_units, trainable=trainable)
   else:
     raise ValueError("Unknown unit type %s!" % unit_type)
 
   # Dropout (= 1 - keep_prob).
   if dropout > 0.0:
-    single_cell = tf.contrib.rnn.DropoutWrapper(
+    single_cell = contrib_rnn.DropoutWrapper(
         cell=single_cell, input_keep_prob=(1.0 - dropout))
 
   # Residual.
   if residual_connection:
-    single_cell = tf.contrib.rnn.ResidualWrapper(
+    single_cell = contrib_rnn.ResidualWrapper(
         single_cell, residual_fn=residual_fn)
 
   return single_cell
@@ -131,7 +128,7 @@ class GNMTAttentionMultiCell(tf.nn.rnn_cell.MultiRNNCell):
 
   def __call__(self, inputs, state, scope=None):
     """Run the cell with bottom layer's attention copied to all upper layers."""
-    if not tf.contrib.framework.nest.is_sequence(state):
+    if not contrib_framework.nest.is_sequence(state):
       raise ValueError(
           "Expected state to be a tuple of length %d, but received: %s"
           % (len(self.state_size), state))
@@ -181,15 +178,17 @@ def gnmt_residual_fn(inputs, outputs):
     out_dim = out.get_shape().as_list()[-1]
     inp_dim = inp.get_shape().as_list()[-1]
     return tf.split(inp, [out_dim, inp_dim - out_dim], axis=-1)
-  actual_inputs, _ = tf.contrib.framework.nest.map_structure(
+
+  actual_inputs, _ = contrib_framework.nest.map_structure(
       split_input, inputs, outputs)
   def assert_shape_match(inp, out):
     inp.get_shape().assert_is_compatible_with(out.get_shape())
-  tf.contrib.framework.nest.assert_same_structure(actual_inputs, outputs)
-  tf.contrib.framework.nest.map_structure(
-      assert_shape_match, actual_inputs, outputs)
-  return tf.contrib.framework.nest.map_structure(
-      lambda inp, out: inp + out, actual_inputs, outputs)
+
+  contrib_framework.nest.assert_same_structure(actual_inputs, outputs)
+  contrib_framework.nest.map_structure(assert_shape_match, actual_inputs,
+                                       outputs)
+  return contrib_framework.nest.map_structure(lambda inp, out: inp + out,
+                                              actual_inputs, outputs)
 
 
 def create_rnn_cell(unit_type,
@@ -240,11 +239,11 @@ def create_rnn_cell(unit_type,
   if len(cell_list) == 1:  # Single layer.
     cell = cell_list[0]
   else:  # Multiple layers.
-    cell = tf.contrib.rnn.MultiRNNCell(cell_list)
+    cell = contrib_rnn.MultiRNNCell(cell_list)
 
   # Wrap with attention, if necessary.
   if attention_mechanism is not None:
-    cell = tf.contrib.seq2seq.AttentionWrapper(
+    cell = contrib_seq2seq.AttentionWrapper(
         cell, [attention_mechanism] * attention_num_heads,
         attention_layer_size=[attention_layer_size] * attention_num_heads,
         alignment_history=False,
@@ -303,8 +302,9 @@ def create_gnmt_rnn_cell(unit_type,
 
   # Only wrap the bottom layer with the attention mechanism.
   attention_cell = cell_list.pop(0)
-  attention_cell = tf.contrib.seq2seq.AttentionWrapper(
-      attention_cell, attention_mechanism,
+  attention_cell = contrib_seq2seq.AttentionWrapper(
+      attention_cell,
+      attention_mechanism,
       attention_layer_size=attention_layer_size,
       alignment_history=False,
       output_attention=output_attention,

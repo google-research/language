@@ -129,8 +129,27 @@ class NeuralQueryExpression(object):
                type_name,
                provenance = None):
     self.context = context
-    self._tf = tf_expr
+    if type_name not in context.get_type_names():
+      raise TypeNameError(type_name,
+                          'Unknown type name in NeuralQueryExpression.')
     self._type_name = type_name
+    tensor = tf.convert_to_tensor(tf_expr)
+    if len(tensor.shape) != 2:
+      raise ValueError(
+          'TF expression must have rank 2 to be converted to an NQL '
+          'expression. Instead found shape: %s' % str(tensor.shape))
+    if context.is_frozen(type_name):
+      # Only further check shape if we know which shape is required.
+      max_id = context.get_max_id(type_name)
+      if not tensor.shape.is_compatible_with((None, max_id)):
+        raise ValueError(
+            'Invalid TF expression with shape {shape}. Type {type_name!s} has '
+            'a fixed size of {max_id} which requires a TF expression '
+            'compatible with (?, {max_id}).'.format(
+                type_name=type_name,
+                max_id=context.get_max_id(type_name),
+                shape=tensor.shape))
+    self._tf = tensor
     self.provenance = provenance
 
   @property
@@ -206,9 +225,10 @@ class NeuralQueryExpression(object):
     Raises:
       RelationNameError: If the relation cannot be found.
     """
+    if inverted != +1 and inverted != -1:
+      raise ValueError('Inverted (%d) is neither +1 nor -1' % inverted)
     if (isinstance(rel_specification, str) and
-        self.context.is_relation(rel_specification) and
-        (inverted == +1 or inverted == -1)):
+        self.context.is_relation(rel_specification)):
       what_to_follow = rel_specification + ('_inverse' if inverted < 0 else '')
       with tf.name_scope('follow_%s' % what_to_follow):
         return self._follow_named_rel(rel_specification, inverted)
@@ -578,6 +598,7 @@ class NeuralQueryContext(object):
       A NeuralQueryExpression
 
     Raises:
+      TypeNameError: If type_name is not a known type.
       TypeCompatibilityError: If expression is not of type_name type.
       TypeError: If the factory method returned an unexpected type.
     """
@@ -816,20 +837,16 @@ class NeuralQueryContext(object):
     else:
       return np.zeros((self.get_max_id(type_name),), dtype='float32')
 
-  def one_hot_numpy_array(self,
-                          entity_name,
-                          type_name,
-                          as_matrix = True):
-    """A one-hot row vector encoding this entity.
+  def one_hot_numpy_array(self, entity_name,
+                          type_name):
+    """A one-hot 1-by-N matrix encoding this entity.
 
     Args:
       entity_name: a string naming an entity.
       type_name: the string type name of the named entity
-      as_matrix: if true, return a 1-by-N matrix instead of a vector.
 
     Returns:
-      A numpy array.  If as_matrix is True, the array has shape (1,n)
-      where n is the number of columns, else the shape is (n,).
+      A numpy array with shape (1,n) where n is the number of columns.
 
     Raises:
       EntityNameError: if entity_name does not map to a legal id.
@@ -840,11 +857,8 @@ class NeuralQueryContext(object):
           entity_name=entity_name,
           type_name=type_name,
           message='Cannot make a one-hot vector')
-    result = self.zeros_numpy_array(type_name, as_matrix)
-    if as_matrix:
-      result[0, index] = 1.0
-    else:
-      result[index] = 1.0
+    result = self.zeros_numpy_array(type_name, True)
+    result[0, index] = 1.0
     return result
 
   # schema operations
@@ -1011,7 +1025,8 @@ class NeuralQueryContext(object):
 
     Raises:
       ValueError: If dense relations are specified as they cannot be handled.
-      RelationNameError: If a relation in the group hasn't been defined
+      RelationNameError: If a relation in the group hasn't been defined or if
+        there already exists a relation with the name group_name.
     """
     if not group_members:
       group_members = sorted([
@@ -1020,12 +1035,10 @@ class NeuralQueryContext(object):
           self.get_range(rel) == range_type
       ])
     if self.is_type(group_name):
-      # if this type is already defined the members need to be in the
-      # order associated with that type id
-      group_members = sorted(
-          group_members, key=lambda r: self.get_id(r, group_name))
-    else:
-      self.extend_type(group_name, group_members)
+      raise RelationNameError(group_name, 'Group already exists.')
+
+    self.declare_entity_type(
+        group_name, fixed_vocab=group_members, unknown_marker=None)
 
     for r in group_members:
       if self.is_dense(r):
@@ -1079,6 +1092,7 @@ class NeuralQueryContext(object):
         (ones_data, (obj_indices, triple_indices)),
         shape=(self.get_max_id(range_type), total_num_rows),
         dtype='float32')
+    self.freeze(group.triple_type, unknown_marker=None)
     return group
 
   def get_relation_names(self):
@@ -1227,14 +1241,18 @@ class NeuralQueryContext(object):
     for entity_name in instances:
       self._symtab[type_name].insert(entity_name)
 
-  def freeze(self, type_name):
+  def freeze(self,
+             type_name,
+             unknown_marker = '<UNK>'):
     """Freeze the SymbolTable for a specific type.
 
     Args:
       type_name: string name of a type.
+      unknown_marker: string  Unknown words or words added after a freeze are
+        mapped to the unknown marker. If None, do not use an unknown value.
     """
     previous_size = self._symtab[type_name].get_max_id()
-    self._symtab[type_name].freeze()
+    self._symtab[type_name].freeze(unknown_marker)
     # Check if the size of this symbol table has increased
     if self._symtab[type_name].get_max_id() != previous_size:
       for rel_name in self.get_relation_names():
@@ -1251,6 +1269,15 @@ class NeuralQueryContext(object):
           # Remove cached tensor if it exists
           if rel_name in self._cached_tensor:
             del self._cached_tensor[rel_name]
+
+  def is_frozen(self, type_name):
+    """Returns whether or not the SymbolTable for a type is frozen.
+
+    Args:
+      type_name: string name of a type.  Returns whether or not the type's
+        symbol table is frozen.
+    """
+    return self._symtab[type_name].is_frozen()
 
   def get_shape(self, rel_name):
     """Return the shape of the matrix defining this relation.

@@ -29,6 +29,7 @@ from language.question_answering.decatt_docreader.datasets import nq_short_pipel
 from language.question_answering.decatt_docreader.layers import document_reader
 from language.question_answering.decatt_docreader.utils import span_utils
 import tensorflow as tf
+from tensorflow.contrib import data as contrib_data
 
 flags.DEFINE_string("embeddings_path", None, "Path to pretrained embeddings.")
 flags.DEFINE_integer("max_vocab_size", 100000, "Maximum vocab size.")
@@ -267,7 +268,7 @@ def input_function(is_train, embeddings):
     bucket_batch_sizes.append(
         int(FLAGS.total_batch_size / FLAGS.max_context_len))
     dataset = dataset.apply(
-        tf.contrib.data.bucket_by_sequence_length(
+        contrib_data.bucket_by_sequence_length(
             element_length_func=lambda d: d["context_len"],
             bucket_boundaries=bucket_boundaries,
             bucket_batch_sizes=bucket_batch_sizes,

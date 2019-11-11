@@ -31,6 +31,7 @@ from language.common.layers import cudnn_layers
 from language.common.utils import tensor_utils
 import numpy as np
 import tensorflow as tf
+from tensorflow.contrib import lookup as contrib_lookup
 
 # Dataset parameters, these need to be pointed at the appropriate targets
 
@@ -170,7 +171,7 @@ def load_data(is_train, num_par=4):
 
 def build_tensorize_text_fn(embeddings):
   """Builds a function to turn text into word/char ids."""
-  tbl = tf.contrib.lookup.index_table_from_tensor(
+  tbl = contrib_lookup.index_table_from_tensor(
       mapping=embeddings.get_vocab(), num_oov_buckets=1)
 
   def fn(string_tensor):

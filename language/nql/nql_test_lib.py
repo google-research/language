@@ -52,5 +52,5 @@ def make_grid():
           kg_lines.append(
               '\t'.join([direction, cell(i, j),
                          cell(i + di, j + dj)]) + '\n')
-  result.load_kg(lines=kg_lines)
+  result.load_kg(lines=kg_lines, freeze=True)
   return result

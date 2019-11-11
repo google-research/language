@@ -31,6 +31,8 @@ from bert import optimization
 from bert import tokenization
 import numpy as np
 import tensorflow as tf
+from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver
+from tensorflow.contrib import tpu as contrib_tpu
 
 flags = tf.flags
 FLAGS = flags.FLAGS
@@ -556,42 +558,6 @@ def convert_examples_to_features(examples, tokenizer, is_training, output_fn):
   return num_spans_to_ids
 
 
-def check_is_max_context(doc_spans, cur_span_index, position):
-  """Check if this is the 'max context' doc span for the token."""
-  # Because of the sliding window approach taken to scoring documents, a single
-  # token can appear in multiple documents. E.g.
-  #  Doc: the man went to the store and bought a gallon of milk
-  #  Span A: the man went to the
-  #  Span B: to the store and bought
-  #  Span C: and bought a gallon of
-  #  ...
-  #
-  # Now the word 'bought' will have two scores from spans B and C. We only
-  # want to consider the score with "maximum context", which we define as
-  # the *minimum* of its left and right context (the *sum* of left and
-  # right context will always be the same, of course).
-  #
-  # In the example the maximum context for 'bought' would be span C since
-  # it has 1 left context and 3 right context, while span B has 4 left context
-  # and 0 right context.
-  best_score = None
-  best_span_index = None
-  for (span_index, doc_span) in enumerate(doc_spans):
-    end = doc_span.start + doc_span.length - 1
-    if position < doc_span.start:
-      continue
-    if position > end:
-      continue
-    num_left_context = position - doc_span.start
-    num_right_context = end - position
-    score = min(num_left_context, num_right_context) + 0.01 * doc_span.length
-    if best_score is None or score > best_score:
-      best_score = score
-      best_span_index = span_index
-
-  return cur_span_index == best_span_index
-
-
 def convert_single_example(example, tokenizer, is_training):
   """Converts a single NqExample into a list of InputFeatures."""
   tok_to_orig_index = []
@@ -651,7 +617,6 @@ def convert_single_example(example, tokenizer, is_training):
   for (doc_span_index, doc_span) in enumerate(doc_spans):
     tokens = []
     token_to_orig_map = {}
-    token_is_max_context = {}
     segment_ids = []
     tokens.append("[CLS]")
     segment_ids.append(0)
@@ -663,10 +628,6 @@ def convert_single_example(example, tokenizer, is_training):
     for i in xrange(doc_span.length):
       split_token_index = doc_span.start + i
       token_to_orig_map[len(tokens)] = tok_to_orig_index[split_token_index]
-
-      is_max_context = check_is_max_context(doc_spans, doc_span_index,
-                                            split_token_index)
-      token_is_max_context[len(tokens)] = is_max_context
       tokens.append(all_doc_tokens[split_token_index])
       segment_ids.append(1)
     tokens.append("[SEP]")
@@ -724,9 +685,7 @@ def convert_single_example(example, tokenizer, is_training):
         unique_id=-1,
         example_index=-1,
         doc_span_index=doc_span_index,
-        tokens=tokens,
         token_to_orig_map=token_to_orig_map,
-        token_is_max_context=token_is_max_context,
         input_ids=input_ids,
         input_mask=input_mask,
         segment_ids=segment_ids,
@@ -830,9 +789,7 @@ class InputFeatures(object):
                unique_id,
                example_index,
                doc_span_index,
-               tokens,
                token_to_orig_map,
-               token_is_max_context,
                input_ids,
                input_mask,
                segment_ids,
@@ -843,9 +800,7 @@ class InputFeatures(object):
     self.unique_id = unique_id
     self.example_index = example_index
     self.doc_span_index = doc_span_index
-    self.tokens = tokens
     self.token_to_orig_map = token_to_orig_map
-    self.token_is_max_context = token_is_max_context
     self.input_ids = input_ids
     self.input_mask = input_mask
     self.segment_ids = segment_ids
@@ -1025,7 +980,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
                                                num_train_steps,
                                                num_warmup_steps, use_tpu)
 
-      output_spec = tf.contrib.tpu.TPUEstimatorSpec(
+      output_spec = contrib_tpu.TPUEstimatorSpec(
           mode=mode,
           loss=total_loss,
           train_op=train_op,
@@ -1037,7 +992,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
           "end_logits": end_logits,
           "answer_type_logits": answer_type_logits,
       }
-      output_spec = tf.contrib.tpu.TPUEstimatorSpec(
+      output_spec = contrib_tpu.TPUEstimatorSpec(
           mode=mode, predictions=predictions, scaffold_fn=scaffold_fn)
     else:
       raise ValueError("Only TRAIN and PREDICT modes are supported: %s" %
@@ -1089,7 +1044,7 @@ def input_fn_builder(input_file, seq_length, is_training, drop_remainder):
       d = d.shuffle(buffer_size=100)
 
     d = d.apply(
-        tf.contrib.data.map_and_batch(
+        tf.data.experimental.map_and_batch(
             lambda record: _decode_record(record, name_to_features),
             batch_size=batch_size,
             drop_remainder=drop_remainder))
@@ -1236,8 +1191,12 @@ def compute_predictions(example):
         score = summary.short_span_score - summary.cls_token_score
         predictions.append((score, summary, start_span, end_span))
 
+  # Default empty prediction.
+  score = -10000.0
   short_span = Span(-1, -1)
   long_span = Span(-1, -1)
+  summary = ScoreSummary()
+
   if predictions:
     score, summary, start_span, end_span = sorted(predictions, reverse=True)[0]
     short_span = Span(start_span, end_span)
@@ -1357,16 +1316,16 @@ def main(_):
 
   tpu_cluster_resolver = None
   if FLAGS.use_tpu and FLAGS.tpu_name:
-    tpu_cluster_resolver = tf.contrib.cluster_resolver.TPUClusterResolver(
+    tpu_cluster_resolver = contrib_cluster_resolver.TPUClusterResolver(
         FLAGS.tpu_name, zone=FLAGS.tpu_zone, project=FLAGS.gcp_project)
 
-  is_per_host = tf.contrib.tpu.InputPipelineConfig.PER_HOST_V2
-  run_config = tf.contrib.tpu.RunConfig(
+  is_per_host = contrib_tpu.InputPipelineConfig.PER_HOST_V2
+  run_config = contrib_tpu.RunConfig(
       cluster=tpu_cluster_resolver,
       master=FLAGS.master,
       model_dir=FLAGS.output_dir,
       save_checkpoints_steps=FLAGS.save_checkpoints_steps,
-      tpu_config=tf.contrib.tpu.TPUConfig(
+      tpu_config=contrib_tpu.TPUConfig(
           iterations_per_loop=FLAGS.iterations_per_loop,
           num_shards=FLAGS.num_tpu_cores,
           per_host_input_for_training=is_per_host))
@@ -1390,7 +1349,7 @@ def main(_):
       use_one_hot_embeddings=FLAGS.use_tpu)
 
   # If TPU is not available, this falls back to normal Estimator on CPU or GPU.
-  estimator = tf.contrib.tpu.TPUEstimator(
+  estimator = contrib_tpu.TPUEstimator(
       use_tpu=FLAGS.use_tpu,
       model_fn=model_fn,
       config=run_config,

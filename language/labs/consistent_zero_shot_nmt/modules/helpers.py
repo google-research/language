@@ -19,6 +19,7 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
+from tensorflow.contrib import seq2seq as contrib_seq2seq
 
 __all__ = [
     "ContinuousEmbeddingTrainingHelper",
@@ -34,7 +35,7 @@ def _unstack_ta(inp):
       element_shape=inp.get_shape()[1:]).unstack(inp)
 
 
-class ContinuousEmbeddingTrainingHelper(tf.contrib.seq2seq.TrainingHelper):
+class ContinuousEmbeddingTrainingHelper(contrib_seq2seq.TrainingHelper):
   """Regards previous outputs as the next input embeddings. Avoids sampling.
 
   By doing so, the decoded sequences are differentiable throughout.
@@ -61,8 +62,8 @@ class ContinuousEmbeddingTrainingHelper(tf.contrib.seq2seq.TrainingHelper):
       return finished, next_inputs, state
 
 
-class ScheduledContinuousEmbeddingTrainingHelper(
-    tf.contrib.seq2seq.TrainingHelper):
+class ScheduledContinuousEmbeddingTrainingHelper(contrib_seq2seq.TrainingHelper
+                                                ):
   """Training helper that constructs next inputs using scheduled mixing.
 
   The hlper mixes previous outputs with the true ground truth embeddings for the
@@ -126,7 +127,7 @@ class ScheduledContinuousEmbeddingTrainingHelper(
                        [time, outputs, state]):
       # Get ground truth next inputs.
       (finished, base_next_inputs,
-       state) = tf.contrib.seq2seq.TrainingHelper.next_inputs(
+       state) = contrib_seq2seq.TrainingHelper.next_inputs(
            self, time, outputs, state, name=name)
 
       # Get generated next inputs.
@@ -150,7 +151,7 @@ class ScheduledContinuousEmbeddingTrainingHelper(
       return finished, next_inputs, state
 
 
-class GreedyContinuousEmbeddingHelper(tf.contrib.seq2seq.GreedyEmbeddingHelper):
+class GreedyContinuousEmbeddingHelper(contrib_seq2seq.GreedyEmbeddingHelper):
   """Greedy decoding helper with continuous reuse of embeddings."""
 
   def sample(self, time, outputs, state, name=None):
@@ -174,7 +175,7 @@ class GreedyContinuousEmbeddingHelper(tf.contrib.seq2seq.GreedyEmbeddingHelper):
     return finished, next_inputs, state
 
 
-class FixedContinuousEmbeddingHelper(tf.contrib.seq2seq.GreedyEmbeddingHelper):
+class FixedContinuousEmbeddingHelper(contrib_seq2seq.GreedyEmbeddingHelper):
   """Decodes for a fixed number of steps and continuously reuses embeddings."""
 
   def __init__(self, embedding, start_tokens, end_token, num_steps):

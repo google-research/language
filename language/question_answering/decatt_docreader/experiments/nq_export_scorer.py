@@ -23,6 +23,7 @@ import json
 
 from absl import flags
 import tensorflow as tf
+from tensorflow.contrib import predictor as contrib_predictor
 
 FLAGS = flags.FLAGS
 
@@ -137,8 +138,8 @@ def _annotate_dataset(context_export_dir, entity_export_dir, data_paths):
   Returns:
     List of dictionaries for annotated examples.
   """
-  context_predict_fn = tf.contrib.predictor.from_saved_model(context_export_dir)
-  entity_predict_fn = tf.contrib.predictor.from_saved_model(entity_export_dir)
+  context_predict_fn = contrib_predictor.from_saved_model(context_export_dir)
+  entity_predict_fn = contrib_predictor.from_saved_model(entity_export_dir)
   num_processed_examples = 0
   annotated_examples = []
   for data_path in data_paths:

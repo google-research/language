@@ -18,6 +18,8 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
+from tensorflow.contrib import cudnn_rnn as contrib_cudnn_rnn
+from tensorflow.contrib import rnn as contrib_rnn
 
 from tensorflow.contrib.cudnn_rnn.python.ops import cudnn_rnn_ops
 
@@ -45,7 +47,7 @@ def _single_lstm(input_emb, input_len, hidden_size, is_fwd, use_cudnn):
         seq_axis=0,
         batch_axis=1)
   if use_cudnn:
-    lstm = tf.contrib.cudnn_rnn.CudnnLSTM(
+    lstm = contrib_cudnn_rnn.CudnnLSTM(
         num_layers=1,
         num_units=hidden_size,
         input_mode=cudnn_rnn_ops.CUDNN_INPUT_LINEAR_MODE,
@@ -53,8 +55,8 @@ def _single_lstm(input_emb, input_len, hidden_size, is_fwd, use_cudnn):
     lstm.build(input_emb.shape)
     output_emb, _ = lstm(input_emb)
   else:
-    cell = tf.contrib.cudnn_rnn.CudnnCompatibleLSTMCell(hidden_size)
-    cell = tf.contrib.rnn.MultiRNNCell([cell])
+    cell = contrib_cudnn_rnn.CudnnCompatibleLSTMCell(hidden_size)
+    cell = contrib_rnn.MultiRNNCell([cell])
     output_emb, _ = tf.nn.dynamic_rnn(
         cell=cell,
         inputs=input_emb,

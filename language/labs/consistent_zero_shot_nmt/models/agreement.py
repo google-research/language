@@ -30,6 +30,8 @@ from language.labs.consistent_zero_shot_nmt.utils import model_utils
 from tensor2tensor.layers import common_layers
 from tensor2tensor.utils import registry
 import tensorflow as tf
+from tensorflow.contrib import seq2seq as contrib_seq2seq
+from tensorflow.contrib import training as contrib_training
 
 __all__ = [
     "AgreementMultilingualNmt",
@@ -198,7 +200,7 @@ class AgreementMultilingualNmt(basic.BasicMultilingualNmt):
         hiddens = self.enc_outputs[key].outputs
         hiddens_length = self.inputs[key][1]
         enc_state = self.enc_outputs[key].final_state
-        decoder_hparams = tf.contrib.training.HParams(auxiliary=True)
+        decoder_hparams = contrib_training.HParams(auxiliary=True)
         # Decode.
         decode_func = self.get_decode_func(
             target_embeddings,
@@ -321,7 +323,7 @@ class AgreementMultilingualNmt(basic.BasicMultilingualNmt):
 
     def decode_func():
       """A closure that builds decoder outputs."""
-      dec_outputs, _, dec_lengths = tf.contrib.seq2seq.dynamic_decode(
+      dec_outputs, _, dec_lengths = contrib_seq2seq.dynamic_decode(
           decoder=self.decoder(
               embeddings=embeddings,
               inputs=inputs,

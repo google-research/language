@@ -1,0 +1,31 @@
+{
+  "data_options": {
+    "bert_vocab_path": "",
+    "max_num_tokens": 512,
+    "max_decode_length": 100
+  },
+  "model_parameters": {
+    "use_segment_ids": false,
+    "use_foreign_key_features": false,
+    "use_alignment_features": false,
+    "pretrained_bert_dir": "",
+    "source_embedding_dims": 128,
+    "target_embedding_dims": 128,
+    "encoder_dims": 128,
+    "decoder_dims": 128,
+    "max_decoder_relative_distance": 8,
+    "num_decoder_layers": 2,
+    "num_heads": 8,
+    "decoder_ff_layer_hidden_size": 512
+  },
+  "training_options": {
+    "tpu_iterations_per_loop": 1000,
+    "batch_size": 2,
+    "training_steps": 1000,
+    "layer_dropout_rate": 0.3,
+    "optimizer_learning_rate": 0.00008,
+    "optimizer_warmup_steps": 200,
+    "freeze_pretrained_steps": 0,
+    "after_restart_learning_rate": 0.00008
+  }
+}

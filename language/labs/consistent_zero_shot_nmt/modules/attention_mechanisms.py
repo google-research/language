@@ -20,6 +20,7 @@ from __future__ import print_function
 
 from language.labs.consistent_zero_shot_nmt.utils import common_utils as U
 import tensorflow as tf
+from tensorflow.contrib import seq2seq as contrib_seq2seq
 
 __all__ = [
     "get",
@@ -31,23 +32,23 @@ def get(attention_type, num_units, memory, memory_sequence_length,
   """Returns attention mechanism according to the specified type."""
   with tf.variable_scope(scope, reuse=reuse):
     if attention_type == U.ATT_LUONG:
-      attention_mechanism = tf.contrib.seq2seq.LuongAttention(
+      attention_mechanism = contrib_seq2seq.LuongAttention(
           num_units=num_units,
           memory=memory,
           memory_sequence_length=memory_sequence_length)
     elif attention_type == U.ATT_LUONG_SCALED:
-      attention_mechanism = tf.contrib.seq2seq.LuongAttention(
+      attention_mechanism = contrib_seq2seq.LuongAttention(
           num_units=num_units,
           memory=memory,
           memory_sequence_length=memory_sequence_length,
           scale=True)
     elif attention_type == U.ATT_BAHDANAU:
-      attention_mechanism = tf.contrib.seq2seq.BahdanauAttention(
+      attention_mechanism = contrib_seq2seq.BahdanauAttention(
           num_units=num_units,
           memory=memory,
           memory_sequence_length=memory_sequence_length)
     elif attention_type == U.ATT_BAHDANAU_NORM:
-      attention_mechanism = tf.contrib.seq2seq.BahdanauAttention(
+      attention_mechanism = contrib_seq2seq.BahdanauAttention(
           num_units=num_units,
           memory=memory,
           memory_sequence_length=memory_sequence_length,

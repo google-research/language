@@ -95,6 +95,46 @@ def where(condition, if_true, if_false):
   return tf.reshape(result, result_dims)
 
 
+def padded_where(condition, length):
+  """TPU friendly version of tf.where(cond) with fixed length and padding.
+
+  This is a wrapper around tf.where(cond) that returns the coordinates of the
+  True elements of cond (case where x and y are None). This version, however,
+  returns a fixed length tensor of coordinates, determined by `length`.  If the
+  number of True elements in `condition` is less than `length`, then the
+  returned tensor is right-padded with zeros. Otherwise, the returned tensor is
+  truncated to `length` size.
+
+  Args:
+    condition: tf.Tensor of type boolean; any shape.
+    length: Length of (last dimension of) the returned tensor.
+
+  Returns:
+    Two tensors:
+    - a tensor of type int32, with same shape as `condition`, representing
+      coordinates of the last dimension of `condition` tensor where values are
+      True.
+    - a mask tensor of type int32 with 1s in valid indices of the first tensor,
+      and 0s for padded indices.
+  """
+  n = condition.shape[-1].value
+
+  # Build a tensor that counts indices from 0 to length of condition.
+  ixs = tf.broadcast_to(tf.range(n, dtype=tf.int32), shape(condition))
+
+  # Build tensor where True condition values get their index value or
+  # n (== len(condition)) otherwise.
+  ixs = tf.where(condition, ixs, tf.ones_like(condition, dtype=tf.int32) * n)
+
+  # Sort indices (so that indices for False values == n, will be placed last),
+  # and get the desired number of entries, truncating by `length`.
+  ixs = tf.sort(ixs)[Ellipsis, 0:length]
+
+  # For first tensor, zero-out values == n. For second tensor, put 1s where
+  # values are < n, and 0s where values are == 0.
+  return tf.mod(ixs, n), (1 - tf.div(ixs, n))
+
+
 def shaped_py_func(func, inputs, types, shapes, stateful=True, name=None):
   """Wrapper around tf.py_func that adds static shape information to the output.
 
@@ -110,11 +150,7 @@ def shaped_py_func(func, inputs, types, shapes, stateful=True, name=None):
     output_tensors: List of output tensors.
   """
   output_tensors = tf.py_func(
-      func=func,
-      inp=inputs,
-      Tout=types,
-      stateful=stateful,
-      name=name)
+      func=func, inp=inputs, Tout=types, stateful=stateful, name=name)
   for t, s in zip(output_tensors, shapes):
     t.set_shape(s)
   return output_tensors
@@ -153,6 +189,7 @@ def flatten(t):
       return tf.reshape(flat_t, input_shape[:-1] + [shape(flat_t, -1)])
     else:
       return flat_t
+
   return t, _unflatten
 
 

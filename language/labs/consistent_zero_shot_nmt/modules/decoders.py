@@ -27,6 +27,8 @@ from language.labs.consistent_zero_shot_nmt.utils import model_utils
 from tensor2tensor.data_generators import text_encoder
 from tensor2tensor.layers import common_layers
 import tensorflow as tf
+from tensorflow.contrib import seq2seq as contrib_seq2seq
+from tensorflow.contrib import training as contrib_training
 
 
 __all__ = [
@@ -46,8 +48,7 @@ class BasicRNNDecoder(base.AbstractNMTModule):
   def _build(self, embeddings, inputs, inputs_length, hiddens, hiddens_length,
              enc_state, mode, hparams, decoder_hparams=None):
     if decoder_hparams is None:
-      decoder_hparams = tf.contrib.training.HParams(
-          auxiliary=False)
+      decoder_hparams = contrib_training.HParams(auxiliary=False)
 
     batch_size = common_layers.shape_list(hiddens)[0]
 
@@ -140,13 +141,13 @@ class BasicRNNDecoder(base.AbstractNMTModule):
 
     if hparams.pass_hidden_state:
       # Non-GNMT RNN cell returns AttentionWrappedState.
-      if isinstance(init_state, tf.contrib.seq2seq.AttentionWrapperState):
+      if isinstance(init_state, contrib_seq2seq.AttentionWrapperState):
         init_state = init_state.clone(cell_state=enc_state)
       # GNMT RNN cell returns a tuple state.
       elif isinstance(init_state, tuple):
         init_state = tuple(
-            zs.clone(cell_state=es)
-            if isinstance(zs, tf.contrib.seq2seq.AttentionWrapperState) else es
+            zs.clone(cell_state=es) if isinstance(
+                zs, contrib_seq2seq.AttentionWrapperState) else es
             for zs, es in zip(init_state, enc_state))
       else:
         ValueError("RNN cell returns zero states of unknown type: %s"
@@ -165,7 +166,7 @@ class BasicRNNDecoder(base.AbstractNMTModule):
       #     start_tokens=start_tokens,
       #     end_token=text_encoder.EOS_ID,
       #     num_steps=hparams.aux_decode_length)
-      helper = tf.contrib.seq2seq.SampleEmbeddingHelper(
+      helper = contrib_seq2seq.SampleEmbeddingHelper(
           embedding=embeddings,
           start_tokens=start_tokens,
           end_token=text_encoder.EOS_ID,
@@ -185,33 +186,29 @@ class BasicRNNDecoder(base.AbstractNMTModule):
             sequence_length=inputs_length)
       # EVAL and PREDICT expect teacher forcing behavior.
       else:
-        helper = tf.contrib.seq2seq.TrainingHelper(
-            inputs=inputs,
-            sequence_length=inputs_length)
+        helper = contrib_seq2seq.TrainingHelper(
+            inputs=inputs, sequence_length=inputs_length)
     # Standard decoding.
     else:
       # Scheduled sampling.
       if mode == tf.estimator.ModeKeys.TRAIN and hparams.scheduled_training:
-        helper = tf.contrib.seq2seq.ScheduledEmbeddingTrainingHelper(
+        helper = contrib_seq2seq.ScheduledEmbeddingTrainingHelper(
             inputs=inputs,
             sequence_length=inputs_length,
             embedding=embeddings,
             sampling_probability=hparams.scheduled_sampling_probability)
       # Teacher forcing (also for EVAL and PREDICT).
       else:
-        helper = tf.contrib.seq2seq.TrainingHelper(
-            inputs=inputs,
-            sequence_length=inputs_length)
+        helper = contrib_seq2seq.TrainingHelper(
+            inputs=inputs, sequence_length=inputs_length)
     return helper
 
   def _build_decoder(self, helper, rnn_cell, initial_state, mode, hparams):
     """Builds a decoder instance."""
     del mode  # Unused.
     del hparams  # Unused.
-    decoder = tf.contrib.seq2seq.BasicDecoder(
-        cell=rnn_cell,
-        helper=helper,
-        initial_state=initial_state)
+    decoder = contrib_seq2seq.BasicDecoder(
+        cell=rnn_cell, helper=helper, initial_state=initial_state)
     return decoder
 
 
@@ -269,15 +266,16 @@ class AttentiveRNNDecoder(BasicRNNDecoder):
 
     if hparams.pass_hidden_state:
       # Non-GNMT RNN cell returns AttentionWrappedState.
-      if isinstance(inner_state, tf.contrib.seq2seq.AttentionWrapperState):
+      if isinstance(inner_state, contrib_seq2seq.AttentionWrapperState):
         init_state = init_state.clone(
             cell_state=inner_state.clone(cell_state=enc_state))
       # GNMT RNN cell returns a tuple state.
       elif isinstance(init_state.cell_state, tuple):
-        init_state = init_state.clone(cell_state=tuple(
-            zs.clone(cell_state=es)
-            if isinstance(zs, tf.contrib.seq2seq.AttentionWrapperState) else es
-            for zs, es in zip(inner_state, enc_state)))
+        init_state = init_state.clone(
+            cell_state=tuple(
+                zs.clone(cell_state=es) if isinstance(
+                    zs, contrib_seq2seq.AttentionWrapperState) else es
+                for zs, es in zip(inner_state, enc_state)))
       else:
         ValueError("RNN cell returns zero states of unknown type: %s"
                    % str(type(init_state)))

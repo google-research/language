@@ -18,6 +18,7 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
+from tensorflow.contrib import lookup as contrib_lookup
 from tensorflow.python.ops.lookup_ops import LookupInterface
 
 
@@ -77,7 +78,7 @@ def string_to_int_mapper(keys_to_map, mapping, num_oov_buckets=1, suffix="_id"):
   if isinstance(mapping, LookupInterface):
     table = mapping
   else:
-    table = tf.contrib.lookup.index_table_from_tensor(
+    table = contrib_lookup.index_table_from_tensor(
         mapping=mapping, num_oov_buckets=num_oov_buckets)
 
   def _mapper(dataset):

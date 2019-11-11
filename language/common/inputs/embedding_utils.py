@@ -21,6 +21,7 @@ from language.common.inputs import dataset_utils
 
 import numpy as np
 import tensorflow as tf
+from tensorflow.contrib import lookup as contrib_lookup
 
 
 class PretrainedWordEmbeddings(object):
@@ -128,7 +129,7 @@ class PretrainedWordEmbeddings(object):
 
   def get_lookup_table(self):
     """Create the lookup table base on the vocabulary."""
-    return tf.contrib.lookup.index_table_from_tensor(
+    return contrib_lookup.index_table_from_tensor(
         mapping=self._idx2str, num_oov_buckets=self._num_oov_buckets)
 
   def token_to_word_id_mapper(self, keys_to_map, suffix="_wid"):

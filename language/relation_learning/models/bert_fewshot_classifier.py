@@ -204,7 +204,7 @@ def file_based_input_fn_builder(input_file, seq_length, fewshot_num_classes,
     """The actual input function."""
     d = tf.data.TFRecordDataset(input_file)
     d = d.apply(
-        tf.contrib.data.map_and_batch(
+        tf.data.experimental.map_and_batch(
             lambda record: _decode_record(record, name_to_features),
             batch_size=params["batch_size"],
             drop_remainder=drop_remainder))

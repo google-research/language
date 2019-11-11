@@ -20,6 +20,7 @@ from __future__ import print_function
 from language.common.inputs import char_utils
 from language.common.utils import tensor_utils
 import tensorflow as tf
+from tensorflow.contrib import layers as contrib_layers
 
 
 def ffnn(input_emb, hidden_sizes, dropout_ratio, mode):
@@ -138,7 +139,7 @@ def highway(input_emb, output_size, dropout_ratio=None, mode=None,
   hidden_emb = tf.nn.relu(hidden_emb)
   carry_gate = tf.sigmoid(carry_gate + carry_bias)
   if layer_norm:
-    hidden_emb = tf.contrib.layers.layer_norm(hidden_emb)
+    hidden_emb = contrib_layers.layer_norm(hidden_emb)
 
   output_emb = carry_gate * project_input_emb + (1 - carry_gate) * hidden_emb
   return output_emb
