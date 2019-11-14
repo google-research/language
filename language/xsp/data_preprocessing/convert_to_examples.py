@@ -118,10 +118,6 @@ def process_spider(output_file, debugging_file, tokenizer):
 
 def process_wikisql(output_file, debugging_file, tokenizer):
   """Loads, converts, and writes WikiSQL examples to the standard format."""
-  # TODO(alanesuhr,petershaw): Support asql for this dataset.
-  if FLAGS.generate_sql and FLAGS.abstract_sql:
-    raise NotImplementedError(
-        'Abstract SQL currently only supported for SPIDER.')
 
   if len(FLAGS.splits) > 1:
     raise ValueError('Not expecting more than one split for WikiSQL.')
@@ -140,12 +136,17 @@ def process_wikisql(output_file, debugging_file, tokenizer):
     load_wikisql_tables(os.path.join(FLAGS.input_filepath,
                                      split + '.tables.jsonl'))
 
+  wikisql_table_schemas_map = abstract_sql_converters.wikisql_table_schemas_map(
+      table_definitions)
+
   for input_example in paired_data:
     example = \
       convert_wikisql(input_example, table_definitions[input_example[2]],
                       tokenizer,
                       FLAGS.generate_sql,
-                      FLAGS.anonymize_values)
+                      FLAGS.anonymize_values,
+                      FLAGS.abstract_sql,
+                      tables_schema=wikisql_table_schemas_map[input_example[2]])
     if example:
       output_file.write(json.dumps(example.to_json()) + '\n')
       num_examples_created += 1

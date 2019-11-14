@@ -249,6 +249,16 @@ def get_sql_spans_from_query(example):
   return _get_sql_spans_from_actions(example.gold_sql_query.actions)
 
 
+def wikisql_db_to_table_tuples(db_name, db):
+  """Return list of abstract_sql.TableSchema from a dictionary describing a database."""
+  table_schemas = list()
+  for table_name, columns in db.items():
+    column_names = [column['field name'].lower() for column in columns]
+    table_schemas.append(abstract_sql.TableSchema(table_name=table_name.lower(),
+                                                  column_names=column_names))
+  return table_schemas
+
+
 def spider_db_to_table_tuples(db):
   """Return list of abstract_sql.TableSchema from spider json."""
   # The format of the db json object is documented here:
@@ -348,6 +358,13 @@ def spider_table_schemas_map(schema):
   # The format of the schema json object is documented here:
   # https://github.com/taoyds/spider#tables
   return {db['db_id']: spider_db_to_table_tuples(db) for db in schema}
+
+
+def wikisql_table_schemas_map(schema):
+  """Returns map of database id to a list of TableSchema tuples."""
+  # The format of the schema json object is documented here:
+  # https://github.com/taoyds/wikisql#tables
+  return {db_name: wikisql_db_to_table_tuples(db_name, db) for db_name, db in schema.items()}
 
 
 def spider_foreign_keys_map(schema):
