@@ -20,6 +20,8 @@ from __future__ import print_function
 
 import json
 
+from language.xsp.data_preprocessing import abstract_sql
+from language.xsp.data_preprocessing import abstract_sql_converters
 from language.xsp.data_preprocessing.nl_to_sql_example import NLToSQLExample
 from language.xsp.data_preprocessing.nl_to_sql_example import populate_utterance
 from language.xsp.data_preprocessing.sql_parsing import ParseError
@@ -50,8 +52,13 @@ def normalize_entities(entity_name):
   return entity_name
 
 
-def convert_wikisql(input_example, schema, tokenizer, generate_sql,
-                    anonymize_values):
+def convert_wikisql(input_example,
+                    schema,
+                    tokenizer,
+                    generate_sql,
+                    anonymize_values,
+                    use_abstract_sql,
+                    tables_schema=None):
   """Converts a WikiSQL example into a NLToSQLExample."""
   example = NLToSQLExample()
 
@@ -81,7 +88,6 @@ def convert_wikisql(input_example, schema, tokenizer, generate_sql,
     try:
       sql = preprocess_sql(sql)
     except UnicodeDecodeError as e:
-      print('Unicode error: ' + str(e))
       return None
 
     sql = sql.lower()
@@ -89,14 +95,16 @@ def convert_wikisql(input_example, schema, tokenizer, generate_sql,
 
     if generate_sql:
       try:
-        populate_sql(parsed_sql, example, anonymize_values)
-      except (ParseError, ValueError, AssertionError, KeyError,
-              IndexError) as e:
-        print(e)
+        if use_abstract_sql:
+          abstract_sql_converters.populate_abstract_sql(example, sql,
+                                                        tables_schema)
+        else:
+          populate_sql(parsed_sql, example, anonymize_values)
+      except (ParseError, ValueError, AssertionError, KeyError, IndexError,
+              abstract_sql.ParseError, abstract_sql.UnsupportedSqlError) as e:
         return None
 
     if example.gold_sql_query.actions[-1].symbol == '=':
-      print('The last token should not be an equals sign!')
       return None
 
   except UnicodeEncodeError as e:

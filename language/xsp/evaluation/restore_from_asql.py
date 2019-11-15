@@ -77,7 +77,9 @@ def _utterance_to_db_map(spider_examples_json, spider_tables_json):
 
 def _get_restored_predictions(predictions_dict,
                               utterance_to_db_map=None,
-                              schema=None):
+                              schema=None,
+                              dataset_name=None,
+                              use_oracle_foreign_keys=False):
   """Returns new predictions dict with FROM clauses restored."""
   utterance = predictions_dict['utterance']
   if utterance_to_db_map:
@@ -86,8 +88,12 @@ def _get_restored_predictions(predictions_dict,
     table_schemas = abstract_sql_converters.spider_db_to_table_tuples(db)
 
   else:
-    foreign_keys = abstract_sql_converters.michigan_db_to_foreign_key_tuples(
-        schema)
+    if use_oracle_foreign_keys:
+      foreign_keys = abstract_sql_converters.michigan_db_to_foreign_key_tuples_orcale(
+          dataset_name)
+    else:
+      foreign_keys = abstract_sql_converters.michigan_db_to_foreign_key_tuples(
+          schema)
     table_schemas = abstract_sql_converters.michigan_db_to_table_tuples(schema)
 
   restored_predictions = []
@@ -120,7 +126,9 @@ def restore_from_clauses(input_path,
                          output_path,
                          spider_examples_json='',
                          spider_tables_json='',
-                         michigan_schema=None):
+                         michigan_schema=None,
+                         dataset_name=None,
+                         use_oracle_foriegn_keys=False):
   """Loads an original dataset and matches with a predictions file.
 
   The input and output is a text file containing model predictions.
@@ -137,6 +145,8 @@ def restore_from_clauses(input_path,
     spider_tables_json: Path to Spider tables.
     michigan_schema: A Michigan schema object (list of tables, each with a list
       of columns and their types).
+    dataset_name: Name of Michigan dataset if using oracle foreign keys.
+    use_oracle_foriegn_keys: Whether to use oracle foreign keys for Michigan.
   """
   # Create map of utterances to schemas.
   utterance_to_db_map = None
@@ -156,7 +166,8 @@ def restore_from_clauses(input_path,
   for predictions_dict in predictions_dicts:
     restored_predictions_dicts.append(
         _get_restored_predictions(predictions_dict, utterance_to_db_map,
-                                  michigan_schema))
+                                  michigan_schema, dataset_name,
+                                  use_oracle_foriegn_keys))
 
   # Write predictions.
   with tf.gfile.Open(output_path, 'w') as output_file:
