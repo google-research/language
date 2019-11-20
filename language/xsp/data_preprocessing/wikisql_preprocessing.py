@@ -98,8 +98,8 @@ def convert_wikisql(input_example,
     if generate_sql:
       try:
         if use_abstract_sql:
-          successful_copy = abstract_sql_converters.populate_abstract_sql(example, sql,
-                                                        tables_schema)
+          successful_copy = abstract_sql_converters.populate_abstract_sql(
+              example, sql, tables_schema)
         else:
           successful_copy = populate_sql(parsed_sql, example, anonymize_values)
       except (ParseError, ValueError, AssertionError, KeyError, IndexError,
@@ -107,7 +107,7 @@ def convert_wikisql(input_example,
         return None
 
     if not successful_copy and not allow_value_generation:
-        return None
+      return None
 
     if example.gold_sql_query.actions[-1].symbol == '=':
       return None

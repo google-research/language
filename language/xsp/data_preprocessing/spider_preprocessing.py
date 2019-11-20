@@ -14,14 +14,14 @@
 # limitations under the License.
 """Contains functions for loading and preprocessing the Spider data."""
 import json
+import sqlparse
+import tensorflow.gfile as gfile
 
 from language.xsp.data_preprocessing import abstract_sql_converters
 from language.xsp.data_preprocessing.nl_to_sql_example import NLToSQLExample
 from language.xsp.data_preprocessing.nl_to_sql_example import populate_utterance
 from language.xsp.data_preprocessing.sql_parsing import populate_sql
 from language.xsp.data_preprocessing.sql_utils import preprocess_sql
-import sqlparse
-import tensorflow.gfile as gfile
 
 WRONG_TRAINING_EXAMPLES = {
     # In this query the SQL query mentions a ref_company_types table that is not
@@ -117,9 +117,8 @@ def convert_spider(spider_example,
   successful_copy = True
   if generate_sql:
     if abstract_sql:
-      successful_copy = abstract_sql_converters.populate_abstract_sql(example,
-                                                    spider_example['query'],
-                                                    table_schemas)
+      successful_copy = abstract_sql_converters.populate_abstract_sql(
+          example, spider_example['query'], table_schemas)
     else:
       successful_copy = populate_sql(sql_query, example, anonymize_values)
 
