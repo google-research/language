@@ -505,7 +505,7 @@ def _parse_identifier(sql, example, anonymize_values):
       continue
 
     if _is_identifier(item):
-      succesful_copy = _parse_identifier(item, example, anonymize_values) and successful_copy
+      successful_copy = _parse_identifier(item, example, anonymize_values) and successful_copy
       continue
 
     if _is_order(item):
