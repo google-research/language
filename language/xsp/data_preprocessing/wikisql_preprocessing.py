@@ -58,7 +58,8 @@ def convert_wikisql(input_example,
                     generate_sql,
                     anonymize_values,
                     use_abstract_sql,
-                    tables_schema=None):
+                    tables_schema=None,
+                    allow_value_generation=False):
   """Converts a WikiSQL example into a NLToSQLExample."""
   example = NLToSQLExample()
 
@@ -93,15 +94,19 @@ def convert_wikisql(input_example,
     sql = sql.lower()
     parsed_sql = sqlparse.parse(sql)[0]
 
+    successful_copy = True
     if generate_sql:
       try:
         if use_abstract_sql:
-          abstract_sql_converters.populate_abstract_sql(example, sql,
+          successful_copy = abstract_sql_converters.populate_abstract_sql(example, sql,
                                                         tables_schema)
         else:
-          populate_sql(parsed_sql, example, anonymize_values)
+          successful_copy = populate_sql(parsed_sql, example, anonymize_values)
       except (ParseError, ValueError, AssertionError, KeyError, IndexError,
               abstract_sql.ParseError, abstract_sql.UnsupportedSqlError) as e:
+        return None
+
+    if not successful_copy and not allow_value_generation:
         return None
 
     if example.gold_sql_query.actions[-1].symbol == '=':

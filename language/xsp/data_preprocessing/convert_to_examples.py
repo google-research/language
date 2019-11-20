@@ -55,6 +55,8 @@ flags.DEFINE_bool('generate_sql', False,
 
 flags.DEFINE_bool('anonymize_values', False, 'Whether to anonymize values.')
 
+flags.DEFINE_bool('allow_value_generation', False, 'Whether to allow query values (that should be copied from the input) to be produced through generation actions (i.e., not copied). If False, examples where copying actions cannot be determined will be thrown out.')
+
 flags.DEFINE_bool(
     'abstract_sql', True,
     'Whether to provide SQL labels using under-specified FROM clauses.')
@@ -100,7 +102,8 @@ def process_spider(output_file, debugging_file, tokenizer):
           FLAGS.generate_sql,
           FLAGS.anonymize_values,
           abstract_sql=FLAGS.abstract_sql,
-          table_schemas=spider_table_schemas_map[example_db])
+          table_schemas=spider_table_schemas_map[example_db],
+          allow_value_generation=FLAGS.allow_value_generation)
     except abstract_sql.UnsupportedSqlError as e:
       print(e)
       example = None
@@ -146,7 +149,8 @@ def process_wikisql(output_file, debugging_file, tokenizer):
                       FLAGS.generate_sql,
                       FLAGS.anonymize_values,
                       FLAGS.abstract_sql,
-                      tables_schema=wikisql_table_schemas_map[input_example[2]])
+                      tables_schema=wikisql_table_schemas_map[input_example[2]],
+                      allow_value_generation=FLAGS.allow_value_generation)
     if example:
       output_file.write(json.dumps(example.to_json()) + '\n')
       num_examples_created += 1
