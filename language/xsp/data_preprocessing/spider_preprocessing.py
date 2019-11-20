@@ -126,7 +126,6 @@ def convert_spider(spider_example,
   # If the example contained an unsuccessful copy action, and values should not be
   # generated, then return an empty example.
   if not successful_copy and not allow_value_generation:
-    print('Throwing out example')
     return None
 
   return example

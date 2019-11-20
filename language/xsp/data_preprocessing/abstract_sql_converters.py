@@ -178,7 +178,7 @@ def populate_example_from_sql_spans(sql_spans, example):
     elif sql_span.table_name:
       _add_table_copy(sql_span.table_name, example)
     elif sql_span.nested_statement:
-      populate_example_from_sql_spans(sql_span.nested_statement, example)
+      successful_copy = populate_example_from_sql_spans(sql_span.nested_statement, example) and successful_copy
     else:
       raise ParseError('Invalid SqlSpan: %s' % sql_span)
   return successful_copy

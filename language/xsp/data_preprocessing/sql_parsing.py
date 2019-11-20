@@ -635,7 +635,7 @@ def _parse_comparison(sql, example, anonymize_values):
       continue
 
     if _is_function(item):
-      _parse_function(item, example, anonymize_values)
+      successful_copy = _parse_function(item, example, anonymize_values) and successful_copy
       continue
 
     if _is_operation(item):
