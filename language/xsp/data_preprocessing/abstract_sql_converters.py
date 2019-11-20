@@ -250,12 +250,14 @@ def get_sql_spans_from_query(example):
 
 
 def wikisql_db_to_table_tuples(db_name, db):
-  """Return list of abstract_sql.TableSchema from a dictionary describing a database."""
+  """Return list of abstract_sql.TableSchema from a dict describing a DB."""
+  del db_name
   table_schemas = list()
   for table_name, columns in db.items():
     column_names = [column['field name'].lower() for column in columns]
-    table_schemas.append(abstract_sql.TableSchema(table_name=table_name.lower(),
-                                                  column_names=column_names))
+    table_schemas.append(
+        abstract_sql.TableSchema(
+            table_name=table_name.lower(), column_names=column_names))
   return table_schemas
 
 
@@ -319,6 +321,158 @@ def spider_db_to_foreign_key_tuples(db):
   return foreign_keys
 
 
+def michigan_db_to_foreign_key_tuples_orcale(dataset_name):
+  """Returns a list of abstract_sql.ForeignKeyRelation."""
+  # Uses hand curated oracle foreign key annotations.
+  if dataset_name == 'academic':
+    return [
+        abstract_sql.ForeignKeyRelation('publication', 'writes', 'pid', 'pid'),
+        abstract_sql.ForeignKeyRelation('author', 'writes', 'aid', 'aid'),
+        abstract_sql.ForeignKeyRelation('journal', 'publication', 'jid', 'jid'),
+        abstract_sql.ForeignKeyRelation('conference', 'publication', 'cid',
+                                        'cid'),
+        abstract_sql.ForeignKeyRelation('publication', 'publication_keyword',
+                                        'pid', 'pid'),
+        abstract_sql.ForeignKeyRelation('keyword', 'publication_keyword', 'kid',
+                                        'kid'),
+        abstract_sql.ForeignKeyRelation('author', 'organization', 'oid', 'oid'),
+        abstract_sql.ForeignKeyRelation('author', 'domain_author', 'aid',
+                                        'aid'),
+        abstract_sql.ForeignKeyRelation('domain', 'domain_author', 'did',
+                                        'did'),
+        abstract_sql.ForeignKeyRelation('domain', 'domain_publication', 'did',
+                                        'did'),
+        abstract_sql.ForeignKeyRelation('domain_publication', 'publication',
+                                        'pid', 'pid'),
+        abstract_sql.ForeignKeyRelation('cite', 'publication', 'cited', 'pid'),
+        abstract_sql.ForeignKeyRelation('cite', 'publication', 'citing', 'pid'),
+        abstract_sql.ForeignKeyRelation('domain', 'domain_keyword', 'did',
+                                        'did'),
+        abstract_sql.ForeignKeyRelation('domain_keyword', 'keyword', 'kid',
+                                        'kid'),
+        abstract_sql.ForeignKeyRelation('domain', 'domain_journal', 'did',
+                                        'did'),
+        abstract_sql.ForeignKeyRelation('domain_journal', 'journal', 'jid',
+                                        'jid'),
+        abstract_sql.ForeignKeyRelation('conference', 'domain_conference',
+                                        'cid', 'cid'),
+        abstract_sql.ForeignKeyRelation('domain', 'domain_conference', 'did',
+                                        'did'),
+    ]
+  elif dataset_name == 'atis':
+    return [
+        abstract_sql.ForeignKeyRelation('airport_service', 'city', 'city_code',
+                                        'city_code'),
+        abstract_sql.ForeignKeyRelation('airport_service', 'flight',
+                                        'airport_code', 'from_airport'),
+        abstract_sql.ForeignKeyRelation('airport_service', 'flight',
+                                        'airport_code', 'to_airport'),
+        abstract_sql.ForeignKeyRelation('date_day', 'days', 'day_name',
+                                        'day_name'),
+        abstract_sql.ForeignKeyRelation('days', 'flight', 'days_code',
+                                        'flight_days'),
+        abstract_sql.ForeignKeyRelation('fare', 'flight_fare', 'fare_id',
+                                        'fare_id'),
+        abstract_sql.ForeignKeyRelation('flight', 'flight_fare', 'flight_id',
+                                        'flight_id'),
+        abstract_sql.ForeignKeyRelation('fare', 'fare_basis', 'fare_basis_code',
+                                        'fare_basis_code'),
+        abstract_sql.ForeignKeyRelation('flight', 'flight_stop', 'flight_id',
+                                        'flight_id'),
+        abstract_sql.ForeignKeyRelation('days', 'fare_basis', 'days_code',
+                                        'basis_days'),
+        abstract_sql.ForeignKeyRelation('airport_service', 'flight_stop',
+                                        'airport_code', 'stop_airport'),
+        abstract_sql.ForeignKeyRelation('city', 'ground_service', 'city_code',
+                                        'city_code'),
+        abstract_sql.ForeignKeyRelation('airline', 'flight', 'airline_code',
+                                        'airline_code'),
+        abstract_sql.ForeignKeyRelation('airport', 'airport_service',
+                                        'airport_code', 'airport_code'),
+        abstract_sql.ForeignKeyRelation('flight', 'food_service', 'meal_code',
+                                        'meal_code'),
+        abstract_sql.ForeignKeyRelation('aircraft', 'equipment_sequence',
+                                        'aircraft_code', 'aircraft_code'),
+        abstract_sql.ForeignKeyRelation('equipment_sequence', 'flight',
+                                        'aircraft_code_sequence',
+                                        'aircraft_code_sequence'),
+        abstract_sql.ForeignKeyRelation('city', 'state', 'state_code',
+                                        'state_code'),
+        abstract_sql.ForeignKeyRelation('airport', 'flight', 'airport_code',
+                                        'to_airport'),
+        abstract_sql.ForeignKeyRelation('airport', 'ground_service',
+                                        'airport_code', 'airport_code'),
+        abstract_sql.ForeignKeyRelation('airport', 'flight', 'airport_code',
+                                        'from_airport'),
+        abstract_sql.ForeignKeyRelation('airport_service', 'fare',
+                                        'airport_code', 'to_airport'),
+        abstract_sql.ForeignKeyRelation('airport_service', 'fare',
+                                        'airport_code', 'from_airport'),
+        abstract_sql.ForeignKeyRelation('flight', 'flight_leg', 'flight_id',
+                                        'flight_id'),
+        abstract_sql.ForeignKeyRelation('flight', 'flight_leg', 'flight_id',
+                                        'leg_flight'),
+        abstract_sql.ForeignKeyRelation('class_of_service', 'fare_basis',
+                                        'booking_class', 'booking_class'),
+        abstract_sql.ForeignKeyRelation('airport', 'state', 'state_code',
+                                        'state_code'),
+        abstract_sql.ForeignKeyRelation('airport', 'flight_stop',
+                                        'airport_code', 'stop_airport'),
+        abstract_sql.ForeignKeyRelation('fare', 'restriction',
+                                        'restriction_code', 'restriction_code'),
+    ]
+  elif dataset_name == 'geography':
+    return [
+        abstract_sql.ForeignKeyRelation('border_info', 'state', 'border',
+                                        'state_name'),
+        abstract_sql.ForeignKeyRelation('river', 'state', 'traverse',
+                                        'state_name'),
+        abstract_sql.ForeignKeyRelation('city', 'state', 'city_name',
+                                        'capital'),
+        abstract_sql.ForeignKeyRelation('border_info', 'state', 'state_name',
+                                        'state_name'),
+        abstract_sql.ForeignKeyRelation('city', 'state', 'state_name',
+                                        'state_name'),
+        abstract_sql.ForeignKeyRelation('border_info', 'river', 'border',
+                                        'traverse'),
+        abstract_sql.ForeignKeyRelation('highlow', 'state', 'state_name',
+                                        'state_name'),
+        abstract_sql.ForeignKeyRelation('border_info', 'border_info', 'border',
+                                        'state_name'),
+        abstract_sql.ForeignKeyRelation('highlow', 'river', 'state_name',
+                                        'traverse'),
+        abstract_sql.ForeignKeyRelation('border_info', 'river', 'state_name',
+                                        'traverse'),
+        abstract_sql.ForeignKeyRelation('city', 'river', 'state_name',
+                                        'traverse'),
+        abstract_sql.ForeignKeyRelation('border_info', 'highlow', 'border',
+                                        'state_name'),
+        abstract_sql.ForeignKeyRelation('border_info', 'city', 'border',
+                                        'state_name'),
+        abstract_sql.ForeignKeyRelation('state', 'state', 'state_name',
+                                        'state_name'),
+        abstract_sql.ForeignKeyRelation('border_info', 'border_info', 'border',
+                                        'border'),
+        abstract_sql.ForeignKeyRelation('city', 'highlow', 'state_name',
+                                        'state_name'),
+        abstract_sql.ForeignKeyRelation('highlow', 'state', 'highest_point',
+                                        'capital'),
+        abstract_sql.ForeignKeyRelation('border_info', 'lake', 'border',
+                                        'state_name'),
+        abstract_sql.ForeignKeyRelation('river', 'river', 'river_name',
+                                        'river_name'),
+    ]
+  elif dataset_name == 'restaurants':
+    return [
+        abstract_sql.ForeignKeyRelation('location', 'restaurant',
+                                        'restaurant_id', 'id'),
+        abstract_sql.ForeignKeyRelation('geographic', 'restaurant', 'city_name',
+                                        'city_name'),
+    ]
+  else:
+    raise ValueError('Unknown dataset: %s' % dataset_name)
+
+
 def michigan_db_to_foreign_key_tuples(db):
   """Returns a list of abstract_sql.ForeignKeyRelation."""
   # Michigan doesn't come with a gold standard of *which* columns are foreign
@@ -364,7 +518,10 @@ def wikisql_table_schemas_map(schema):
   """Returns map of database id to a list of TableSchema tuples."""
   # The format of the schema json object is documented here:
   # https://github.com/taoyds/wikisql#tables
-  return {db_name: wikisql_db_to_table_tuples(db_name, db) for db_name, db in schema.items()}
+  return {
+      db_name: wikisql_db_to_table_tuples(db_name, db)
+      for db_name, db in schema.items()
+  }
 
 
 def spider_foreign_keys_map(schema):

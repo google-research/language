@@ -70,6 +70,9 @@ flags.DEFINE_bool('match_and_save', True,
 flags.DEFINE_bool(
     'restore_preds_from_asql', False,
     'Whether model was trained with under-specified from clauses.')
+flags.DEFINE_bool(
+    'use_oracle_foriegn_keys', True,
+    'Whether to use oracle foreign keys when restoring from asql.')
 # These flags are only required if restore_preds_from_asql is True.
 # TODO(petershaw): Better method for handling other datasets.
 flags.DEFINE_string('spider_examples_json', '', 'Path to Spider json examples')
@@ -303,7 +306,9 @@ def inference_wrapper(inference_fn, sharded=False):
         spider_tables_json=FLAGS.spider_tables_json if spider else '',
         michigan_schema=None if spider else read_schema(
             os.path.join(FLAGS.data_filepath, FLAGS.dataset_name +
-                         '_schema.csv')))
+                         '_schema.csv')),
+        dataset_name=FLAGS.dataset_name,
+        use_oracle_foriegn_keys=FLAGS.use_oracle_foriegn_keys)
     predictions = FLAGS.restored_predictions_path
 
   if FLAGS.match_and_save:

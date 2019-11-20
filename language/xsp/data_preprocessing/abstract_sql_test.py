@@ -175,6 +175,49 @@ class AbstractSqlTest(absltest.TestCase):
         "select,table1.foo,<from_clause_placeholder>,table1,table2")
     self.assertEqual(expected_sql_spans_string, sql_spans_string)
 
+  def test_find_table(self):
+    tables = [
+        "author", "domain", "domain_author", "organization", "publication",
+        "writes"
+    ]
+    relations = [
+        abstract_sql.ForeignKeyRelation(
+            child_table="publication",
+            parent_table="writes",
+            child_column="pid",
+            parent_column="pid"),
+        abstract_sql.ForeignKeyRelation(
+            child_table="author",
+            parent_table="writes",
+            child_column="aid",
+            parent_column="aid"),
+        abstract_sql.ForeignKeyRelation(
+            child_table="author",
+            parent_table="organization",
+            child_column="oid",
+            parent_column="oid"),
+        abstract_sql.ForeignKeyRelation(
+            child_table="author",
+            parent_table="domain_author",
+            child_column="aid",
+            parent_column="aid"),
+        abstract_sql.ForeignKeyRelation(
+            child_table="domain",
+            parent_table="domain_author",
+            child_column="did",
+            parent_column="did"),
+    ]
+    from_clause_spans = abstract_sql._get_from_clause_for_tables(
+        tables, relations)
+    from_clause = abstract_sql.sql_spans_to_string(from_clause_spans, sep=" ")
+    expected_from_clause = ("author join domain_author on author.aid = "
+                            "domain_author.aid join domain on domain_author.did"
+                            " = domain.did join organization on domain.oid = "
+                            "organization.oid join writes on organization.aid ="
+                            " writes.aid join publication on writes.pid = "
+                            "publication.pid")
+    self.assertEqual(expected_from_clause, from_clause)
+
 
 if __name__ == "__main__":
   absltest.main()

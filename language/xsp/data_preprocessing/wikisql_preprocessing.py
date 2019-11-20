@@ -52,8 +52,13 @@ def normalize_entities(entity_name):
   return entity_name
 
 
-def convert_wikisql(input_example, schema, tokenizer, generate_sql,
-                    anonymize_values, use_abstract_sql, tables_schema=None):
+def convert_wikisql(input_example,
+                    schema,
+                    tokenizer,
+                    generate_sql,
+                    anonymize_values,
+                    use_abstract_sql,
+                    tables_schema=None):
   """Converts a WikiSQL example into a NLToSQLExample."""
   example = NLToSQLExample()
 
@@ -91,13 +96,12 @@ def convert_wikisql(input_example, schema, tokenizer, generate_sql,
     if generate_sql:
       try:
         if use_abstract_sql:
-            abstract_sql_converters.populate_abstract_sql(example,
-                                                          sql,
-                                                          tables_schema)
+          abstract_sql_converters.populate_abstract_sql(example, sql,
+                                                        tables_schema)
         else:
-            populate_sql(parsed_sql, example, anonymize_values)
-      except (ParseError, ValueError, AssertionError, KeyError,
-              IndexError, abstract_sql.ParseError, abstract_sql.UnsupportedSqlError) as e:
+          populate_sql(parsed_sql, example, anonymize_values)
+      except (ParseError, ValueError, AssertionError, KeyError, IndexError,
+              abstract_sql.ParseError, abstract_sql.UnsupportedSqlError) as e:
         return None
 
     if example.gold_sql_query.actions[-1].symbol == '=':

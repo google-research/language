@@ -26,7 +26,6 @@ from __future__ import division
 from __future__ import print_function
 
 import collections
-import itertools
 
 from language.xsp.data_preprocessing import sqlparse_keyword_utils
 
@@ -518,44 +517,23 @@ def replace_from_clause(sql_spans):
   return replaced_spans
 
 
-def _get_from_clause_for_permuted_table_names(table_names, fk_relations_map):
-  """Given a permuation of table names, returns valid from clause or None."""
-  # TODO(petershaw): Consider paths between tables that are not direct
-  # foreign keys.
-  sql_spans = []
-  sql_spans.append(make_sql_span(table_name=table_names[0]))
-  for i in range(len(table_names) - 1):
-    table_a = table_names[i]
-    table_b = table_names[i + 1]
-    if (table_a, table_b) in fk_relations_map:
-      column_a, column_b = fk_relations_map[(table_a, table_b)]
-      # join table_b on table_a.column_a = table_b.column_b
-      sql_spans.append(make_sql_span(sql_token='join'))
-      sql_spans.append(make_sql_span(table_name=table_b))
-      sql_spans.append(make_sql_span(sql_token='on'))
-      sql_spans.append(
-          make_sql_span(
-              column=SqlColumn(column_name=column_a, table_name=table_a)))
-      sql_spans.append(make_sql_span(sql_token='='))
-      sql_spans.append(
-          make_sql_span(
-              column=SqlColumn(column_name=column_b, table_name=table_b)))
-    else:
-      # Couldn't find a relation, return None and try other permutation.
-      return None
-  return sql_spans
+def _get_fk_relations_helper(unvisited_tables, visited_tables,
+                             fk_relations_map):
+  for table_to_visit in unvisited_tables:
+    for table in visited_tables:
+      if (table, table_to_visit) in fk_relations_map:
+        fk_relation = fk_relations_map[(table, table_to_visit)]
+        unvisited_tables.remove(table_to_visit)
+        visited_tables.append(table_to_visit)
+        return fk_relation
+  return None
 
 
-def _get_from_clause_for_tables(table_names, fk_relations):
-  """Returns list of SqlSpan tuples for FROM clause."""
-  if not table_names:
-    raise ParseError('No table names provided.')
-  if len(table_names) == 1:
-    return [make_sql_span(table_name=table_names[0])]
-
-  # Map of (table_a, table_b) to (column_a, column_b)
+def _get_fk_relations_linking_tables(table_names, fk_relations):
+  """Returns (List of table names, List of (col name, col name))."""
   fk_relations_map = {}
   for relation in fk_relations:
+    # TODO(petershaw): Consider adding warning if overwriting key.
     fk_relations_map[(relation.child_table,
                       relation.parent_table)] = (relation.child_column,
                                                  relation.parent_column)
@@ -563,21 +541,46 @@ def _get_from_clause_for_tables(table_names, fk_relations):
     fk_relations_map[(relation.parent_table,
                       relation.child_table)] = (relation.parent_column,
                                                 relation.child_column)
+  visited_tables = [table_names[0]]
+  unvisited_tables = table_names[1:]
+  fk_relations = []
+  while unvisited_tables:
+    fk_relation = _get_fk_relations_helper(unvisited_tables, visited_tables,
+                                           fk_relations_map)
+    if fk_relation:
+      fk_relations.append(fk_relation)
+    else:
+      # TODO(petershaw): Handle case where not all tables are mentioned, i.e.
+      # some tables need to be inferred to connect mentioned tables.
+      raise UnsupportedSqlError(
+          "Couldn't find path between tables %s given relations %s." %
+          (table_names, fk_relations))
+  # Length of fk_relations will be 1 shorter than visited tables.
+  return visited_tables, fk_relations
 
-  # Naively try every permutation of table_names until we get a hit.
-  # TODO(petershaw): Could probably speed up this up quite a bit and provide
-  # better error handling for ambiguous cases.
-  for permuted_table_names in itertools.permutations(table_names):
-    sql_spans = _get_from_clause_for_permuted_table_names(
-        permuted_table_names, fk_relations_map)
-    if sql_spans:
-      return sql_spans
-  # Raise exception if not permuation found a valid path between tables.
-  # TODO(petershaw): Handle case where not all tables are mentioned, i.e.
-  # some tables need to be inferred to connect mentioned tables.
-  raise UnsupportedSqlError(
-      "Couldn't find path between tables %s given relations %s." %
-      (table_names, fk_relations))
+
+def _get_from_clause_for_tables(table_names, fk_relations):
+  """Returns list of SqlSpan tuples for FROM clause."""
+  visited_tables, fk_relations = _get_fk_relations_linking_tables(
+      table_names, fk_relations)
+  sql_spans = []
+  sql_spans.append(make_sql_span(table_name=visited_tables[0]))
+  for i in range(len(visited_tables) - 1):
+    table_a = visited_tables[i]
+    table_b = visited_tables[i + 1]
+    column_a, column_b = fk_relations[i]
+    # join table_b on table_a.column_a = table_b.column_b
+    sql_spans.append(make_sql_span(sql_token='join'))
+    sql_spans.append(make_sql_span(table_name=table_b))
+    sql_spans.append(make_sql_span(sql_token='on'))
+    sql_spans.append(
+        make_sql_span(
+            column=SqlColumn(column_name=column_a, table_name=table_a)))
+    sql_spans.append(make_sql_span(sql_token='='))
+    sql_spans.append(
+        make_sql_span(
+            column=SqlColumn(column_name=column_b, table_name=table_b)))
+  return sql_spans
 
 
 def _get_all_table_names(sql_spans):
