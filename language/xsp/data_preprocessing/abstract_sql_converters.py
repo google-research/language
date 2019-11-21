@@ -21,6 +21,7 @@ from __future__ import print_function
 from language.xsp.data_preprocessing import abstract_sql
 from language.xsp.data_preprocessing import schema_utils
 
+from language.xsp.data_preprocessing.sql_parsing import VALID_GENERATED_TOKENS
 from language.xsp.data_preprocessing.sql_utils import SchemaEntityCopy
 from language.xsp.data_preprocessing.sql_utils import SQLAction
 
@@ -104,8 +105,6 @@ def _add_value_literal(item_str, example):
             utterance_copy=example.model_input.utterance_wordpieces[i])
         example.gold_sql_query.actions.append(action)
       return True
-    print('WARNING: Could not find the value ' + item_str +
-          ' to copy from input ' + example.model_input.original_utterance)
     return False
 
   # First, check if this string could be copied from the wordpiece-tokenized
@@ -114,10 +113,10 @@ def _add_value_literal(item_str, example):
   if item_str.lower() in example.model_input.original_utterance.lower():
     success = find_and_add_copy_from_text(item_str)
 
-    if not success:
+    if not success or item_str in VALID_GENERATED_TOKENS:
       example.gold_sql_query.actions.append(SQLAction(symbol=item_str))
 
-    return
+    return success or item_str in VALID_GENERATED_TOKENS
 
   elif item_str.startswith('\'') and item_str.endswith('\''):
     quote_type = '\''
@@ -129,30 +128,32 @@ def _add_value_literal(item_str, example):
       example.gold_sql_query.actions.append(SQLAction(symbol=quote_type))
 
       success = find_and_add_copy_from_text(item_str[1:-1])
-      if not success:
+      if not success or item_str in VALID_GENERATED_TOKENS:
         example.gold_sql_query.actions.append(SQLAction(symbol=item_str))
 
       example.gold_sql_query.actions.append(SQLAction(symbol=quote_type))
 
-      return
+      return success or item_str in VALID_GENERATED_TOKENS
     elif item_str[1] == '%' and item_str[-2] == '%' and item_str[2:-2].lower(
     ) in example.model_input.original_utterance.lower():
       example.gold_sql_query.actions.append(SQLAction(symbol=quote_type))
       example.gold_sql_query.actions.append(SQLAction(symbol='%'))
 
       success = find_and_add_copy_from_text(item_str[2:-2])
-      if not success:
+      if not success or item_str in VALID_GENERATED_TOKENS:
         example.gold_sql_query.actions.append(SQLAction(symbol=item_str[2:-2]))
 
       example.gold_sql_query.actions.append(SQLAction(symbol='%'))
       example.gold_sql_query.actions.append(SQLAction(symbol=quote_type))
 
-      return
+      return success or item_str in VALID_GENERATED_TOKENS
 
   # Just add it as choice from the output vocabulary
   if u'u s a' in item_str:
     raise ValueError('WHAT????????')
   example.gold_sql_query.actions.append(SQLAction(symbol=item_str))
+
+  return item_str in VALID_GENERATED_TOKENS
 
 
 def populate_example_from_sql_spans(sql_spans, example):
@@ -164,21 +165,28 @@ def populate_example_from_sql_spans(sql_spans, example):
 
   Raises:
     ParseError: if the SQL query can't be parsed.
+
+  Returns:
+    Successful copy.
   """
+  successful_copy = True
   for sql_span in sql_spans:
     if sql_span.sql_token:
       _add_generate_action(sql_span.sql_token, example)
     elif sql_span.value_literal:
-      _add_value_literal(sql_span.value_literal, example)
+      successful_copy = _add_value_literal(sql_span.value_literal,
+                                           example) and successful_copy
     elif sql_span.column:
       _add_column_copy(sql_span.column.table_name, sql_span.column.column_name,
                        example)
     elif sql_span.table_name:
       _add_table_copy(sql_span.table_name, example)
     elif sql_span.nested_statement:
-      populate_example_from_sql_spans(sql_span.nested_statement, example)
+      successful_copy = populate_example_from_sql_spans(
+          sql_span.nested_statement, example) and successful_copy
     else:
       raise ParseError('Invalid SqlSpan: %s' % sql_span)
+  return successful_copy
 
 
 def _nested_statement_end_idx(sql_query, action_idx):
@@ -538,10 +546,13 @@ def populate_abstract_sql(example, sql_string, table_schemas):
     example: NLToSQLExample instance with utterance populated.
     sql_string: SQL query as string.
     table_schemas: List of TableSchema tuples.
+
+  Returns:
+    Successful copy.
   """
   sql_spans = abstract_sql.sql_to_sql_spans(sql_string, table_schemas)
   sql_spans = abstract_sql.replace_from_clause(sql_spans)
-  populate_example_from_sql_spans(sql_spans, example)
+  return populate_example_from_sql_spans(sql_spans, example)
 
 
 def restore_predicted_sql(sql_string, table_schemas, foreign_keys):

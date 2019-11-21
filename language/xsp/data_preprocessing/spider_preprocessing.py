@@ -20,6 +20,7 @@ from language.xsp.data_preprocessing.nl_to_sql_example import NLToSQLExample
 from language.xsp.data_preprocessing.nl_to_sql_example import populate_utterance
 from language.xsp.data_preprocessing.sql_parsing import populate_sql
 from language.xsp.data_preprocessing.sql_utils import preprocess_sql
+
 import sqlparse
 import tensorflow.gfile as gfile
 
@@ -85,7 +86,8 @@ def convert_spider(spider_example,
                    generate_sql,
                    anonymize_values,
                    abstract_sql=False,
-                   table_schemas=None):
+                   table_schemas=None,
+                   allow_value_generation=False):
   """Converts a Spider example to the standard format.
 
   Args:
@@ -96,6 +98,7 @@ def convert_spider(spider_example,
     anonymize_values: If True, anonymizes values in SQL.
     abstract_sql: If True, use under-specified FROM clause.
     table_schemas: required if abstract_sql, list of TableSchema tuples.
+    allow_value_generation: Allow value generation.
 
   Returns:
     NLToSQLExample instance.
@@ -113,12 +116,17 @@ def convert_spider(spider_example,
                      wordpiece_tokenizer)
 
   # Set the output
+  successful_copy = True
   if generate_sql:
     if abstract_sql:
-      abstract_sql_converters.populate_abstract_sql(example,
-                                                    spider_example['query'],
-                                                    table_schemas)
+      successful_copy = abstract_sql_converters.populate_abstract_sql(
+          example, spider_example['query'], table_schemas)
     else:
-      populate_sql(sql_query, example, anonymize_values)
+      successful_copy = populate_sql(sql_query, example, anonymize_values)
+
+  # If the example contained an unsuccessful copy action, and values should not
+  # be generated, then return an empty example.
+  if not successful_copy and not allow_value_generation:
+    return None
 
   return example
