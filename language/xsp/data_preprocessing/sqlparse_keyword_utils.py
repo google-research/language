@@ -40,7 +40,10 @@ def remove_bad_sqlparse_keywords():
       'CONNECTION', 'DATE', 'DOMAIN', 'HOST', 'LANGUAGE', 'LENGTH', 'LEVEL',
       'LOCATION', 'LONG', 'MATCH', 'MONTH', 'OWNER', 'POSITION', 'RESULT',
       'ROLE', 'SHARE', 'SHOW', 'SOURCE', 'START', 'TEXT', 'TYPE', 'UID', 'USER',
-      'YEAR', 'DAY', 'PARTIAL', 'BIT', 'PUBLIC', 'QUARTER', 'NATIONAL', 'OUT', 'CURRENT', 'METHOD', 'FREE', 'SECURITY', 'OF', 'FIRST', 'UNKNOWN', 'FORWARD', 'FINAL', 'ENGINE', 'RESET', 'NONE', 'HOUR', 'GENERAL', 'END', 'NO', 'ALL', 'PRIMARY', 'BOTH'
+      'YEAR', 'DAY', 'PARTIAL', 'BIT', 'PUBLIC', 'QUARTER', 'NATIONAL', 'OUT', 
+      'CURRENT', 'METHOD', 'FREE', 'SECURITY', 'OF', 'FIRST', 'UNKNOWN',
+      'FORWARD', 'FINAL', 'ENGINE', 'RESET', 'NONE', 'HOUR', 'GENERAL', 'END',
+      'NO', 'ALL', 'PRIMARY', 'BOTH'
   ]:
     if keyword in sqlparse.keywords.KEYWORDS:
       del sqlparse.keywords.KEYWORDS[keyword]

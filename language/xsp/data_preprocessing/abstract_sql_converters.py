@@ -546,6 +546,19 @@ def populate_abstract_sql(example, sql_string, table_schemas):
   """
   sql_spans = abstract_sql.sql_to_sql_spans(sql_string, table_schemas)
   sql_spans = abstract_sql.replace_from_clause(sql_spans)
+
+  # Sqlparse has a bug that allows values starting with certain characters.
+  # This removes such examples (we don't want this behavior).
+  # It also removes values that are not ASCII (which it also treats as
+  # tokens).
+  for span in sql_spans:
+    if span.sql_token:
+      if span.sql_token[0] in {'$', '#', '|'}:
+        return False
+      try:
+        span.sql_token.decode('ascii')
+      except UnicodeDecodeError:
+        return None
   return populate_example_from_sql_spans(sql_spans, example)
 
 
