@@ -134,8 +134,8 @@ def _parse_function(sql, example, anonymize_values):
   successful_copy = True
   for item in sql:
     if _is_parenthesis(item):
-      successful_copy = populate_sql(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = populate_sql(item, example,
+                                     anonymize_values) and successful_copy
       continue
     if _is_identifier(item) and item.value.lower() in ('count', 'avg', 'min',
                                                        'max', 'sum',
@@ -397,11 +397,13 @@ def _add_simple_value(item, example, anonymize):
   Args:
     item: A string value present in the SQL query.
     example: The NLToSQLExample being constructed.
-    anonymize: Whether to anonymize values
-        (i.e., replace them with a 'value' placeholder).
+    anonymize: Whether to anonymize values (i.e., replace them with a 'value'
+      placeholder).  Returns a boolean indicating whether the value could be
+      copied from the input.
 
-  Returns a boolean indicating whether the value could be copied from
-  the input."""
+  Returns:
+    Successful copy.
+  """
   if anonymize:
     example.gold_sql_query.actions.append(SQLAction(symbol='value'))
     return True
@@ -507,8 +509,8 @@ def _parse_identifier(sql, example, anonymize_values):
       continue
 
     if _is_identifier(item):
-      successful_copy = _parse_identifier(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = _parse_identifier(item, example,
+                                          anonymize_values) and successful_copy
       continue
 
     if _is_order(item):
@@ -550,8 +552,8 @@ def _parse_identifier(sql, example, anonymize_values):
 
     if _is_literal(item):
       prev_len = len(example.gold_sql_query.actions)
-      successful_copy = _add_simple_value(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = _add_simple_value(item, example,
+                                          anonymize_values) and successful_copy
       if len(example.gold_sql_query.actions) == prev_len:
         raise ValueError(
             'Gold query did not change length when adding simple value!')
@@ -570,8 +572,8 @@ def _parse_operation(sql, example, anonymize_values):
     if item.ttype == sqlparse.tokens.Text.Whitespace:
       continue
     if _is_identifier(item):
-      successful_copy = _parse_identifier(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = _parse_identifier(item, example,
+                                          anonymize_values) and successful_copy
       continue
     if _is_operator(item):
       _add_simple_step(item, example)
@@ -599,13 +601,13 @@ def _parse_identifier_list(sql, example, anonymize_values):
       continue
 
     if _is_identifier(item):
-      successful_copy = _parse_identifier(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = _parse_identifier(item, example,
+                                          anonymize_values) and successful_copy
       continue
 
     if _is_operation(item):
-      successful_copy = _parse_operation(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = _parse_operation(item, example,
+                                         anonymize_values) and successful_copy
       continue
     if _is_keyword(item) and item.value.lower() in ('count', 'avg', 'min',
                                                     'max', 'sum'):
@@ -625,34 +627,34 @@ def _parse_comparison(sql, example, anonymize_values):
     if item.ttype == sqlparse.tokens.Text.Whitespace:
       continue
     if _is_identifier(item):
-      successful_copy = _parse_identifier(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = _parse_identifier(item, example,
+                                          anonymize_values) and successful_copy
       continue
     if _is_comparison_operator(item):
       _add_simple_step(item, example)
       continue
     if _is_literal(item):
       prev_len = len(example.gold_sql_query.actions)
-      successful_copy = _add_simple_value(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = _add_simple_value(item, example,
+                                          anonymize_values) and successful_copy
       if len(example.gold_sql_query.actions) == prev_len:
         raise ValueError(
             'Gold query did not change length when adding simple value!')
       continue
 
     if _is_parenthesis(item):
-      successful_copy = populate_sql(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = populate_sql(item, example,
+                                     anonymize_values) and successful_copy
       continue
 
     if _is_function(item):
-      successful_copy = _parse_function(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = _parse_function(item, example,
+                                        anonymize_values) and successful_copy
       continue
 
     if _is_operation(item):
-      successful_copy = _parse_operation(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = _parse_operation(item, example,
+                                         anonymize_values) and successful_copy
       continue
 
     _debug_state(item, example)
@@ -673,8 +675,8 @@ def _parse_where(sql, example, anonymize_values):
       continue
 
     if _is_comparison(item):
-      successful_copy = _parse_comparison(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = _parse_comparison(item, example,
+                                          anonymize_values) and successful_copy
       continue
 
     if _is_comparison_operator(item):
@@ -682,8 +684,8 @@ def _parse_where(sql, example, anonymize_values):
       continue
 
     if _is_identifier(item):
-      successful_copy = _parse_identifier(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = _parse_identifier(item, example,
+                                          anonymize_values) and successful_copy
       continue
 
     if _is_identifier_list(item):
@@ -705,8 +707,8 @@ def _parse_where(sql, example, anonymize_values):
 
     if _is_integer(item):
       prev_len = len(example.gold_sql_query.actions)
-      successful_copy = _add_simple_value(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = _add_simple_value(item, example,
+                                          anonymize_values) and successful_copy
       if len(example.gold_sql_query.actions) == prev_len:
         raise ValueError(
             'Gold query did not change length when adding simple value!')
@@ -719,8 +721,8 @@ def _parse_where(sql, example, anonymize_values):
 
     if _is_literal(item):
       prev_len = len(example.gold_sql_query.actions)
-      successful_copy = _add_simple_value(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = _add_simple_value(item, example,
+                                          anonymize_values) and successful_copy
       if len(example.gold_sql_query.actions) == prev_len:
         raise ValueError(
             'Gold query did not change length when adding simple value!')
@@ -731,8 +733,8 @@ def _parse_where(sql, example, anonymize_values):
       continue
 
     if _is_parenthesis(item):
-      successful_copy = populate_sql(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = populate_sql(item, example,
+                                     anonymize_values) and successful_copy
       continue
 
     if _is_select(item) or _is_from(item):
@@ -774,8 +776,8 @@ def populate_sql(sql, example, anonymize_values):
       continue
 
     if _is_parenthesis(item):
-      successful_copy = populate_sql(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = populate_sql(item, example,
+                                     anonymize_values) and successful_copy
       continue
 
     if _is_wildcard(item):
@@ -787,18 +789,18 @@ def populate_sql(sql, example, anonymize_values):
       continue
 
     if _is_where(item):
-      successful_copy = _parse_where(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = _parse_where(item, example,
+                                     anonymize_values) and successful_copy
       continue
 
     if _is_function(item):
-      successful_copy = _parse_function(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = _parse_function(item, example,
+                                        anonymize_values) and successful_copy
       continue
 
     if _is_identifier(item):
-      successful_copy = _parse_identifier(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = _parse_identifier(item, example,
+                                          anonymize_values) and successful_copy
       continue
 
     if _is_identifier_list(item):
@@ -818,8 +820,8 @@ def populate_sql(sql, example, anonymize_values):
       continue
 
     if _is_operation(item):
-      successful_copy = _parse_operation(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = _parse_operation(item, example,
+                                         anonymize_values) and successful_copy
       continue
 
     if _is_keyword(item) and item.value.lower() in ('between', 'and', 'or'):
@@ -855,16 +857,16 @@ def populate_sql(sql, example, anonymize_values):
                                        1].symbol in ('limit', 'between',
                                                      'and')):
       prev_len = len(example.gold_sql_query.actions)
-      successful_copy = _add_simple_value(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = _add_simple_value(item, example,
+                                          anonymize_values) and successful_copy
       if len(example.gold_sql_query.actions) == prev_len:
         raise ValueError(
             'Gold query did not change length when adding simple value!')
       continue
 
     if _is_comparison(item):
-      successful_copy = _parse_comparison(
-          item, example, anonymize_values) and successful_copy
+      successful_copy = _parse_comparison(item, example,
+                                          anonymize_values) and successful_copy
       continue
 
     _debug_state(item, example)

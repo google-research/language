@@ -165,14 +165,17 @@ def populate_example_from_sql_spans(sql_spans, example):
 
   Raises:
     ParseError: if the SQL query can't be parsed.
+
+  Returns:
+    Successful copy.
   """
   successful_copy = True
   for sql_span in sql_spans:
     if sql_span.sql_token:
       _add_generate_action(sql_span.sql_token, example)
     elif sql_span.value_literal:
-      successful_copy = _add_value_literal(
-          sql_span.value_literal, example) and successful_copy
+      successful_copy = _add_value_literal(sql_span.value_literal,
+                                           example) and successful_copy
     elif sql_span.column:
       _add_column_copy(sql_span.column.table_name, sql_span.column.column_name,
                        example)
@@ -543,6 +546,9 @@ def populate_abstract_sql(example, sql_string, table_schemas):
     example: NLToSQLExample instance with utterance populated.
     sql_string: SQL query as string.
     table_schemas: List of TableSchema tuples.
+
+  Returns:
+    Successful copy.
   """
   sql_spans = abstract_sql.sql_to_sql_spans(sql_string, table_schemas)
   sql_spans = abstract_sql.replace_from_clause(sql_spans)

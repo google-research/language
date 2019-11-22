@@ -22,7 +22,6 @@ import os
 
 from absl import app
 from absl import flags
-import tensorflow.gfile as gfile
 
 from bert.tokenization import FullTokenizer
 from language.xsp.data_preprocessing import abstract_sql
@@ -35,6 +34,8 @@ from language.xsp.data_preprocessing.spider_preprocessing import load_spider_exa
 from language.xsp.data_preprocessing.spider_preprocessing import load_spider_tables
 from language.xsp.data_preprocessing.wikisql_preprocessing import convert_wikisql
 from language.xsp.data_preprocessing.wikisql_preprocessing import load_wikisql_tables
+
+import tensorflow.gfile as gfile
 
 FLAGS = flags.FLAGS
 
@@ -56,11 +57,12 @@ flags.DEFINE_bool('generate_sql', False,
 
 flags.DEFINE_bool('anonymize_values', False, 'Whether to anonymize values.')
 
-flags.DEFINE_bool('allow_value_generation', False,
-                  'Whether to allow query values (that should be copied from '
-                  'the input) to be produced through generation actions (i.e.,'
-                  ' not copied). If False, examples where copying actions '
-                  'cannot be determined will be thrown out.')
+flags.DEFINE_bool(
+    'allow_value_generation', False,
+    'Whether to allow query values (that should be copied from '
+    'the input) to be produced through generation actions (i.e.,'
+    ' not copied). If False, examples where copying actions '
+    'cannot be determined will be thrown out.')
 
 flags.DEFINE_bool(
     'abstract_sql', True,

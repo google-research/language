@@ -14,14 +14,15 @@
 # limitations under the License.
 """Contains functions for loading and preprocessing the Spider data."""
 import json
-import sqlparse
-import tensorflow.gfile as gfile
 
 from language.xsp.data_preprocessing import abstract_sql_converters
 from language.xsp.data_preprocessing.nl_to_sql_example import NLToSQLExample
 from language.xsp.data_preprocessing.nl_to_sql_example import populate_utterance
 from language.xsp.data_preprocessing.sql_parsing import populate_sql
 from language.xsp.data_preprocessing.sql_utils import preprocess_sql
+
+import sqlparse
+import tensorflow.gfile as gfile
 
 WRONG_TRAINING_EXAMPLES = {
     # In this query the SQL query mentions a ref_company_types table that is not
@@ -97,6 +98,7 @@ def convert_spider(spider_example,
     anonymize_values: If True, anonymizes values in SQL.
     abstract_sql: If True, use under-specified FROM clause.
     table_schemas: required if abstract_sql, list of TableSchema tuples.
+    allow_value_generation: Allow value generation.
 
   Returns:
     NLToSQLExample instance.
@@ -122,8 +124,8 @@ def convert_spider(spider_example,
     else:
       successful_copy = populate_sql(sql_query, example, anonymize_values)
 
-  # If the example contained an unsuccessful copy action, and values should not be
-  # generated, then return an empty example.
+  # If the example contained an unsuccessful copy action, and values should not
+  # be generated, then return an empty example.
   if not successful_copy and not allow_value_generation:
     return None
 
