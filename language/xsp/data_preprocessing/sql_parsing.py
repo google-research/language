@@ -705,7 +705,7 @@ def _parse_where(sql, example, anonymize_values):
 
     if _is_integer(item):
       prev_len = len(example.gold_sql_query.actions)
-      succesful_copy = _add_simple_value(
+      successful_copy = _add_simple_value(
           item, example, anonymize_values) and successful_copy
       if len(example.gold_sql_query.actions) == prev_len:
         raise ValueError(
