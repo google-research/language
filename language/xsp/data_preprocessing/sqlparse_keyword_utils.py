@@ -40,14 +40,22 @@ def remove_bad_sqlparse_keywords():
       'CONNECTION', 'DATE', 'DOMAIN', 'HOST', 'LANGUAGE', 'LENGTH', 'LEVEL',
       'LOCATION', 'LONG', 'MATCH', 'MONTH', 'OWNER', 'POSITION', 'RESULT',
       'ROLE', 'SHARE', 'SHOW', 'SOURCE', 'START', 'TEXT', 'TYPE', 'UID', 'USER',
-      'YEAR'
+      'YEAR', 'DAY', 'PARTIAL', 'BIT', 'PUBLIC', 'QUARTER', 'NATIONAL', 'OUT',
+      'CURRENT', 'METHOD', 'FREE', 'SECURITY', 'OF', 'FIRST', 'UNKNOWN',
+      'FORWARD', 'FINAL', 'ENGINE', 'RESET', 'NONE', 'HOUR', 'GENERAL', 'END',
+      'NO', 'ALL', 'PRIMARY', 'BOTH'
   ]:
     if keyword in sqlparse.keywords.KEYWORDS:
       del sqlparse.keywords.KEYWORDS[keyword]
   for oracle_keyword in [
-      'BLOCK', 'EVENTS', 'ROLES', 'SECTION', 'STATEMENT_ID', 'TIME', 'STOP'
+      'BLOCK', 'EVENTS', 'ROLES', 'SECTION', 'STATEMENT_ID', 'TIME', 'STOP',
+      'PRIVATE', 'RESTRICTED'
   ]:
     if oracle_keyword in sqlparse.keywords.KEYWORDS_ORACLE:
       del sqlparse.keywords.KEYWORDS_ORACLE[oracle_keyword]
-    if 'CHARACTER' in sqlparse.keywords.KEYWORDS_PLPGSQL:
-      del sqlparse.keywords.KEYWORDS_PLPGSQL['CHARACTER']
+  if 'CHARACTER' in sqlparse.keywords.KEYWORDS_PLPGSQL:
+    del sqlparse.keywords.KEYWORDS_PLPGSQL['CHARACTER']
+  if 'BOX' in sqlparse.keywords.KEYWORDS_PLPGSQL:
+    del sqlparse.keywords.KEYWORDS_PLPGSQL['BOX']
+  if 'END' in sqlparse.keywords.KEYWORDS_COMMON:
+    del sqlparse.keywords.KEYWORDS_COMMON['END']
