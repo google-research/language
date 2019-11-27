@@ -395,7 +395,24 @@ def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
       else:
         gold_results = cache_dict[gold_query]
 
-      correct_exec = pred_results == gold_results
+      if 'order by' in gold_query:
+        results_equivalent = pred_results == gold_results
+      else:
+        pred_set = set()
+        gold_set = set()
+        for pred in pred_results:
+          if isinstance(pred, list):
+            pred_set.add(' '.join([str(item) for item in pred]))
+          else:
+            pred_set.add(pred)
+        for gold in gold_results:
+          if isinstance(gold, list):
+            gold_set.add(' '.join([str(item) for item in gold]))
+          else:
+            gold_set.add(gold)
+
+        results_equivalent = pred_set == gold_set
+
     else:
       string_same.append(0.)
       ofile.write('Column F1: 0.')
@@ -406,27 +423,27 @@ def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
       conversion_errors += 1
 
       # Only consider correct if the gold table was empty.
-      correct_exec = gold_results == list()
+      results_equivalent = gold_results == list()
 
-    exec_results_same.append(int(correct_exec))
-    ofile.write('Execution was correct? ' + str(correct_exec) + '\n')
+    exec_results_same.append(int(results_equivalent))
+    ofile.write('Execution was correct? ' + str(results_equivalent) + '\n')
 
     # Add some debugging information about the tables, and compute the
     # precisions.
     if pred_results:
-      if pred_results != gold_results:
+      if not results_equivalent:
         ofile.write('Predicted table:\n')
         ofile.write(result_table_to_string(pred_results))
 
-      precision.append(int(pred_results == gold_results))
-    elif best_prediction is None or pred_results != gold_results:
+      precision.append(int(results_equivalent))
+    elif best_prediction is None or not results_equivalent:
       ofile.write('Predicted table was EMPTY!\n')
 
     if gold_results:
       ofile.write('Gold table:\n')
       ofile.write(result_table_to_string(gold_results))
 
-      recall.append(int(pred_results == gold_results))
+      recall.append(int(results_equivalent))
     else:
       ofile.write('Gold table was EMPTY!\n')
 
