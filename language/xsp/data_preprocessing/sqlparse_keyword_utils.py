@@ -40,7 +40,7 @@ def remove_bad_sqlparse_keywords():
       'CONNECTION', 'DATE', 'DOMAIN', 'HOST', 'LANGUAGE', 'LENGTH', 'LEVEL',
       'LOCATION', 'LONG', 'MATCH', 'MONTH', 'OWNER', 'POSITION', 'RESULT',
       'ROLE', 'SHARE', 'SHOW', 'SOURCE', 'START', 'TEXT', 'TYPE', 'UID', 'USER',
-      'YEAR', 'DAY', 'PARTIAL', 'BIT', 'PUBLIC', 'QUARTER', 'NATIONAL', 'OUT', 
+      'YEAR', 'DAY', 'PARTIAL', 'BIT', 'PUBLIC', 'QUARTER', 'NATIONAL', 'OUT',
       'CURRENT', 'METHOD', 'FREE', 'SECURITY', 'OF', 'FIRST', 'UNKNOWN',
       'FORWARD', 'FINAL', 'ENGINE', 'RESET', 'NONE', 'HOUR', 'GENERAL', 'END',
       'NO', 'ALL', 'PRIMARY', 'BOTH'
@@ -48,7 +48,8 @@ def remove_bad_sqlparse_keywords():
     if keyword in sqlparse.keywords.KEYWORDS:
       del sqlparse.keywords.KEYWORDS[keyword]
   for oracle_keyword in [
-      'BLOCK', 'EVENTS', 'ROLES', 'SECTION', 'STATEMENT_ID', 'TIME', 'STOP', 'PRIVATE', 'RESTRICTED'
+      'BLOCK', 'EVENTS', 'ROLES', 'SECTION', 'STATEMENT_ID', 'TIME', 'STOP',
+      'PRIVATE', 'RESTRICTED'
   ]:
     if oracle_keyword in sqlparse.keywords.KEYWORDS_ORACLE:
       del sqlparse.keywords.KEYWORDS_ORACLE[oracle_keyword]
