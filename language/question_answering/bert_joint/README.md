@@ -69,7 +69,8 @@ python -m language.question_answering.bert_joint.run_nq \
   --predict_file=tiny-dev/nq-dev-sample.no-annot.jsonl.gz \
   --init_checkpoint=bert-joint-baseline/bert_joint.ckpt \
   --do_predict \
-  --output_dir=bert_model_output
+  --output_dir=bert_model_output \
+  --output_prediction_file=bert_model_output/predictions.json
 
 python -m natural_questions.nq_eval \
   --logtostderr \
