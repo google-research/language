@@ -102,8 +102,18 @@ def try_executing_query(prediction, cursor, case_sensitive=True):
     if not case_sensitive:
       # TODO(alanesuhr): Verify that this correctly makes the query case-
       # insensitive for the Scholar domain.
-      prediction = prediction.replace(';', '')
-      prediction += ' COLLATE NOCASE;'
+      new_prediction = ''
+      last_quote = ''
+      for char in prediction:
+        new_prediction += char
+        if last_quote = '':
+          if char in {'"', '\''}:
+            last_quote = char
+        elif char == last_quote:
+          last_quote = ''
+          new_prediction += ' COLLATE NOCASE'
+      prediction = new_prediction
+
     cursor.execute(prediction)
     pred_results = cursor.fetchall()
     pred_results = [list(result) for result in pred_results]
