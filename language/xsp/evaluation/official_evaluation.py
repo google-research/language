@@ -90,7 +90,7 @@ def result_table_to_string(table):
   return string_val
 
 
-def try_executing_query(prediction, cursor, case_sensitive=True):
+def try_executing_query(prediction, cursor, case_sensitive=True, verbose=False):
   """Attempts to execute a SQL query against a database given a cursor."""
   exception_str = None
   signal.signal(signal.SIGALRM, timeout_handler)
@@ -102,8 +102,22 @@ def try_executing_query(prediction, cursor, case_sensitive=True):
     if not case_sensitive:
       # TODO(alanesuhr): Verify that this correctly makes the query case-
       # insensitive for the Scholar domain.
-      prediction = prediction.replace(';', '')
-      prediction += ' COLLATE NOCASE;'
+      new_prediction = ''
+      last_quote = ''
+      for char in prediction:
+        new_prediction += char
+        if not last_quote:
+          if char in {'"', '\''}:
+            last_quote = char
+        elif char == last_quote:
+          last_quote = ''
+          new_prediction += ' COLLATE NOCASE'
+      prediction = new_prediction
+
+      if verbose:
+        print('Executing case-insensitive query:')
+        print(new_prediction)
+
     cursor.execute(prediction)
     pred_results = cursor.fetchall()
     pred_results = [list(result) for result in pred_results]
@@ -216,7 +230,7 @@ def execute_prediction(prediction, empty_table_cursor, cursor, case_sensitive,
       print('Trying to execute query:\n\t' + pred)
       print('... on empty database')
     temp_exception_str = try_executing_query(pred, empty_table_cursor,
-                                             case_sensitive)[1]
+                                             case_sensitive, verbose)[1]
 
     if temp_exception_str:
       if i == 0:
@@ -228,7 +242,7 @@ def execute_prediction(prediction, empty_table_cursor, cursor, case_sensitive,
         if verbose:
           print('... on actual database')
         pred_results, exception_str = try_executing_query(
-            pred, cursor, case_sensitive)
+            pred, cursor, case_sensitive, verbose)
       if exception_str == 'timeout':
         # Technically, this query didn't have a syntax problem, so
         # continue and set this as the best prediction.
@@ -237,7 +251,7 @@ def execute_prediction(prediction, empty_table_cursor, cursor, case_sensitive,
         if verbose:
           print('... on actual database')
         pred_results, exception_str = try_executing_query(
-            pred, cursor, case_sensitive)
+            pred, cursor, case_sensitive, verbose)
         break
     else:
       best_prediction = pred
@@ -245,7 +259,8 @@ def execute_prediction(prediction, empty_table_cursor, cursor, case_sensitive,
 
       if verbose:
         print('... on actual database')
-      pred_results = try_executing_query(pred, cursor, case_sensitive)[0]
+      pred_results = try_executing_query(pred, cursor, case_sensitive,
+                                         verbose)[0]
       break
 
   return best_prediction, pred_results, exception_str
@@ -370,6 +385,22 @@ def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
     ofile.write('Gold query:\n')
     ofile.write('\t' + u''.join(gold_query).encode('utf-8').strip() + '\n')
 
+    # Compare the execution results
+    if cache_dict is None or gold_query not in cache_dict:
+      if verbose:
+        print('Trying to execute the gold query:\n\t' + gold_query)
+      gold_results, gold_exception_str = try_executing_query(
+          gold_query, cursor, case_sensitive, verbose)
+      if gold_exception_str:
+        gold_error += 1
+        gold_results = []
+
+      elif cache_dict is not None:
+        cache_dict[u''.join(gold_query).decode('utf-8')] = gold_results
+
+    else:
+      gold_results = cache_dict[gold_query]
+
     if best_prediction:
       string_same.append(string_acc(gold_query, best_prediction))
       col_f1, tab_f1 = col_tab_f1(prediction['schema'], gold_query,
@@ -378,22 +409,6 @@ def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
       table_f1s.append(tab_f1)
       ofile.write('Column F1: %f\n' % col_f1)
       ofile.write('Table F1: %f\n' % tab_f1)
-
-      # Compare the execution results
-      if cache_dict is None or gold_query not in cache_dict:
-        if verbose:
-          print('Trying to execute the gold query:\n\t' + gold_query)
-        gold_results, gold_exception_str = try_executing_query(
-            gold_query, cursor, case_sensitive)
-        if gold_exception_str:
-          gold_error += 1
-          gold_results = []
-
-        elif cache_dict is not None:
-          cache_dict[u''.join(gold_query).decode('utf-8')] = gold_results
-
-      else:
-        gold_results = cache_dict[gold_query]
 
       if 'order by' in gold_query:
         results_equivalent = pred_results == gold_results
