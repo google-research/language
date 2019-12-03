@@ -106,7 +106,7 @@ def try_executing_query(prediction, cursor, case_sensitive=True, verbose=False):
       last_quote = ''
       for char in prediction:
         new_prediction += char
-        if last_quote == '':
+        if not last_quote:
           if char in {'"', '\''}:
             last_quote = char
         elif char == last_quote:
@@ -259,7 +259,8 @@ def execute_prediction(prediction, empty_table_cursor, cursor, case_sensitive,
 
       if verbose:
         print('... on actual database')
-      pred_results = try_executing_query(pred, cursor, case_sensitive, verbose)[0]
+      pred_results = try_executing_query(pred, cursor, case_sensitive,
+                                         verbose)[0]
       break
 
   return best_prediction, pred_results, exception_str
@@ -393,13 +394,13 @@ def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
       if gold_exception_str:
         gold_error += 1
         gold_results = []
-  
+
       elif cache_dict is not None:
         cache_dict[u''.join(gold_query).decode('utf-8')] = gold_results
-  
+
     else:
       gold_results = cache_dict[gold_query]
-  
+
     if best_prediction:
       string_same.append(string_acc(gold_query, best_prediction))
       col_f1, tab_f1 = col_tab_f1(prediction['schema'], gold_query,
