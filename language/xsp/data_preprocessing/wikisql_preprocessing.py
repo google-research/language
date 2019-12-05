@@ -99,7 +99,7 @@ def convert_wikisql(input_example,
       try:
         if use_abstract_sql:
           successful_copy = abstract_sql_converters.populate_abstract_sql(
-              example, sql, tables_schema)
+              example, sql, tables_schema, anonymize_values)
         else:
           successful_copy = populate_sql(parsed_sql, example, anonymize_values)
       except (ParseError, ValueError, AssertionError, KeyError, IndexError,
