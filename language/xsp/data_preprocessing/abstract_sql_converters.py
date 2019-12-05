@@ -66,8 +66,12 @@ def _add_generate_action(token, example):
 
 
 # TODO(petershaw): De-duplicate with function from `sql_parsing.py`.
-def _add_value_literal(item_str, example):
+def _add_value_literal(item_str, example, anonymize):
   """Adds a value action to the output."""
+  if anonymize:
+    example.gold_sql_query.actions.append(SQLAction(symbol='value'))
+    return True
+
   # Add quotes if [1] there aren't quotes and [2] it's not numeric
   if not item_str.replace(
       '.', '',
@@ -156,12 +160,13 @@ def _add_value_literal(item_str, example):
   return item_str in VALID_GENERATED_TOKENS
 
 
-def populate_example_from_sql_spans(sql_spans, example):
+def populate_example_from_sql_spans(sql_spans, example, anonymize):
   """Creates a sequence of output / decoder actions from sql_spans.
 
   Args:
     sql_spans: List of SqlSpan tuples.
     example: The NLToSQLExample object to add output actions.
+    anonymize: Whether to anonymize string/numerical values.
 
   Raises:
     ParseError: if the SQL query can't be parsed.
@@ -175,7 +180,8 @@ def populate_example_from_sql_spans(sql_spans, example):
       _add_generate_action(sql_span.sql_token, example)
     elif sql_span.value_literal:
       successful_copy = _add_value_literal(sql_span.value_literal,
-                                           example) and successful_copy
+                                           example,
+                                           anonymize) and successful_copy
     elif sql_span.column:
       _add_column_copy(sql_span.column.table_name, sql_span.column.column_name,
                        example)
@@ -183,7 +189,7 @@ def populate_example_from_sql_spans(sql_spans, example):
       _add_table_copy(sql_span.table_name, example)
     elif sql_span.nested_statement:
       successful_copy = populate_example_from_sql_spans(
-          sql_span.nested_statement, example) and successful_copy
+          sql_span.nested_statement, example, anonymize) and successful_copy
     else:
       raise ParseError('Invalid SqlSpan: %s' % sql_span)
   return successful_copy
@@ -539,13 +545,14 @@ def spider_foreign_keys_map(schema):
   return {db['db_id']: spider_db_to_foreign_key_tuples(db) for db in schema}
 
 
-def populate_abstract_sql(example, sql_string, table_schemas):
+def populate_abstract_sql(example, sql_string, table_schemas, anonymize):
   """Populate SQL in example.
 
   Args:
     example: NLToSQLExample instance with utterance populated.
     sql_string: SQL query as string.
     table_schemas: List of TableSchema tuples.
+    anonymize: Whether to anonymize value literals.
 
   Returns:
     Successful copy.
@@ -565,7 +572,7 @@ def populate_abstract_sql(example, sql_string, table_schemas):
         span.sql_token.decode('ascii')
       except UnicodeDecodeError:
         return None
-  return populate_example_from_sql_spans(sql_spans, example)
+  return populate_example_from_sql_spans(sql_spans, example, anonymize)
 
 
 def restore_predicted_sql(sql_string, table_schemas, foreign_keys):
