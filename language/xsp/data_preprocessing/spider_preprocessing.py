@@ -120,7 +120,7 @@ def convert_spider(spider_example,
   if generate_sql:
     if abstract_sql:
       successful_copy = abstract_sql_converters.populate_abstract_sql(
-          example, spider_example['query'], table_schemas)
+          example, spider_example['query'], table_schemas, anonymize_values)
     else:
       successful_copy = populate_sql(sql_query, example, anonymize_values)
 
