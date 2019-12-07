@@ -179,8 +179,7 @@ def populate_example_from_sql_spans(sql_spans, example, anonymize):
     if sql_span.sql_token:
       _add_generate_action(sql_span.sql_token, example)
     elif sql_span.value_literal:
-      successful_copy = _add_value_literal(sql_span.value_literal,
-                                           example,
+      successful_copy = _add_value_literal(sql_span.value_literal, example,
                                            anonymize) and successful_copy
     elif sql_span.column:
       _add_column_copy(sql_span.column.table_name, sql_span.column.column_name,
