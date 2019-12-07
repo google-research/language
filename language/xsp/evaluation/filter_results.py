@@ -62,7 +62,8 @@ for example in examples[:-1]:
   numerical_value = ''
   handled_prefix = False
   too_many_selects = False
-  gold_query = example_lines[gold_query_idx]
+  gold_query = example_lines[gold_query_idx].strip()
+
   for i, char in enumerate(gold_query):
     # Check that it's only selecting a single table at the top
     if (not handled_prefix and i - 4 >= 0 and
@@ -75,6 +76,7 @@ for example in examples[:-1]:
       last_quote = ''
 
       prev_value = prev_value.replace('%', '')
+
       if prev_value not in utterance:
         copiable = False
 
@@ -85,7 +87,7 @@ for example in examples[:-1]:
     elif char in {'"', '\''}:
       last_quote = char
 
-    if char == '=':
+    if char in {'=', '>', '<'}:
       in_equality = True
 
     if in_equality:
