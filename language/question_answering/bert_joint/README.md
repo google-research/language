@@ -98,7 +98,7 @@ comparable to ours with the following command in a few hours, although you might
 need to further tune the learning rate between 1e-4 and 1e-5 and the number of
 train epochs between 1 and 3. In our paper we initialize our training from a
 BERT model trained on SQuAD2.0 and then finetune on NQ for only 1 epoch with a
-learning rate of 3e-5.
+learning rate of 5e-3.
 
 ```
 python -m language.question_answering.bert_joint.run_nq \
@@ -107,7 +107,7 @@ python -m language.question_answering.bert_joint.run_nq \
   --vocab_file=bert-joint-baseline/vocab-nq.txt \
   --train_precomputed=nq-train.tfrecords-00000-of-00001 \
   --train_num_precomputed=494670 \
-  --learning_rate=3e-5 \
+  --learning_rate=5e-3 \
   --num_train_epochs=1 \
   --max_seq_length=512 \
   --save_checkpoints_steps=5000 \
