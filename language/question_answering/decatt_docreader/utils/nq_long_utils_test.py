@@ -20,7 +20,7 @@ from __future__ import print_function
 
 from language.question_answering.decatt_docreader.utils import nq_long_utils
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class NqLongUtilsTest(tf.test.TestCase):

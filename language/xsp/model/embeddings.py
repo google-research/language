@@ -18,8 +18,8 @@ import math
 from language.xsp.model import bert_utils
 from language.xsp.model import common_layers
 from language.xsp.model import constants
-import tensorflow as tf
-import tensorflow.gfile as gfile
+import tensorflow.compat.v1 as tf
+import tensorflow.compat.v1.gfile as gfile
 
 # Added to avoid division by zero.
 EPSILON = 0.00000001

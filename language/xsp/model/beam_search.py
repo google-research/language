@@ -14,7 +14,7 @@
 # limitations under the License.
 """Implemetation of beam seach with penalties."""
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 # Default value for INF

@@ -23,7 +23,7 @@ from __future__ import print_function
 from language.common.layers import common_layers
 from language.common.utils import tensor_utils
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def decomposable_attention(emb1, len1, emb2, len2, hidden_size, hidden_layers,

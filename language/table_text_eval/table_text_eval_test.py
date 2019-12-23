@@ -17,7 +17,7 @@ from __future__ import division
 from __future__ import print_function
 
 from language.table_text_eval import table_text_eval
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 TEST_PREDS = [
     ["michael", "dahlquist", "(", "december", "22", ",", "1965", "--", "july",

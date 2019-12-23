@@ -35,7 +35,7 @@ from language.xsp.model import model_builder
 from language.xsp.model.model_config import load_config
 
 import sqlparse
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 FLAGS = flags.FLAGS
 

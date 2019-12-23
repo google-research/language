@@ -506,12 +506,14 @@ class NeuralQueryExpression(object):
     with tf.name_scope('tf_op'):
       return self.context.as_nql(py_fun(self.tf), self._type_name)
 
-  def eval(self,
-           session = None,
-           as_dicts = True,
-           as_top = 0,
-           simplify_unitsize_minibatch=True,
-           feed_dict = None):
+  def eval(
+      self,
+      session = None,
+      as_dicts = True,
+      as_top = 0,
+      simplify_unitsize_minibatch=True,
+      feed_dict = None
+  ):  # pytype: disable=invalid-annotation
     """Evaluate the Tensorflow expression associated with this NeuralQueryExpression.
 
     Args:

@@ -20,8 +20,8 @@ from __future__ import print_function
 import multiprocessing
 
 from language.xsp.model import constants
-import tensorflow as tf
-import tensorflow.gfile as gfile
+import tensorflow.compat.v1 as tf
+import tensorflow.compat.v1.gfile as gfile
 
 
 def get_source_len_fn(key):

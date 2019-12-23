@@ -18,7 +18,7 @@ from language.xsp.model import beam_search
 from language.xsp.model import common_layers
 from language.xsp.model import constants
 from language.xsp.model import decode_utils
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 # TODO(alanesuhr): Bias beam search based on sequence length.
 ALPHA = 0.0

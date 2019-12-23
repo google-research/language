@@ -19,9 +19,9 @@ from __future__ import division
 from __future__ import print_function
 
 import contextlib
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
-from tensorflow import summary
+from tensorflow.compat.v1 import summary
 
 
 def _tpu_summary_no_op(*args, **kwargs):
