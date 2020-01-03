@@ -27,7 +27,7 @@ from tensor2tensor.data_generators import text_encoder
 from tensor2tensor.utils import decoding
 from tensor2tensor.utils import t2t_model
 from tensor2tensor.utils import trainer_lib
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import learn as contrib_learn
 
 FLAGS = flags.FLAGS

@@ -20,7 +20,7 @@ from functools import partial  # pylint: disable=g-importing-member
 from language.labs.exemplar_decoding.utils.data import id2text
 from language.labs.exemplar_decoding.utils.data import SPECIAL_TOKENS
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def _safe_divide(x, y):

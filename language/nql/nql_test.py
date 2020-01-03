@@ -21,7 +21,7 @@ from language.nql import nql
 from language.nql import nql_test_lib
 import mock
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 cell = nql_test_lib.cell
 

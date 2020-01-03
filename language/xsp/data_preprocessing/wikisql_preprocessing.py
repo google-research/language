@@ -28,7 +28,7 @@ from language.xsp.data_preprocessing.sql_parsing import ParseError
 from language.xsp.data_preprocessing.sql_parsing import populate_sql
 from language.xsp.data_preprocessing.sql_utils import preprocess_sql
 import sqlparse
-import tensorflow.gfile as gfile
+import tensorflow.compat.v1.gfile as gfile
 
 
 def normalize_sql(sql, replace_period=True):

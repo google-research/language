@@ -19,7 +19,7 @@ from __future__ import print_function
 
 import math
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def linear_interpolation(t, minimum, maximum):

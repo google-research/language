@@ -20,7 +20,7 @@ from __future__ import print_function
 from absl import flags
 from language.common.utils import experiment_utils
 from language.question_answering.decatt_docreader.models import nq_short_pipeline_model
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 FLAGS = flags.FLAGS
 

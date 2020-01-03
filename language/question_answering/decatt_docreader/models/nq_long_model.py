@@ -27,7 +27,7 @@ from language.question_answering.decatt_docreader.datasets import nq_long_datase
 from language.question_answering.decatt_docreader.models import nq_long_decatt_model
 from language.question_answering.decatt_docreader.utils import nq_long_utils
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 flags.DEFINE_string("embeddings_path", None, "Path to pretrained embeddings.")
 flags.DEFINE_integer("max_vocab_size", 4000000, "Maximum vocab size.")

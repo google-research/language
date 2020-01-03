@@ -18,7 +18,7 @@ from __future__ import division
 from __future__ import print_function
 
 from language.boolq.utils import ops
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class OpsTest(tf.test.TestCase):

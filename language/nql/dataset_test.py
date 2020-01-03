@@ -17,7 +17,7 @@ import tempfile
 from language.nql import dataset
 from language.nql import nql
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 NP_NONE = np.array([0., 0., 0., 0., 0.])
 NP_A = np.array([1., 0., 0., 0., 0.])

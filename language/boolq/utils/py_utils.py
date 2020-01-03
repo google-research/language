@@ -19,7 +19,7 @@ from __future__ import print_function
 
 import os
 import pickle
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def flatten_list(iterable_of_lists):

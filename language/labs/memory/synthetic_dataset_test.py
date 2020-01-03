@@ -22,7 +22,7 @@ import random
 
 from language.labs.memory import synthetic_dataset
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class PatternDataTest(tf.test.TestCase):

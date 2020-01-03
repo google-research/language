@@ -42,7 +42,7 @@ from tensor2tensor import problems as problems_lib  # pylint: disable=unused-imp
 from tensor2tensor.data_generators import generator_utils
 from tensor2tensor.utils import registry
 from tensor2tensor.utils import usr_dir
-import tensorflow as tf  # pylint: disable=g-import-not-at-top
+import tensorflow.compat.v1 as tf  # pylint: disable=g-import-not-at-top
 
 # Improrting here to prevent pylint from ungrouped-imports warning.
 

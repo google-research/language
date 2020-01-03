@@ -21,7 +21,7 @@ from __future__ import print_function
 import os.path
 
 from language.common.utils import file_utils
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class BestSavedModelAndCheckpointExporter(tf.estimator.BestExporter):

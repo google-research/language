@@ -15,7 +15,7 @@
 """Tests for nql_symbol."""
 
 from language.nql import nql_symbol
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class TestSymbolTable(tf.test.TestCase):

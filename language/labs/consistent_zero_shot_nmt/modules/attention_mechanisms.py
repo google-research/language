@@ -19,7 +19,7 @@ from __future__ import division
 from __future__ import print_function
 
 from language.labs.consistent_zero_shot_nmt.utils import common_utils as U
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import seq2seq as contrib_seq2seq
 
 __all__ = [

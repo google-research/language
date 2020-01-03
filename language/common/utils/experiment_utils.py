@@ -19,7 +19,7 @@ from __future__ import print_function
 
 from absl import flags
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 flags.DEFINE_integer("batch_size", 16, "Batch size.")
 

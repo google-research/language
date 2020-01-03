@@ -21,7 +21,7 @@ from absl import flags
 from language.common.utils import tensor_utils
 from language.question_answering.decatt_docreader.layers import decomposable_attention as decatt
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 flags.DEFINE_integer("hidden_size", 400, "Hidden size.")
 

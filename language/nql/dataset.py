@@ -21,7 +21,7 @@ from __future__ import print_function
 
 from language.nql import nql
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 

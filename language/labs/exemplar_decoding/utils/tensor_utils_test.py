@@ -20,7 +20,7 @@ from __future__ import print_function
 
 from language.labs.exemplar_decoding.utils import tensor_utils
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class TensorUtilsTest(tf.test.TestCase):

@@ -24,7 +24,7 @@ import collections
 from language.labs.consistent_zero_shot_nmt.modules import base
 from language.labs.consistent_zero_shot_nmt.utils import common_utils as U
 from language.labs.consistent_zero_shot_nmt.utils import model_utils
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 __all__ = [

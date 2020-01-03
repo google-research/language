@@ -24,7 +24,7 @@ from language.nql import nql_io
 from language.nql import nql_symbol
 import numpy as np
 import scipy.sparse
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 

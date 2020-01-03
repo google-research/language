@@ -23,7 +23,7 @@ import unittest
 
 from language.common.layers import cudnn_layers
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 from tensorflow.python.platform import test
 

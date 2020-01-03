@@ -17,7 +17,7 @@
 import tempfile
 from language.nql import nql_io
 from language.nql import nql_symbol
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def _equal_sparse(a, b):

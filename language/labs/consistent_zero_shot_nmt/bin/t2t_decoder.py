@@ -46,7 +46,7 @@ from tensor2tensor.utils import decoding
 from tensor2tensor.utils import registry
 from tensor2tensor.utils import trainer_lib
 from tensor2tensor.utils import usr_dir
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 # This import triggers the decorations that register the problems.
 

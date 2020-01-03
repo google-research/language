@@ -22,7 +22,7 @@ from __future__ import print_function
 from language.nql import nql_symbol
 import numpy
 import scipy.sparse
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 

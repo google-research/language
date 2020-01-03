@@ -20,7 +20,7 @@ from __future__ import print_function
 from language.common.utils import experiment_utils
 from language.question_answering.decatt_docreader.models import nq_long_model
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def main(_):

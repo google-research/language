@@ -19,7 +19,7 @@ from __future__ import print_function
 
 from language.common.inputs import char_utils
 from language.common.utils import tensor_utils
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import layers as contrib_layers
 
 

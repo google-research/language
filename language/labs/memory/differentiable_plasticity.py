@@ -24,7 +24,7 @@ from __future__ import print_function
 
 from language.labs.memory.model_utils import layer_norm
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def rnn_differentiable_plasticity(seqs,

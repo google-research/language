@@ -29,7 +29,7 @@ from absl import flags
 import apache_beam as beam
 from language.xsp.data_preprocessing.nl_to_sql_example import NLToSQLExample
 from language.xsp.model.model_config import load_config
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 FLAGS = flags.FLAGS
 

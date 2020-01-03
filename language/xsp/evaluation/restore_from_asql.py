@@ -25,7 +25,7 @@ import json
 from language.xsp.data_preprocessing import abstract_sql
 from language.xsp.data_preprocessing import abstract_sql_converters
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def _load_json(filepath):

@@ -25,7 +25,7 @@ import language.labs.consistent_zero_shot_nmt.models.agreement  # pylint: disabl
 import language.labs.consistent_zero_shot_nmt.models.basic  # pylint: disable=unused-import
 import language.labs.consistent_zero_shot_nmt.utils.t2t_tweaks  # pylint: disable=unused-import
 from tensor2tensor.bin import t2t_trainer
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 # This import triggers the decorations that register the problems.
 
