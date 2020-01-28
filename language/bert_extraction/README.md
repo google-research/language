@@ -1,7 +1,6 @@
 # Model Extraction of BERT-based APIs
 
-This folder contains the original codebase used to conduct the experiments in
-the academic paper *[Thieves on Sesame Street! Model Extraction of BERT-based APIs](https://arxiv.org/abs/1910.12366)*.
+This folder contains the original codebase used to conduct the experiments in the ICLR 2020 paper *[Thieves on Sesame Street! Model Extraction of BERT-based APIs](https://arxiv.org/abs/1910.12366)*. The OpenReview discussion for this paper can be found [here](https://openreview.net/forum?id=Byl5NREFDr).
 
 ## Setup
 
@@ -20,11 +19,11 @@ Please find more details in [`steal_bert_qa/README.md`](steal_bert_qa/README.md)
 If you find this paper or codebase useful, please cite us.
 
 ```
-@article{krishna2019thieves,
+@inproceedings{krishna2020thieves,
   title={Thieves on Sesame Street! Model Extraction of BERT-based APIs},
   author={Krishna, Kalpesh and Tomar, Gaurav Singh and Parikh, Ankur P and Papernot, Nicolas and Iyyer, Mohit},
-  journal={arXiv preprint arXiv:1910.12366},
-  year={2019}
+  booktitle={International Conference on Learning Representations},
+  year={2020}
 }
 ```
 

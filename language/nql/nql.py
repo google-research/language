@@ -513,7 +513,7 @@ class NeuralQueryExpression(object):
       as_top = 0,
       simplify_unitsize_minibatch=True,
       feed_dict = None
-  ):  # pytype: disable=invalid-annotation
+  ):
     """Evaluate the Tensorflow expression associated with this NeuralQueryExpression.
 
     Args:

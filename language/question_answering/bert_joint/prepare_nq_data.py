@@ -55,7 +55,7 @@ flags.DEFINE_integer(
 
 def get_examples(input_jsonl_pattern):
   for input_path in tf.gfile.Glob(input_jsonl_pattern):
-    with gzip.GzipFile(fileobj=tf.gfile.Open(input_path)) as input_file:
+    with gzip.GzipFile(fileobj=tf.gfile.Open(input_path, "rb")) as input_file:
       for line in input_file:
         yield run_nq.create_example_from_jsonl(line)
 

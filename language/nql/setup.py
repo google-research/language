@@ -12,31 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Install projects from the Language Team."""
-import os
+"""Install Neural Query Language."""
+
 from setuptools import find_packages
 from setuptools import setup
 
-
-def read(fname):
-  return open(os.path.join(os.path.dirname(__file__), fname)).read()
-
-
 setup(
-    name="language",
+    name="nql",
     version="0.0.1.dev",
     packages=find_packages(),
-    description="Google AI Language.",
-    long_description=read("README.md"),
+    description="Neural Query Language",
     author="Google Inc.",
-    url="https://github.com/google-research/language",
+    author_email="no-reply@google.com",
+    url="https://github.com/google-research/language/tree/master/language/nql",
     license="Apache 2.0",
     install_requires=[
-        "tensorflow-gpu~=1.15.0",
+        "tensorflow-gpu",
     ],
-    extras_require={
-        "consistent-zero-shot-nmt": [
-            "tensorflow-probability==0.6.0",
-            "tensor2tensor==1.11.0",
-        ],
-    })
+)
