@@ -32,7 +32,6 @@ from language.labs.drkit import search_utils
 import numpy as np
 import scipy.sparse as sp
 import tensorflow.compat.v1 as tf
-from tensorflow.compat.v1.python import pywrap_tensorflow
 from tqdm import tqdm
 
 FLAGS = flags.FLAGS
@@ -374,7 +373,7 @@ def main(_):
       for i in shard_range:
         ckpt_path = os.path.join(FLAGS.multihop_output_dir,
                                  "mention_feats_%d" % i)
-        reader = pywrap_tensorflow.NewCheckpointReader(ckpt_path)
+        reader = tf.NewCheckpointReader(ckpt_path)
         var_to_shape_map = reader.get_variable_to_shape_map()
         tf.logging.info("Reading %s from %s with shape %s", "db_emb_%d" % i,
                         ckpt_path, str(var_to_shape_map["db_emb_%d" % i]))

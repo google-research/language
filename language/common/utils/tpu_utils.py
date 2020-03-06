@@ -21,7 +21,7 @@ from __future__ import division
 from __future__ import print_function
 
 from language.common.utils import tensor_utils
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 # pylint: disable=g-direct-tensorflow-import
 from tensorflow.python.tpu import tpu_function

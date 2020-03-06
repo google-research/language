@@ -12,13 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tests for nql."""
+"""Tests for NQL."""
 
 import pprint
 import tempfile
 
-from language.nql import nql
-from language.nql import nql_test_lib
+import nql
+from nql import nql_test_lib
 import mock
 import numpy as np
 import tensorflow.compat.v1 as tf
@@ -438,6 +438,7 @@ class TestOnGrid(tf.test.TestCase):
     all_cells = self.context.all('place_t')
     num_cells = tf.reduce_sum(input_tensor=all_cells.tf)
     num_black_cells = tf.reduce_sum(input_tensor=black_cells.tf)
+    self.session.run(self.context.get_initializers())
     self.assertEqual(self.session.run(num_cells), 17.0)
     self.assertEqual(self.session.run(num_black_cells), 8.0)
 
@@ -457,8 +458,12 @@ class TestOnGrid(tf.test.TestCase):
 
     x1 = self.context.one(cell(2, 2), 'place_t')
     x2 = self.context.one(cell(3, 2), 'place_t')
-    y1_vec = self.session.run(conditional_move1(x1).tf)
-    y2_vec = self.session.run(conditional_move1(x2).tf)
+    y1_tf = conditional_move1(x1).tf
+    y2_tf = conditional_move1(x2).tf
+    # Initialize variables after making the tensors, but before evaluating them.
+    self.session.run(self.context.get_initializers())
+    y1_vec = self.session.run(y1_tf)
+    y2_vec = self.session.run(y2_tf)
     d1 = self._as_dict(y1_vec, 'place_t')
     d2 = self._as_dict(y2_vec, 'place_t')
 

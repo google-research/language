@@ -20,7 +20,7 @@ from __future__ import print_function
 
 from bert import modeling
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def create_model(model, labels, label_types, num_choices, k_size=4):

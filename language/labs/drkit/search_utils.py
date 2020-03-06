@@ -27,7 +27,6 @@ import numpy as np
 import scipy.sparse as sp
 from sklearn.utils import murmurhash3_32
 import tensorflow.compat.v1 as tf
-from tensorflow.compat.v1.python import pywrap_tensorflow
 from tqdm import tqdm
 
 
@@ -253,7 +252,7 @@ def init_from_checkpoint(checkpoint_path,
 def load_database(var_name, shape, checkpoint_path, dtype=tf.float32):
   """Load variable from checkpoint."""
   if shape is None:
-    reader = pywrap_tensorflow.NewCheckpointReader(checkpoint_path)
+    reader = tf.NewCheckpointReader(checkpoint_path)
     var_to_shape_map = reader.get_variable_to_shape_map()
     shape = var_to_shape_map[var_name]
   tf_db = tf.get_local_variable(

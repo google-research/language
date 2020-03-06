@@ -17,9 +17,9 @@
 import os
 import tempfile
 
-from language.nql import dataset
-from language.nql import nql
-from language.nql import util
+import nql
+from nql import dataset
+from nql import util
 import numpy as np
 import tensorflow.compat.v1 as tf
 

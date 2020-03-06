@@ -19,7 +19,7 @@ from __future__ import division
 
 from __future__ import print_function
 
-from language.nql import nql_symbol
+from nql import symbol
 import numpy
 import scipy.sparse
 import tensorflow.compat.v1 as tf
@@ -141,7 +141,7 @@ def read_symbol_table_dict(input_file,
   """
   symbol_dict = _read_numpy_item(input_file)
   return {
-      type_name: nql_symbol.create_from_dict(symbol_table_dict)
+      type_name: symbol.create_from_dict(symbol_table_dict)
       for type_name, symbol_table_dict in symbol_dict.items()
       if not restrict_to or type_name in restrict_to
   }
@@ -150,7 +150,8 @@ def read_symbol_table_dict(input_file,
 def write_symbol_table_dict(
     output_file,
     symbol_table_dict,
-    restrict_to = ()):
+    restrict_to = ()
+):
   """Write a dictionary of SymbolTable values to a file.
 
   Args:

@@ -20,8 +20,8 @@ from __future__ import division
 
 from __future__ import print_function
 
-from language.nql import nql_io
-from language.nql import nql_symbol
+from nql import io
+from nql import symbol
 import numpy as np
 import scipy.sparse
 import tensorflow.compat.v1 as tf
@@ -364,8 +364,8 @@ class NeuralQueryExpression(object):
     """
     return self.weighted_by(rel_name, related_entity)
 
-  def weighted_by_sum(self, other
-                     ):
+  def weighted_by_sum(
+      self, other):
     """Weight elements in some set by the sum of the scores in some other set.
 
     Args:
@@ -500,20 +500,18 @@ class NeuralQueryExpression(object):
     """
     return self.context.none(type_name)
 
-  def tf_op(self, py_fun
-           ):
+  def tf_op(
+      self, py_fun):
     """Apply any shape-preserving function to the underlying expression."""
     with tf.name_scope('tf_op'):
       return self.context.as_nql(py_fun(self.tf), self._type_name)
 
-  def eval(
-      self,
-      session = None,
-      as_dicts = True,
-      as_top = 0,
-      simplify_unitsize_minibatch=True,
-      feed_dict = None
-  ):
+  def eval(self,
+           session = None,
+           as_dicts = True,
+           as_top = 0,
+           simplify_unitsize_minibatch=True,
+           feed_dict = None):
     """Evaluate the Tensorflow expression associated with this NeuralQueryExpression.
 
     Args:
@@ -564,13 +562,15 @@ class NeuralQueryContext(object):
     # symbol table for every type
     self._symtab = dict()
     # and a special symbol table for relation names
-    self._rel_name_symtab = nql_symbol.SymbolTable()
+    self._rel_name_symtab = symbol.SymbolTable()
     # map relation name to information like domain, range, ...
     self._declaration = dict()
     # sparse scipy matrix with initial values for each relation
     self._np_initval = dict()
     # cached out tensors for each relation
     self._cached_tensor = dict()
+    # intializers for all internal variables
+    self._initializers = []
     # factory class used when you convert to an expression
     # using as_nql - you can set this to a subclass
     # of NeuralQueryExpression if you, eg, want to
@@ -581,11 +581,12 @@ class NeuralQueryContext(object):
 
   # Basic API
 
-  def as_nql(self,
-             expr,
-             type_name,
-             provenance = None
-            ):
+  def as_nql(
+      self,
+      expr,
+      type_name,
+      provenance = None
+  ):
     """Convert a Tensorflow expression to a NeuralQueryExpression.
 
     Args:
@@ -618,8 +619,7 @@ class NeuralQueryContext(object):
             type(result))
       return result
 
-  def as_tf(self,
-            expr):
+  def as_tf(self, expr):
     """Convert a NeuralQueryExpression expression to a Tensorflow expression.
 
     If called on a Tensorflow expression, it will return expr unchanged.
@@ -665,12 +665,13 @@ class NeuralQueryContext(object):
     vals = [m.values[i] for i in range(nnz)]
     return dict(zip(keys, vals))
 
-  def as_top_k(self,
-               k,
-               matrix,
-               type_name,
-               simplify_unitsize_minibatch = True
-              ):
+  def as_top_k(
+      self,
+      k,
+      matrix,
+      type_name,
+      simplify_unitsize_minibatch = True
+  ):
     """Return top-k (entity-name, weight) tuples for each row of a matrix.
 
     Args:
@@ -822,7 +823,8 @@ class NeuralQueryContext(object):
     np_vec = self.zeros_numpy_array(type_name, as_matrix=True)
     return self.as_nql(np_vec, type_name, provenance)
 
-  def zeros_numpy_array(self, type_name,
+  def zeros_numpy_array(self,
+                        type_name,
                         as_matrix = True):
     """A zero valued row vector encoding this entity.
 
@@ -909,7 +911,7 @@ class NeuralQueryContext(object):
     """
     if type_name in self._symtab:
       raise TypeNameError(type_name, 'Type is already declared.')
-    symtab = self._symtab[type_name] = nql_symbol.SymbolTable()
+    symtab = self._symtab[type_name] = symbol.SymbolTable()
     if fixed_vocab:
       if fixed_vocab_size:
         raise ValueError(
@@ -961,15 +963,15 @@ class NeuralQueryContext(object):
                                                       dense)
     for type_name in [domain_type, range_type]:
       if type_name not in self._symtab:
-        self._symtab[type_name] = nql_symbol.SymbolTable()
+        self._symtab[type_name] = symbol.SymbolTable()
     self._rel_name_symtab.insert(rel_name)
 
-  def construct_relation_group(self,
-                               group_name,
-                               domain_type,
-                               range_type,
-                               group_members = None
-                              ):
+  def construct_relation_group(
+      self,
+      group_name,
+      domain_type,
+      range_type,
+      group_members = None):
     """Declare a group of relations.
 
     This must be called after all the triples for all the relations in the group
@@ -1175,12 +1177,7 @@ class NeuralQueryContext(object):
     Returns:
       a list of Tensorflow ops.
     """
-    result = []
-    for rel_name in self.get_relation_names():
-      p = self.get_underlying_parameter(rel_name)
-      if p is not None:
-        result.append(p.initializer)
-    return result
+    return self._initializers
 
   def is_relation(self, rel_name):
     """Test if the relation has been previously declared.
@@ -1239,7 +1236,7 @@ class NeuralQueryContext(object):
       instances: list of entity names to add to this type.
     """
     if type_name not in self._symtab:
-      self._symtab[type_name] = nql_symbol.SymbolTable()
+      self._symtab[type_name] = symbol.SymbolTable()
     for entity_name in instances:
       self._symtab[type_name].insert(entity_name)
 
@@ -1307,7 +1304,7 @@ class NeuralQueryContext(object):
       ValueError: If a line is formatted wrong.
     """
     with open(schema_file) as fp:
-      for line in nql_io.lines_in(fp):
+      for line in io.lines_in(fp):
         parts = line.strip().split('\t')
         if len(parts) != 3:
           raise ValueError('invalid type declaration %r' % line.strip())
@@ -1349,8 +1346,10 @@ class NeuralQueryContext(object):
     domain_buf = empty_buffer()
     range_buf = empty_buffer()
     data_buf = empty_buffer()
-    for lid, line in enumerate(nql_io.lines_in_all(files, lines)):
+    for lid, line in enumerate(io.lines_in_all(files, lines)):
       # format: relation entity1 entity2 [weight]
+      if isinstance(line, bytes):
+        line = line.decode('utf-8')
       parts = line.strip().split('\t')
       rel_name = parts[0]
       try:
@@ -1419,7 +1418,7 @@ class NeuralQueryContext(object):
         name: tensor
         for name, tensor in zip(trained_rels, session.run(sparse_tensors))
     }
-    nql_io.write_sparse_tensor_dict(output_file, trained_dict)
+    io.write_sparse_tensor_dict(output_file, trained_dict)
 
   def deserialize_trained(self, input_file):
     """Restore the current value of all trainable relations from a file.
@@ -1427,7 +1426,7 @@ class NeuralQueryContext(object):
     Args:
       input_file: Filename string or FileLike object.
     """
-    relation_dict = nql_io.read_sparse_matrix_dict(input_file)
+    relation_dict = io.read_sparse_matrix_dict(input_file)
     for name, relation in relation_dict.items():
       self.set_initial_value(name, relation)
 
@@ -1440,12 +1439,12 @@ class NeuralQueryContext(object):
       output_file: Filename string or FileLike object.
       restrict_to: If defined, a list of types to restrict to.
     """
-    nql_io.write_symbol_table_dict(output_file, self._symtab, restrict_to)
+    io.write_symbol_table_dict(output_file, self._symtab, restrict_to)
 
-  def deserialize_dictionaries(self,
-                               input_file,
-                               restrict_to = None
-                              ):
+  def deserialize_dictionaries(
+      self,
+      input_file,
+      restrict_to = None):
     """Restore all symbol tables from a file.
 
     Existing tables having the same type_name are overwritten.
@@ -1454,12 +1453,12 @@ class NeuralQueryContext(object):
       input_file: Filename string or FileLike object.
       restrict_to: If defined, a list of types to restrict to.
     """
-    for type_name, symbol_table in nql_io.read_symbol_table_dict(
+    for type_name, symbol_table in io.read_symbol_table_dict(
         input_file, restrict_to).items():
       self._symtab[type_name] = symbol_table
 
-  def get_initial_value(self, rel_name
-                       ):
+  def get_initial_value(
+      self, rel_name):
     """Return value that will be used to initialize a relation matrix.
 
     Args:
@@ -1513,11 +1512,10 @@ class NeuralQueryContext(object):
       m = self._np_initval[rel_name]
       n_rows, n_cols = m.shape
       if self.is_dense(rel_name):
-        if self.is_trainable(rel_name):
-          self._cached_tensor[rel_name] = tf.Variable(
-              m, trainable=True, name='nql/' + rel_name)
-        else:
-          self._cached_tensor[rel_name] = tf.constant(m)
+        self._cached_tensor[rel_name] = tf.Variable(
+            m, trainable=self.is_trainable(rel_name), name='nql/' + rel_name)
+        self._initializers.append(self._cached_tensor[rel_name].initializer)
+
       else:
         data_m = np.transpose(np.vstack([m.row, m.col]))
         if not self.is_trainable(rel_name):
@@ -1525,10 +1523,20 @@ class NeuralQueryContext(object):
         else:
           data_var_name = 'nql/%s_values' % rel_name
           data_var = tf.Variable(m.data, trainable=True, name=data_var_name)
+          self._initializers.append(data_var.initializer)
           sparse_tensor = tf.SparseTensor(data_m, data_var, [n_rows, n_cols])
           self._declaration[rel_name].underlying_parameter = data_var
-        self._cached_tensor[rel_name] = sparse_tensor
-    return self._cached_tensor[rel_name]  # pytype: disable=bad-return-type
+        self._cached_tensor[rel_name] = (sparse_tensor.indices,
+                                         sparse_tensor.values,
+                                         sparse_tensor.dense_shape)
+    if self.is_dense(rel_name):
+      return self._cached_tensor[rel_name]  # pytype: disable=bad-return-type
+    else:
+      return tf.SparseTensor(
+          indices=self._cached_tensor[rel_name][0],
+          values=self._cached_tensor[rel_name][1],
+          dense_shape=self._cached_tensor[rel_name][2],
+      )
 
   def _get_insert_id_if_unfrozen(self, entity_name,
                                  type_name):
@@ -1612,7 +1620,9 @@ class NeuralQueryContext(object):
       raise TypeNameError(type_name, 'Type is not defined.')
     return self._symtab[type_name].get_unk_id()
 
-  def query_kg(self, rel_name, entity_name,
+  def query_kg(self,
+               rel_name,
+               entity_name,
                as_object = False):
     """Simple method to query the KG, mainly for debugging.
 
@@ -1763,7 +1773,7 @@ class RelationGroup(object):
 class NQExprProvenance(object):
   """Information on how a NeuralQueryExpression was constructed.
 
-  Args:
+  Attributes:
     operation: A text description of the operation.
     inner: The nested operation.
     other: A secondary operation.

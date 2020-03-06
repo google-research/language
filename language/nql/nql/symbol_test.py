@@ -12,23 +12,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tests for nql_symbol."""
+"""Tests for symbol."""
 
-from language.nql import nql_symbol
+from nql import symbol
 import tensorflow.compat.v1 as tf
 
 
 class TestSymbolTable(tf.test.TestCase):
 
   def test_fixed_freeze_none(self):
-    tab = nql_symbol.SymbolTable()
+    tab = symbol.SymbolTable()
     for s in 'abcdefg':
       tab.insert(s)
     tab.freeze(unknown_marker=None)
     self.assertEqual(tab.get_id('Z'), None)
 
   def test_unk(self):
-    tab = nql_symbol.SymbolTable()
+    tab = symbol.SymbolTable()
     for s in 'abcdefg':
       tab.insert(s)
     self.assertEqual(tab.get_max_id(), 7)
@@ -46,7 +46,7 @@ class TestSymbolTable(tf.test.TestCase):
     self.assertEqual(tab.get_id('h'), 7)
 
   def test_padding(self):
-    tab = nql_symbol.SymbolTable()
+    tab = symbol.SymbolTable()
     for s in 'abcdefg':
       tab.insert(s)
     self.assertTrue(tab.has_id('a'))

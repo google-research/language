@@ -35,7 +35,7 @@ from language.labs.memory.model_utils import hamming_loss
 from language.labs.memory.model_utils import write_flags_to_file
 
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 # Dataset params
 flags.DEFINE_integer("num_examples", 100000, "Number of examples to train on.")

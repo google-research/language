@@ -12,11 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tests for nql_io."""
+"""Tests for io."""
 
 import tempfile
-from language.nql import nql_io
-from language.nql import nql_symbol
+from nql import io
+from nql import symbol
 import tensorflow.compat.v1 as tf
 
 
@@ -42,14 +42,14 @@ def _make_sparse_tensor_dict():
 def _make_symbol_table_dict():
   symbol_table_dict = {}
   type_name1 = 'type_safety'
-  symbol_table1 = nql_symbol.SymbolTable()
-  for symbol in 'abcdefghijklmnop':
-    symbol_table1.insert(symbol)
+  symbol_table1 = symbol.SymbolTable()
+  for s in 'abcdefghijklmnop':
+    symbol_table1.insert(s)
   symbol_table1.freeze()
   type_name2 = 'fancy_type'
-  symbol_table2 = nql_symbol.SymbolTable()
-  for symbol in '1234567890':
-    symbol_table2.insert(symbol)
+  symbol_table2 = symbol.SymbolTable()
+  for s in '1234567890':
+    symbol_table2.insert(s)
   symbol_table2.pad_to_vocab_size(20)
   symbol_table_dict[type_name1] = symbol_table1
   symbol_table_dict[type_name2] = symbol_table2
@@ -67,7 +67,7 @@ class NQLIOTest(tf.test.TestCase):
 
     Very basic test that creates two sparse tensors, serializes them,
     deserializes them, then compares them using the transformation
-    methods in nql_io.
+    methods in io.
 
     Args:
       use_fh: Boolean indicating usage of FileLike instead of Filename.
@@ -75,17 +75,17 @@ class NQLIOTest(tf.test.TestCase):
     sparse_tensor_dict = _make_sparse_tensor_dict()
     if use_fh:
       with open(self.filename, 'wb') as fh:
-        nql_io.write_sparse_tensor_dict(fh, sparse_tensor_dict)
+        io.write_sparse_tensor_dict(fh, sparse_tensor_dict)
       with open(self.filename, 'rb') as fh:
-        io_sparse_matrix_dict = nql_io.read_sparse_matrix_dict(fh)
+        io_sparse_matrix_dict = io.read_sparse_matrix_dict(fh)
     else:
-      nql_io.write_sparse_tensor_dict(self.filename, sparse_tensor_dict)
-      io_sparse_matrix_dict = nql_io.read_sparse_matrix_dict(self.filename)
+      io.write_sparse_tensor_dict(self.filename, sparse_tensor_dict)
+      io_sparse_matrix_dict = io.read_sparse_matrix_dict(self.filename)
     self.assertEqual(
         len(io_sparse_matrix_dict.keys()), len(sparse_tensor_dict.keys()))
     for rel_name, sparse_tensor in sparse_tensor_dict.items():
-      ref_sparse_matrix = nql_io._numpy_dict_to_sparse_matrix(
-          nql_io._sparse_tensor_to_numpy_dict(sparse_tensor))
+      ref_sparse_matrix = io._numpy_dict_to_sparse_matrix(
+          io._sparse_tensor_to_numpy_dict(sparse_tensor))
       io_sparse_matrix = io_sparse_matrix_dict[rel_name]
       self.assertTrue(_equal_sparse(io_sparse_matrix, ref_sparse_matrix))
 
@@ -99,7 +99,7 @@ class NQLIOTest(tf.test.TestCase):
     """Test full io pipeline on serializing relations.
 
     Very basic test that creates two symbol tables, serializes them,
-    deserializes them, then compares them using methods in nql_io.
+    deserializes them, then compares them using methods in io.
 
     Args:
       use_fh: Boolean indicating usage of FileLike instead of Filename.
@@ -107,12 +107,12 @@ class NQLIOTest(tf.test.TestCase):
     symbol_table_dict = _make_symbol_table_dict()
     if use_fh:
       with open(self.filename, 'wb') as fh:
-        nql_io.write_symbol_table_dict(fh, symbol_table_dict)
+        io.write_symbol_table_dict(fh, symbol_table_dict)
       with open(self.filename, 'rb') as fh:
-        io_symbol_table_dict = nql_io.read_symbol_table_dict(fh)
+        io_symbol_table_dict = io.read_symbol_table_dict(fh)
     else:
-      nql_io.write_symbol_table_dict(self.filename, symbol_table_dict)
-      io_symbol_table_dict = nql_io.read_symbol_table_dict(self.filename)
+      io.write_symbol_table_dict(self.filename, symbol_table_dict)
+      io_symbol_table_dict = io.read_symbol_table_dict(self.filename)
     for type_name in io_symbol_table_dict.keys():
       self.assertIn(type_name, symbol_table_dict)
     for type_name, t in symbol_table_dict.items():
@@ -123,8 +123,8 @@ class NQLIOTest(tf.test.TestCase):
       t_symbols = t.get_symbols()
       io_t_symbols = io_t.get_symbols()
       self.assertEqual(t_symbols, io_t_symbols)
-      for symbol in t_symbols:
-        self.assertEqual(t.get_id(symbol), io_t.get_id(symbol))
+      for s in t_symbols:
+        self.assertEqual(t.get_id(s), io_t.get_id(s))
 
   def test_serialize_symbol_table_dict_using_filenames(self):
     self._symbol_table_dict_roundtrip(False)
@@ -142,12 +142,12 @@ class NQLIOTest(tf.test.TestCase):
       restrict_read: A list of the restrict_to to use while reading.
       expected_output_types: A list of the types to expect returned.
     """
-    symbol_table_dict = {t: nql_symbol.SymbolTable() for t in input_types}
-    nql_io.write_symbol_table_dict(
+    symbol_table_dict = {t: symbol.SymbolTable() for t in input_types}
+    io.write_symbol_table_dict(
         self.filename,
         symbol_table_dict,
         restrict_to=[r for r in restrict_write])
-    io_symbol_table_dict = nql_io.read_symbol_table_dict(
+    io_symbol_table_dict = io.read_symbol_table_dict(
         self.filename, restrict_to=[r for r in restrict_read])
     io_output_types = ''.join(sorted(io_symbol_table_dict.keys()))
     self.assertEqual(io_output_types, expected_output_types)

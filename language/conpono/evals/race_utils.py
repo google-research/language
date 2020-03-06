@@ -27,7 +27,7 @@ from bert import optimization
 from bert import tokenization
 from language.conpono.evals.classifier_utils import InputFeatures
 from language.conpono.evals.classifier_utils import PaddingInputExample
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 from tensorflow.contrib import tpu as contrib_tpu
 

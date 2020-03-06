@@ -30,7 +30,7 @@ from bert import tokenization
 from language.conpono.cpc import model_builder
 from language.conpono.evals.coherence_eval import create_cpc_input_from_text
 from language.conpono.evals.coherence_eval import read_data
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver

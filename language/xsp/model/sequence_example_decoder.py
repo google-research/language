@@ -14,7 +14,7 @@
 # limitations under the License.
 """A decoder for tf.SequenceExample."""
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class TFSequenceExampleDecoder(tf.contrib.slim.data_decoder.DataDecoder):

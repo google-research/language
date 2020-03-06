@@ -15,7 +15,7 @@
 """Compare performance of a watermarked / nonwatermarked model on watermark."""
 
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 app = tf.compat.v1.app
 flags = tf.flags

@@ -20,7 +20,7 @@ from __future__ import print_function
 
 from bert import modeling
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import seq2seq as contrib_seq2seq
 
 

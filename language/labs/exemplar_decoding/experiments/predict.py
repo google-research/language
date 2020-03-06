@@ -21,7 +21,7 @@ from functools import partial
 from absl import flags
 import language.labs.exemplar_decoding.models.model_function as model_function
 import language.labs.exemplar_decoding.utils.data as data
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 flags.DEFINE_string("train_path", None, "Path to train examples.")
 

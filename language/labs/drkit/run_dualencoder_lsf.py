@@ -35,8 +35,11 @@ from bert import tokenization
 from language.labs.drkit import evaluate
 import numpy as np
 import six
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tqdm import tqdm
+from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver
+from tensorflow.contrib import data as contrib_data
+from tensorflow.contrib import layers as contrib_layers
 
 FLAGS = flags.FLAGS
 
@@ -1225,29 +1228,29 @@ def create_model(bert_config, qa_config, is_training, doc_input_ids,
 
   if qa_config.projection_dim is not None:
     with tf.variable_scope("projection"):
-      doc_hidden = tf.contrib.layers.fully_connected(
+      doc_hidden = contrib_layers.fully_connected(
           doc_hidden,
           qa_config.projection_dim,
           activation_fn=tf.nn.tanh,
           scope="doc_projection")
-      qry_start_emb = tf.contrib.layers.fully_connected(
+      qry_start_emb = contrib_layers.fully_connected(
           qry_start_emb,
           qa_config.projection_dim,
           activation_fn=tf.nn.tanh,
           scope="qry_projection")
-      qry_end_emb = tf.contrib.layers.fully_connected(
+      qry_end_emb = contrib_layers.fully_connected(
           qry_end_emb,
           qa_config.projection_dim,
           activation_fn=tf.nn.tanh,
           reuse=True,
           scope="qry_projection")
-      na_emb = tf.contrib.layers.fully_connected(
+      na_emb = contrib_layers.fully_connected(
           na_emb,
           qa_config.projection_dim,
           activation_fn=tf.nn.tanh,
           reuse=True,
           scope="doc_projection")
-      qry_bow_emb = tf.contrib.layers.fully_connected(
+      qry_bow_emb = contrib_layers.fully_connected(
           qry_bow_emb,
           qa_config.projection_dim,
           activation_fn=tf.nn.tanh,
@@ -1319,7 +1322,7 @@ def create_optimizer(loss, init_lr, num_train_steps, num_warmup_steps, use_tpu,
       exclude_from_weight_decay=["LayerNorm", "layer_norm", "bias"])
 
   if use_tpu:
-    optimizer = tf.contrib.tpu.CrossShardOptimizer(optimizer)
+    optimizer = tf.estimator.tpu.CrossShardOptimizer(optimizer)
 
   tvars = tf.trainable_variables()
   if exclude_bert:
@@ -1406,7 +1409,7 @@ def compute_bow_reconstruction_loss(hidden, word_emb, input_ids, input_mask,
   Returns:
     loss: (tf.float32) scalar
   """
-  hidden = tf.contrib.layers.fully_connected(
+  hidden = contrib_layers.fully_connected(
       hidden, word_emb_size, activation_fn=tf.nn.relu)
   input_onehot = _convert_ids_to_onehot(input_ids, input_mask, vocab_size)
   logits = tf.matmul(hidden, word_emb, transpose_b=True)
@@ -1555,7 +1558,7 @@ def model_fn_builder(bert_config,
                                   num_warmup_steps, use_tpu,
                                   not qa_config.train_bert)
 
-      output_spec = tf.contrib.tpu.TPUEstimatorSpec(
+      output_spec = tf.estimator.tpu.TPUEstimatorSpec(
           mode=mode,
           loss=total_loss,
           train_op=train_op,
@@ -1574,7 +1577,7 @@ def model_fn_builder(bert_config,
           "qry_en_features": qry_end,
           "qry_bow_features": qry_bow,
       }
-      output_spec = tf.contrib.tpu.TPUEstimatorSpec(
+      output_spec = tf.estimator.tpu.TPUEstimatorSpec(
           mode=mode, predictions=predictions, scaffold_fn=scaffold_fn)
     else:
       raise ValueError("Only TRAIN and PREDICT modes are supported: %s" %
@@ -1634,7 +1637,7 @@ def input_fn_builder(input_file, seq_length, qry_length, ent_length,
       d = d.shuffle(buffer_size=100)
 
     d = d.apply(
-        tf.contrib.data.map_and_batch(
+        contrib_data.map_and_batch(
             lambda record: _decode_record(record, name_to_features),
             batch_size=batch_size,
             drop_remainder=drop_remainder))
@@ -2367,16 +2370,16 @@ def main(_):
 
   tpu_cluster_resolver = None
   if FLAGS.use_tpu and FLAGS.tpu_name:
-    tpu_cluster_resolver = tf.contrib.cluster_resolver.TPUClusterResolver(
+    tpu_cluster_resolver = contrib_cluster_resolver.TPUClusterResolver(
         FLAGS.tpu_name, zone=FLAGS.tpu_zone, project=FLAGS.gcp_project)
 
-  is_per_host = tf.contrib.tpu.InputPipelineConfig.PER_HOST_V2
-  run_config = tf.contrib.tpu.RunConfig(
+  is_per_host = tf.estimator.tpu.InputPipelineConfig.PER_HOST_V2
+  run_config = tf.estimator.tpu.RunConfig(
       cluster=tpu_cluster_resolver,
       master=FLAGS.master,
       model_dir=FLAGS.output_dir,
       save_checkpoints_steps=FLAGS.save_checkpoints_steps,
-      tpu_config=tf.contrib.tpu.TPUConfig(
+      tpu_config=tf.estimator.tpu.TPUConfig(
           iterations_per_loop=FLAGS.iterations_per_loop,
           num_shards=FLAGS.num_tpu_cores,
           per_host_input_for_training=is_per_host))
@@ -2440,7 +2443,7 @@ def main(_):
 
   # If TPU is not available, this will fall back to normal Estimator on CPU
   # or GPU.
-  estimator = tf.contrib.tpu.TPUEstimator(
+  estimator = tf.estimator.tpu.TPUEstimator(
       use_tpu=FLAGS.use_tpu,
       model_fn=model_fn,
       config=run_config,

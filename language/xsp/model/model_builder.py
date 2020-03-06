@@ -27,7 +27,7 @@ from language.xsp.model import loss
 from language.xsp.model import metrics
 from language.xsp.model import tpu_utils
 from language.xsp.model import transformer
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def _compute_loss(logits, decode_steps, target_len, weights, output_vocab_size,

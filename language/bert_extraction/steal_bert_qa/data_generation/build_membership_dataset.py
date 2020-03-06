@@ -16,7 +16,7 @@
 import json
 import random
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 app = tf.compat.v1.app
 flags = tf.flags

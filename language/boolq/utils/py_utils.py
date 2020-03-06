@@ -19,6 +19,9 @@ from __future__ import print_function
 
 import os
 import pickle
+import six
+from six.moves import range
+from six.moves import zip
 import tensorflow.compat.v1 as tf
 
 
@@ -41,10 +44,10 @@ def transpose_lists(lsts):
 
 def ensure_unicode(x):
   """Convert `x` to unicode, if it is not unicode already."""
-  if isinstance(x, unicode):
+  if isinstance(x, six.text_type):
     return x
   else:
-    return unicode(str(x), "utf8")
+    return six.text_type(str(x), "utf8")
 
 
 def print_table(table):

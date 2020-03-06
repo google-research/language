@@ -20,7 +20,7 @@ from functools import partial  # pylint: disable=g-importing-member
 import re
 
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 SEPARATOR = "</h>"
 SENTENCE_START = "<s>"

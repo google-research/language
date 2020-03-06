@@ -28,7 +28,7 @@ from bert import tokenization
 from language.conpono.create_pretrain_data.preprocessing_utils import convert_instance_to_tf_example
 from language.conpono.create_pretrain_data.preprocessing_utils import create_instances_from_document
 from language.conpono.create_pretrain_data.preprocessing_utils import create_paragraph_order_from_document
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 FORMAT_BINARY = "binary"
 FORMAT_PARAGRAPH = "paragraph"

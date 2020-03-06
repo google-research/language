@@ -29,7 +29,7 @@ from language.conpono.cpc.preproc.preprocessing_utils import convert_instance_to
 from language.conpono.cpc.preproc.preprocessing_utils import create_instances_from_document
 from language.conpono.cpc.preproc.preprocessing_utils import LONG_CTX
 from language.conpono.cpc.preproc.preprocessing_utils import ONE_SENT_CTX
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 flags.DEFINE_string(

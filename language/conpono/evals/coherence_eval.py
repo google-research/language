@@ -27,7 +27,7 @@ from bert import modeling
 from bert import tokenization
 import numpy as np
 from scipy import stats
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 FLAGS = flags.FLAGS

@@ -25,7 +25,7 @@ from bert import modeling
 from bert import optimization
 from bert import tokenization
 from language.conpono.evals import model_builder
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver

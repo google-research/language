@@ -21,7 +21,7 @@ from functools import partial  # pylint: disable=g-importing-member
 import language.labs.exemplar_decoding.models.adam as adam
 from language.labs.exemplar_decoding.models.hyperlstm import HyperLSTMCell
 from language.labs.exemplar_decoding.utils.data import id2text
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def dimension_value(dimension):

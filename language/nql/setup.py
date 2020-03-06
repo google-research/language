@@ -28,5 +28,8 @@ setup(
     license="Apache 2.0",
     install_requires=[
         "tensorflow-gpu",
+        "scipy",
+        "mock",
+        "numpy",
     ],
 )

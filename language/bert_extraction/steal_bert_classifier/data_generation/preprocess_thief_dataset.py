@@ -17,7 +17,7 @@ import random
 
 from bert_extraction.steal_bert_classifier.data_generation import preprocess_util as pp_util
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import tqdm
 
 app = tf.compat.v1.app

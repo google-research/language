@@ -14,8 +14,8 @@
 # limitations under the License.
 import tempfile
 
-from language.nql import dataset
-from language.nql import nql
+import nql
+from nql import dataset
 import numpy as np
 import tensorflow.compat.v1 as tf
 

@@ -19,7 +19,7 @@ from __future__ import print_function
 
 import json
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import tqdm
 
 app = tf.compat.v1.app

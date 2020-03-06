@@ -33,7 +33,7 @@ from language.conpono.cpc.preproc.preprocessing_utils import LONG_CTX
 from language.conpono.cpc.preproc.preprocessing_utils import ONE_SENT_CTX
 import nltk
 from nltk.tokenize import sent_tokenize
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 flags.DEFINE_string("input_file", None, "Path to raw input files.")

@@ -28,7 +28,7 @@ from bert import modeling
 from bert import optimization
 from bert import tokenization
 import six
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver

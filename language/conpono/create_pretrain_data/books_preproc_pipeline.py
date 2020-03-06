@@ -32,7 +32,7 @@ from language.conpono.create_pretrain_data.preprocessing_utils import create_ins
 from language.conpono.create_pretrain_data.preprocessing_utils import create_paragraph_order_from_document
 import nltk
 from nltk.tokenize import sent_tokenize
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 FORMAT_BINARY = "binary"

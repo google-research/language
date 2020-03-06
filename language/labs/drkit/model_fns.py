@@ -21,7 +21,8 @@ from __future__ import print_function
 
 from bert import modeling
 from language.labs.drkit import search_utils
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+from tensorflow.contrib import layers as contrib_layers
 
 DEFAULT_VALUE = -10000.
 
@@ -466,7 +467,7 @@ def follow(batch_entities,
   batch_bow_emb.set_shape([None, hidden_size])
   if qa_config.projection_dim is not None:
     with tf.variable_scope("projection"):
-      batch_bow_emb = tf.contrib.layers.fully_connected(
+      batch_bow_emb = contrib_layers.fully_connected(
           batch_bow_emb,
           qa_config.projection_dim,
           activation_fn=tf.nn.tanh,
@@ -735,13 +736,13 @@ def layer_qry_encoder(qry_seq_emb,
 
   if project and qa_config.projection_dim is not None:
     with tf.variable_scope("projection"):
-      qry_start_emb = tf.contrib.layers.fully_connected(
+      qry_start_emb = contrib_layers.fully_connected(
           qry_start_emb,
           qa_config.projection_dim,
           activation_fn=tf.nn.tanh,
           reuse=tf.AUTO_REUSE,
           scope="qry_projection")
-      qry_end_emb = tf.contrib.layers.fully_connected(
+      qry_end_emb = contrib_layers.fully_connected(
           qry_end_emb,
           qa_config.projection_dim,
           activation_fn=tf.nn.tanh,

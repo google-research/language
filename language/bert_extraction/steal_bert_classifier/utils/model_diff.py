@@ -23,7 +23,7 @@ from bert import tokenization
 
 from bert_extraction.steal_bert_classifier.models import run_classifier
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 flags = tf.flags
 

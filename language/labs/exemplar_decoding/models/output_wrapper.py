@@ -19,7 +19,7 @@ from __future__ import print_function
 from language.labs.exemplar_decoding.models.common import sparse_batched_matmul
 from language.labs.exemplar_decoding.models.linear import Linear
 from language.labs.exemplar_decoding.utils import tensor_utils
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 _BIAS_VARIABLE_NAME = "bias"
 _WEIGHTS_VARIABLE_NAME = "kernel"
 

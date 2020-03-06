@@ -25,7 +25,7 @@ from language.labs.exemplar_decoding.models.common import sparse_tile_batch
 from language.labs.exemplar_decoding.models.output_wrapper import OutputWrapper
 from language.labs.exemplar_decoding.utils import tensor_utils
 import language.labs.exemplar_decoding.utils.data as data
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 EncoderOutputs = namedtuple(
     "EncoderOutputs",

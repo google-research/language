@@ -27,7 +27,7 @@ from bert import optimization
 from bert import tokenization
 from language.conpono.cpc import bilin_model_builder
 from language.conpono.reconstruct import preprocess as ip
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver

@@ -26,7 +26,7 @@ from __future__ import print_function
 
 from absl import flags
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 flags.DEFINE_string("nq_long_train_pattern", None,
                     "Path to NQ long answer training data.")
