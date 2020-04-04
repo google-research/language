@@ -17,11 +17,12 @@
 import pprint
 import tempfile
 
+from absl import logging
 import nql
 from nql import nql_test_lib
 import mock
 import numpy as np
-import tensorflow.compat.v1 as tf
+import tensorflow.compat.v2 as tf
 
 cell = nql_test_lib.cell
 
@@ -97,7 +98,7 @@ class TestDeclaredTypes(tf.test.TestCase):
       self.context.as_nql(tf_expr, 'vowel_t')
 
   def test_as_nql_with_wrong_rank(self):
-    tf_expr = tf.placeholder(tf.float32, shape=(None, None, None))
+    tf_expr = tf.constant([[[0]]])
     self.context.declare_entity_type('vowel_t', fixed_vocab='aeiou')
     with self.assertRaises(ValueError):
       self.context.as_nql(tf_expr, 'vowel_t')
@@ -237,14 +238,9 @@ class TestOnGrid(tf.test.TestCase):
   def setUp(self):
     super(TestOnGrid, self).setUp()
     self.context = nql_test_lib.make_grid()
-    self.session = tf.Session()
-
-  def tearDown(self):
-    super(TestOnGrid, self).tearDown()
-    tf.reset_default_graph()
 
   def test_problematic_relation_name(self):
-    with mock.patch.object(tf.logging, 'warn') as mocked_log:
+    with mock.patch.object(logging, 'warn') as mocked_log:
       self.context.declare_relation('follow', 'place_t', 'place_t')
       self.context.declare_relation('tf', 'place_t', 'place_t')
       mocked_log.assert_called()
@@ -263,8 +259,7 @@ class TestOnGrid(tf.test.TestCase):
     for (d, (i, j)) in zip('nsew', [(1, 2), (3, 2), (2, 3), (2, 1)]):
       mat = self.context.get_tf_tensor(d)
       y_vec = tf.transpose(
-          a=tf.sparse.sparse_dense_matmul(mat, tf.transpose(a=x.tf))).eval(
-              session=self.session)
+          a=tf.sparse.sparse_dense_matmul(mat, tf.transpose(a=x.tf)))
       self.assertEqual(self._vec2cell(y_vec), cell(i, j))
 
   def test_grid_context(self):
@@ -272,7 +267,7 @@ class TestOnGrid(tf.test.TestCase):
     x = self.context.one(cell(2, 2), 'place_t')
     for (d, (i, j)) in zip('nsew', [(1, 2), (3, 2), (2, 3), (2, 1)]):
       y = x.follow(d)
-      y_vec = self.session.run(y.tf)
+      y_vec = y.tf
       self.assertEqual(self._vec2cell(y_vec), cell(i, j))
 
   def test_frozen_grid_context(self):
@@ -280,7 +275,7 @@ class TestOnGrid(tf.test.TestCase):
     x = self.context.one(cell(2, 2), 'place_t')
     for (d, (i, j)) in zip('nsew', [(1, 2), (3, 2), (2, 3), (2, 1)]):
       y = x.follow(d)
-      y_vec = self.session.run(y.tf)
+      y_vec = y.tf
       self.assertEqual(self._vec2cell(y_vec), cell(i, j))
 
   def test_or(self):
@@ -289,7 +284,7 @@ class TestOnGrid(tf.test.TestCase):
     def near(x):
       return x.follow('n') + x.follow('s') + x.follow('e') + x.follow('w')
 
-    y_vec = self.session.run(near(x).tf)
+    y_vec = near(x).tf
     self._check_2_2_neighbors(y_vec)
 
   def _check_2_2_neighbors(self, y_vec):
@@ -306,39 +301,32 @@ class TestOnGrid(tf.test.TestCase):
     def near(x):
       return x.follow('n') + x.follow('s') + x.follow('e') + x.follow('w')
 
-    y_vec = near(x).eval(session=self.session, as_dicts=False)
-    with self.session.as_default():
-      y_vec = near(x).eval(as_dicts=False)
+    y_vec = near(x).eval(as_dicts=False)
     self._check_2_2_neighbors(y_vec)
     # test the dictionary bit
-    y_dict = near(x).eval(self.session)
+    y_dict = near(x).eval()
     for i, j in [(1, 2), (3, 2), (2, 3), (2, 1)]:
       self.assertIn(cell(i, j), y_dict)
     self.assertEqual(len(y_dict), 4)
 
-    x.eval(self.session)
-    near(x).eval(self.session)
+    x.eval()
+    near(x).eval()
 
-    w = self.context.placeholder('w', 'place_t')
-    near_w = (w.n() | w.s())
-    two_hop_w = (near_w.e() | near_w.w())
-    val = x.eval(self.session, as_dicts=False)
-    near_w.eval(self.session, feed_dict={w.name: val})
-    two_hop_w.eval(self.session, feed_dict={w.name: val})
+    near_x = (x.n() | x.s())
+    near_x.eval()
 
     # make sure weights work
-
     def lr_near(x):
       return near(x).weighted_by('distance_to', 'ul')
 
-    y_dict = lr_near(x).eval(session=self.session)
+    y_dict = lr_near(x).eval()
     self._check_lr_near_2_2(y_dict)
 
   def test_weighted_by(self):
     x = self.context.one(cell(2, 2), 'place_t')
     near_x = x.follow('n') + x.follow('s') + x.follow('e') + x.follow('w')
     lr_near_x = near_x.weighted_by('distance_to', 'ul')
-    y_vec = self.session.run(lr_near_x.tf)
+    y_vec = lr_near_x.tf.numpy()
     y_dict = self._as_dict(y_vec, 'place_t')
     self._check_lr_near_2_2(y_dict)
 
@@ -368,7 +356,7 @@ class TestOnGrid(tf.test.TestCase):
     # softmax should split most of the weight between 2, 3 and 3,2
 
     sm = nql.nonneg_softmax(lr_near(x).tf)
-    sm_list = self.context.as_dicts(self.session.run(sm), 'place_t')
+    sm_list = self.context.as_dicts(sm.numpy(), 'place_t')
     for i in range(len(sm_list)):
       self.assertAllInRange(sm_list[i][cell(2, 3)], 0.4, 0.5)
       self.assertAllInRange(sm_list[i][cell(3, 2)], 0.4, 0.5)
@@ -379,10 +367,15 @@ class TestOnGrid(tf.test.TestCase):
     offtarget_nq = (self.context.one(cell(2, 1), 'place_t')
                     | self.context.one(cell(2, 2), 'place_t')) * 0.5
     high_loss = nql.nonneg_crossentropy(sm, offtarget_nq.tf)
-    lo = self.session.run(low_loss)
-    hi = self.session.run(high_loss)
-    self.assertAllInRange(lo, 0.5, 2.0)
-    self.assertAllInRange(hi, 5.0, 15.0)
+    self.assertAllInRange(low_loss.numpy(), 0.5, 2.0)
+    self.assertAllInRange(high_loss.numpy(), 5.0, 15.0)
+
+  def _as_dict(self, vec, type_name):
+    result = {}
+    entity_ids = np.nonzero(vec)[1].tolist()
+    for i in entity_ids:
+      result[self.context.get_entity_name(i, type_name)] = vec[0, i]
+    return result
 
   def _check_lr_near_2_2(self, y_dict):
     self.assertAlmostEqual(y_dict['cell_1_2'], 3.0, delta=0.0001)
@@ -395,26 +388,26 @@ class TestOnGrid(tf.test.TestCase):
     x = self.context.one(cell(2, 2), 'place_t')
     for (d1, d2) in zip('nsew', 'snwe'):
       y = x.follow(d1).follow(d2)
-      y_vec = self.session.run(y.tf)
+      y_vec = y.tf.numpy()
       self.assertEqual(self._vec2cell(y_vec), cell(2, 2))
     for d in 'nsew':
       y = x.follow(d).follow(d, -1)
-      y_vec = self.session.run(y.tf)
+      y_vec = y.tf.numpy()
       self.assertEqual(self._vec2cell(y_vec), cell(2, 2))
     y = x.follow('n').follow('e').follow('s').follow('w')
-    y_vec = self.session.run(y.tf)
+    y_vec = y.tf.numpy()
     self.assertEqual(self._vec2cell(y_vec), cell(2, 2))
 
   def test_grid_reflection(self):
     x = self.context.one(cell(2, 2), 'place_t')
     y = x.n().s()
-    y_vec = self.session.run(y.tf)
+    y_vec = y.tf.numpy()
     self.assertEqual(self._vec2cell(y_vec), cell(2, 2))
     y = x.e().w()
-    y_vec = self.session.run(y.tf)
+    y_vec = y.tf.numpy()
     self.assertEqual(self._vec2cell(y_vec), cell(2, 2))
     y = x.n().n(-1)
-    y_vec = self.session.run(y.tf)
+    y_vec = y.tf.numpy()
     self.assertEqual(self._vec2cell(y_vec), cell(2, 2))
 
   def test_factory(self):
@@ -427,8 +420,8 @@ class TestOnGrid(tf.test.TestCase):
     old_class = self.context.expression_factory_class
     self.context.expression_factory_class = MyExpression
     x = self.context.one(cell(2, 2), 'place_t')
-    y1 = x.n().e().eval(session=self.session)
-    y2 = x.ne().eval(session=self.session)
+    y1 = x.n().e().eval()
+    y2 = x.ne().eval()
     self.context.expression_factory_class = old_class
     self.assertEqual(y1, y2)
 
@@ -438,11 +431,17 @@ class TestOnGrid(tf.test.TestCase):
     all_cells = self.context.all('place_t')
     num_cells = tf.reduce_sum(input_tensor=all_cells.tf)
     num_black_cells = tf.reduce_sum(input_tensor=black_cells.tf)
-    self.session.run(self.context.get_initializers())
-    self.assertEqual(self.session.run(num_cells), 17.0)
-    self.assertEqual(self.session.run(num_black_cells), 8.0)
+    self.assertEqual(num_cells.numpy(), 17.0)
+    self.assertEqual(num_black_cells.numpy(), 8.0)
 
   def test_grid_conditionals(self):
+
+    def check_dicts(d1, d2):
+      self.assertEqual(len(d1), 1)
+      self.assertEqual(len(d2), 1)
+      self.assertIn(cell(1, 2), d1)
+      self.assertIn(cell(3, 3), d2)
+
     go_north = lambda x: x.follow('n')
     go_east = lambda x: x.follow('e')
 
@@ -460,25 +459,13 @@ class TestOnGrid(tf.test.TestCase):
     x2 = self.context.one(cell(3, 2), 'place_t')
     y1_tf = conditional_move1(x1).tf
     y2_tf = conditional_move1(x2).tf
-    # Initialize variables after making the tensors, but before evaluating them.
-    self.session.run(self.context.get_initializers())
-    y1_vec = self.session.run(y1_tf)
-    y2_vec = self.session.run(y2_tf)
-    d1 = self._as_dict(y1_vec, 'place_t')
-    d2 = self._as_dict(y2_vec, 'place_t')
-
-    def check_dicts(d1, d2):
-      self.assertEqual(len(d1), 1)
-      self.assertEqual(len(d2), 1)
-      self.assertIn(cell(1, 2), d1)
-      self.assertIn(cell(3, 3), d2)
+    d1 = self._as_dict(y1_tf.numpy(), 'place_t')
+    d2 = self._as_dict(y2_tf.numpy(), 'place_t')
 
     check_dicts(d1, d2)
     # make sure the syntactic variant works
-    z1_vec = self.session.run(conditional_move2(x1).tf)
-    z2_vec = self.session.run(conditional_move2(x2).tf)
-    e1 = self._as_dict(z1_vec, 'place_t')
-    e2 = self._as_dict(z2_vec, 'place_t')
+    e1 = self._as_dict(conditional_move2(x1).tf.numpy(), 'place_t')
+    e2 = self._as_dict(conditional_move2(x2).tf.numpy(), 'place_t')
     check_dicts(e1, e2)
 
   def test_grid_recursion(self):
@@ -491,7 +478,7 @@ class TestOnGrid(tf.test.TestCase):
 
     x = self.context.one(cell(3, 2), 'place_t')
     for k in range(3):
-      d = at_most_k_cells_north(k, x).eval(session=self.session, as_dicts=True)
+      d = at_most_k_cells_north(k, x).eval(as_dicts=True)
       self.assertIn(cell(3 - k, 2), d)
       self.assertEqual(len(d), k + 1)
 
@@ -507,13 +494,6 @@ class TestOnGrid(tf.test.TestCase):
     # map a one-hot vector to a cell name
     entity_id = np.nonzero(onehot_vec)[1][0]
     return self.context.get_entity_name(entity_id, 'place_t')
-
-  def _as_dict(self, vec, type_name):
-    result = {}
-    entity_ids = np.nonzero(vec)[1].tolist()
-    for i in entity_ids:
-      result[self.context.get_entity_name(i, type_name)] = vec[0, i]
-    return result
 
 
 class TestOnDenseGrid(TestOnGrid):
@@ -544,7 +524,6 @@ class TestOnDenseGrid(TestOnGrid):
       else:
         context.set_initial_value(r, m)
     self.context = context
-    self.session = tf.Session()
 
 
 class TestTrainable(TestOnGrid):
@@ -560,16 +539,14 @@ class TestTrainable(TestOnGrid):
     x = self.context.one(cell(2, 2), 'place_t')
     near_x = x.follow('n') + x.follow('s') + x.follow('e') + x.follow('w')
     lr_near_x = near_x.weighted_by('trained_distance_to', 'ul')
-    # need to initialize if there are any trainable relations
-    self.session.run(self.context.get_initializers())
-    y_vec = self.session.run(lr_near_x.tf)
+    y_vec = lr_near_x.tf.numpy()
     y_dict = self._as_dict(y_vec, 'place_t')
     self._check_lr_near_2_2(y_dict)
 
     # Must be run on an operation after training.
     filename = tempfile.mktemp()
     iv = self.context.get_initial_value('trained_distance_to')
-    self.context.serialize_trained(filename, self.session)
+    self.context.serialize_trained(filename)
     # Clear out the initial values.
     self.context.set_initial_value('trained_distance_to',
                                    123. + np.zeros(iv.shape))
@@ -584,38 +561,40 @@ class TestTrainable(TestOnGrid):
     np.testing.assert_array_equal(iv.todense().ravel(), io_iv.todense().ravel())
 
   def test_gradients(self):
-    x = self.context.one(cell(2, 2), 'place_t')
-    near_x = x.follow('n') + x.follow('s') + x.follow('e') + x.follow('w')
-    lr_near_x = near_x.weighted_by('trained_distance_to', 'ul')
-    expected_y = self.context.one(cell(1, 2), 'place_t') * 3 + self.context.one(
-        cell(2, 1), 'place_t') * 3 + self.context.one(cell(
-            3, 2), 'place_t') * 5 + self.context.one(cell(2, 3), 'place_t') * 5
-    almost_y = self.context.one(cell(1, 2), 'place_t') * 2 + self.context.one(
-        cell(2, 1), 'place_t') * 3 + self.context.one(cell(
-            3, 2), 'place_t') * 4 + self.context.one(cell(2, 3), 'place_t') * 5
-    # need to initialize if there are any trainable relations
-    self.session.run(self.context.get_initializers())
-    # compute some gradients
-    loss_1 = tf.reduce_sum(
-        input_tensor=tf.multiply(lr_near_x.tf - expected_y.tf, lr_near_x.tf -
-                                 expected_y.tf))
-    loss_2 = tf.reduce_sum(
-        input_tensor=tf.multiply(lr_near_x.tf - almost_y.tf, lr_near_x.tf -
-                                 almost_y.tf))
-    self.assertEqual(loss_1.eval(session=self.session), 0.0)
-    self.assertEqual(loss_2.eval(session=self.session), 2.0)
-    grad_1 = tf.gradients(
-        ys=loss_1,
-        xs=self.context.get_underlying_parameter('trained_distance_to'))
-    grad_2 = tf.gradients(
-        ys=loss_2,
-        xs=self.context.get_underlying_parameter('trained_distance_to'))
-    self.assertEqual(len(grad_1), 1)
-    self.assertEqual(len(grad_2), 1)
-    sum_grad_1 = tf.reduce_sum(input_tensor=grad_1[0])
-    sum_grad_2 = tf.reduce_sum(input_tensor=grad_2[0])
-    self.assertEqual(sum_grad_1.eval(session=self.session), 0.0)
-    self.assertEqual(sum_grad_2.eval(session=self.session), 4.0)
+    with tf.GradientTape(persistent=True) as g:
+      x = self.context.one(cell(2, 2), 'place_t')
+      near_x = x.follow('n') + x.follow('s') + x.follow('e') + x.follow('w')
+      lr_near_x = near_x.weighted_by('trained_distance_to', 'ul')
+      g.watch(self.context.get_underlying_parameter('trained_distance_to'))
+      expected_y = self.context.one(cell(
+          1, 2), 'place_t') * 3 + self.context.one(
+              cell(2, 1), 'place_t') * 3 + self.context.one(
+                  cell(3, 2), 'place_t') * 5 + self.context.one(
+                      cell(2, 3), 'place_t') * 5
+      almost_y = self.context.one(cell(1, 2), 'place_t') * 2 + self.context.one(
+          cell(2, 1), 'place_t') * 3 + self.context.one(
+              cell(3, 2), 'place_t') * 4 + self.context.one(
+                  cell(2, 3), 'place_t') * 5
+      # compute some gradients
+      loss_1 = tf.reduce_sum(
+          input_tensor=tf.multiply(lr_near_x.tf - expected_y.tf, lr_near_x.tf -
+                                   expected_y.tf))
+      loss_2 = tf.reduce_sum(
+          input_tensor=tf.multiply(lr_near_x.tf - almost_y.tf, lr_near_x.tf -
+                                   almost_y.tf))
+
+      grad_1 = g.gradient(
+          target=loss_1,
+          sources=self.context.get_underlying_parameter('trained_distance_to'))
+      grad_2 = g.gradient(
+          target=loss_2,
+          sources=self.context.get_underlying_parameter('trained_distance_to'))
+    self.assertEqual(loss_1.numpy(), 0.0)
+    self.assertEqual(loss_2.numpy(), 2.0)
+    sum_grad_1 = tf.reduce_sum(input_tensor=grad_1)
+    sum_grad_2 = tf.reduce_sum(input_tensor=grad_2)
+    self.assertEqual(sum_grad_1.numpy(), 0.0)
+    self.assertEqual(sum_grad_2.numpy(), 4.0)
 
 
 class TestFollowGroup(TestOnGrid):
@@ -648,16 +627,16 @@ class TestFollowGroup(TestOnGrid):
     # going north
     x = self.context.one(cell(2, 2), 'place_t')
     rel_n = self.context.one('n', 'dir_g')
-    y1 = x.n().eval(self.session)
+    y1 = x.n().eval()
 
     def follow_thru(x, r):
       return (x.dir_g_subj(-1).dir_g_weight() * r.dir_g_rel(-1)).dir_g_obj()
 
-    y2 = follow_thru(x, rel_n).eval(self.session)
+    y2 = follow_thru(x, rel_n).eval()
     self.assertEqual(y1, y2)
     rel_all = self.context.all('dir_g')
-    z1 = (x.n() | x.s() | x.e() | x.w()).eval(self.session)
-    z2 = follow_thru(x, rel_all).eval(self.session)
+    z1 = (x.n() | x.s() | x.e() | x.w()).eval()
+    z2 = follow_thru(x, rel_all).eval()
     self.assertEqual(z1, z2)
 
     def follow_thru_triple(group_name, x, r):
@@ -665,22 +644,22 @@ class TestFollowGroup(TestOnGrid):
       return (x.follow(g.subject_rel, -1).follow(g.weight_rel) * r.follow(
           g.relation_rel, -1)).follow(g.object_rel)
 
-    y3 = follow_thru_triple('dir_g', x, rel_n).eval(self.session)
+    y3 = follow_thru_triple('dir_g', x, rel_n).eval()
     self.assertEqual(y1, y3)
-    z3 = follow_thru_triple('dir_g', x, rel_all).eval(self.session)
+    z3 = follow_thru_triple('dir_g', x, rel_all).eval()
     self.assertEqual(z1, z3)
-    w1 = (x.n() + x.s()).eval(self.session)
+    w1 = (x.n() + x.s()).eval()
     vrel_all = self.context.all('vdir_g')
-    w2 = follow_thru_triple('vdir_g', x, vrel_all).eval(self.session)
+    w2 = follow_thru_triple('vdir_g', x, vrel_all).eval()
     self.assertEqual(w1, w2)
 
-    y4 = x.follow(rel_n).eval(self.session)
+    y4 = x.follow(rel_n).eval()
     self.assertEqual(y1, y4)
-    z4 = x.follow(rel_all).eval(self.session)
+    z4 = x.follow(rel_all).eval()
     self.assertEqual(z1, z4)
 
-    v1 = x.n(-1).eval(self.session)
-    v2 = x.follow(rel_n, -1).eval(self.session)
+    v1 = x.n(-1).eval()
+    v2 = x.follow(rel_n, -1).eval()
     self.assertEqual(v1, v2)
 
   def test_redefining_group(self):
@@ -691,23 +670,12 @@ class TestFollowGroup(TestOnGrid):
 
   def test_group_rel_from_variable(self):
     x = self.context.one(cell(2, 2), 'place_t')
-    initializer = tf.glorot_uniform_initializer()(
+    initializer = tf.keras.initializers.GlorotUniform()(
         [1, self.context.get_max_id('dir_g')])
     dir_tf_var = tf.Variable(initializer)
     dir_nql_exp = self.context.as_nql(dir_tf_var, 'dir_g')
     y = x.follow(dir_nql_exp)
-    self.session.run(dir_tf_var.initializer)
-    y.eval(self.session)
-
-  def test_group_rel_from_ph(self):
-    ph = tf.placeholder(
-        tf.float32, shape=(None, self.context.get_max_id('place_t')))
-    x = self.context.as_nql(ph, 'place_t')
-    initializer = tf.glorot_uniform_initializer()(
-        [1, self.context.get_max_id('dir_g')])
-    dir_tf_var = tf.Variable(initializer)
-    dir_nql_exp = self.context.as_nql(dir_tf_var, 'dir_g')
-    x.follow(dir_nql_exp)  # This test ensures this doesn't throw an error.
+    y.eval()
 
 
 class TestMinibatchOnGrid(TestOnGrid):
@@ -719,8 +687,7 @@ class TestMinibatchOnGrid(TestOnGrid):
         'nsew', [[(1, 2), (2, 3)], [(3, 2)], [(2, 3)], [(2, 1), (3, 2)]]):
       mat = self.context.get_tf_tensor(d)
       y_mat = tf.transpose(
-          a=tf.sparse.sparse_dense_matmul(mat, tf.transpose(a=x.tf))).eval(
-              session=self.session)
+          a=tf.sparse.sparse_dense_matmul(mat, tf.transpose(a=x.tf))).numpy()
       y_dict = self.context.as_dicts(y_mat, 'place_t')
       for k, (i, j) in enumerate(ij_list):
         self.assertIn(cell(i, j), y_dict[k])
@@ -728,7 +695,7 @@ class TestMinibatchOnGrid(TestOnGrid):
   def test_context_eval_asdict(self):
     x = self.minibatch([cell(2, 2), cell(3, 3)], 'place_t')
     y = x.follow('n')
-    y_list = y.eval(session=self.session, as_dicts=True)
+    y_list = y.eval(as_dicts=True)
     self.assertIsInstance(y_list, list)
     self.assertEqual(len(y_list), 2)
     self.confirm_dict(y_list[0], {cell(1, 2): 1.0})
@@ -754,7 +721,7 @@ class TestMinibatchOnGrid(TestOnGrid):
   def test_weighted_by(self):
     x = self.minibatch([cell(2, 2), cell(3, 3)], 'place_t')
     y = (x.n() + x.s() + x.e() + x.w()).weighted_by('distance_to', 'ul')
-    y_dict = y.eval(session=self.session)
+    y_dict = y.eval()
     self.confirm_dict(y_dict[0], {
         cell(1, 2): 3,
         cell(2, 1): 3,
@@ -763,7 +730,7 @@ class TestMinibatchOnGrid(TestOnGrid):
     })
     self.confirm_dict(y_dict[1], {cell(3, 2): 5, cell(2, 3): 5})
     # test the as_top option
-    y_top = y.eval(session=self.session, as_top=2)
+    y_top = y.eval(as_top=2)
     self.assertEqual(len(y_top), 2)
     for i in range(2):
       self.assertEqual(len(y_top[i]), 2)
@@ -775,7 +742,7 @@ class TestMinibatchOnGrid(TestOnGrid):
     x = self.minibatch([cell(2, 2), cell(3, 3)], 'place_t')
     z = (x.n() + x.s() + x.e() + x.w()).weighted_by('distance_to', 'ul')
     y = z.tf_op(lambda t: tf.clip_by_value(t, 0.0, 1.0))
-    y_dict = y.eval(session=self.session)
+    y_dict = y.eval()
     self.confirm_dict(y_dict[0], {
         cell(1, 2): 1,
         cell(2, 1): 1,
@@ -787,15 +754,15 @@ class TestMinibatchOnGrid(TestOnGrid):
   def test_multihop(self):
     x = self.minibatch([cell(2, 2), cell(3, 3)], 'place_t')
     y = x.n().w()
-    y_dict = y.eval(session=self.session)
+    y_dict = y.eval()
     self.confirm_dict(y_dict[0], {cell(1, 1): 1.0})
     self.confirm_dict(y_dict[1], {cell(2, 2): 1.0})
     z = y.n().w()
-    z_dict = z.eval(session=self.session)
+    z_dict = z.eval()
     self.confirm_dict(z_dict[0], {cell(0, 0): 1.0})
     self.confirm_dict(z_dict[1], {cell(1, 1): 1.0})
     w = z.n().w()
-    w_dict = w.eval(session=self.session)
+    w_dict = w.eval()
     self.confirm_dict(w_dict[0], {})
     self.confirm_dict(w_dict[1], {cell(0, 0): 1.0})
 
@@ -810,7 +777,7 @@ class TestMinibatchOnGrid(TestOnGrid):
 
     x = self.minibatch([cell(2, 2), cell(3, 2)], 'place_t')
     y = conditional_move(x)
-    y_dict = y.eval(session=self.session)
+    y_dict = y.eval()
     self.confirm_dict(y_dict[0], {cell(1, 2): 1.0})
     self.confirm_dict(y_dict[1], {cell(3, 3): 1.0})
 
@@ -823,33 +790,31 @@ class TestMinibatchOnGrid(TestOnGrid):
     def neighbors2(c):
       return c.n() | c.s() | c.e() | c.w()
 
-    d1 = neighbors1(x).eval(session=self.session)
+    d1 = neighbors1(x).eval()
     self.confirm_dict(d1, {
         cell(1, 2): 1.0,
         cell(3, 2): 1.0,
         cell(2, 1): 1.0,
         cell(2, 3): 1.0
     })
-    d2 = neighbors2(x).eval(session=self.session)
+    d2 = neighbors2(x).eval()
     self.confirm_dict(d1, d2)
     y1 = neighbors1(x.jump_to(cell(1, 1), 'place_t')) * neighbors2(x)
     y2 = neighbors2(x.jump_to(cell(1, 1), 'place_t')) & neighbors1(x)
-    e1 = y1.eval(session=self.session)
-    e2 = y2.eval(session=self.session)
+    e1 = y1.eval()
+    e2 = y2.eval()
     self.confirm_dict(e1, {cell(1, 2): 1.0, cell(2, 1): 1.0})
     self.confirm_dict(e1, e2)
 
   def test_jump_all(self):
     all1 = self.context.all('place_t')
     all2 = self.context.one('black', 'color_t').jump_to_all('place_t')
-    self.confirm_dict(
-        all1.eval(session=self.session), all2.eval(session=self.session))
+    self.confirm_dict(all1.eval(), all2.eval())
 
   def test_jump_none(self):
     all1 = self.context.none('place_t')
     all2 = self.context.one('black', 'color_t').jump_to_none('place_t')
-    self.confirm_dict(
-        all1.eval(session=self.session), all2.eval(session=self.session))
+    self.confirm_dict(all1.eval(), all2.eval())
 
 
 if __name__ == '__main__':

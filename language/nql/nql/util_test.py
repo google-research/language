@@ -21,7 +21,8 @@ import nql
 from nql import dataset
 from nql import util
 import numpy as np
-import tensorflow.compat.v1 as tf
+import tensorflow.compat.v1 as tf1
+import tensorflow.compat.v2 as tf
 
 
 def tabline(s):
@@ -122,17 +123,17 @@ class TrippyBuilder(util.ModelBuilder):
   def config_model_training(self, model, labels_ph, params=None):
     model.labels = model.context.as_tf(labels_ph)
     model.loss = nql.nonneg_crossentropy(model.predicted_y.tf, model.labels)
-    optimizer = tf.train.AdagradOptimizer(1.0)
+    optimizer = tf1.train.AdagradOptimizer(1.0)
     model.train_op = optimizer.minimize(
-        loss=model.loss, global_step=tf.train.get_global_step())
+        loss=model.loss, global_step=tf1.train.get_global_step())
 
   def config_model_evaluation(self, model, labels_ph, params=None):
-    model.accuracy = tf.metrics.accuracy(
+    model.accuracy = tf1.metrics.accuracy(
         tf.argmax(input=model.labels, axis=1),
         tf.argmax(input=model.predicted_y.tf, axis=1))
     model.top_labels = util.labels_of_top_ranked_predictions_in_batch(
         model.labels, model.predicted_y.tf)
-    model.precision_at_one = tf.metrics.mean(model.top_labels)
+    model.precision_at_one = tf1.metrics.mean(model.top_labels)
     model.evaluations = {
         "accuracy": model.accuracy,
         "precision@1": model.precision_at_one
@@ -172,7 +173,8 @@ class TestModelBuilder(BaseTester):
 
   def setUp(self):
     super(TestModelBuilder, self).setUp()
-    self.session = tf.Session()
+    self.graph = tf.Graph()
+    self.session = tf1.Session(graph=self.graph)
 
   def check_one_hot(self, m, i, typename):
     self.assertEqual(m.shape, (self.context.get_max_id(typename),))
@@ -180,15 +182,15 @@ class TestModelBuilder(BaseTester):
     self.assertEqual(m[i], 1.0)
 
   def test_tf_dataset(self):
-    dset1 = simple_tf_dataset(
-        self.context,
-        TRAIN_DATA_LINES,
-        "instance_t",
-        "label_t",
-        shuffle_buffer_size=0,
-        field_separator="|")
-    x, y = self.session.run(
-        tf.data.make_one_shot_iterator(dset1).get_next())
+    with self.graph.as_default():
+      dset1 = simple_tf_dataset(
+          self.context,
+          TRAIN_DATA_LINES,
+          "instance_t",
+          "label_t",
+          shuffle_buffer_size=0,
+          field_separator="|")
+      x, y = self.session.run(tf1.data.make_one_shot_iterator(dset1).get_next())
     self.check_batch(x, 0, "instance_t")
     self.check_batch(y, 0, "label_t")
 
@@ -198,16 +200,16 @@ class TestModelBuilder(BaseTester):
     self.assertEqual(m[0, i], 1.0)
 
   def test_tf_minibatch_dataset(self):
-    dset2 = simple_tf_dataset(
-        self.context,
-        TRAIN_DATA_LINES,
-        "instance_t",
-        "label_t",
-        batch_size=2,
-        shuffle_buffer_size=0,
-        field_separator="|")
-    x, y = self.session.run(
-        tf.data.make_one_shot_iterator(dset2).get_next())
+    with self.graph.as_default():
+      dset2 = simple_tf_dataset(
+          self.context,
+          TRAIN_DATA_LINES,
+          "instance_t",
+          "label_t",
+          batch_size=2,
+          shuffle_buffer_size=0,
+          field_separator="|")
+      x, y = self.session.run(tf1.data.make_one_shot_iterator(dset2).get_next())
     # check that this is a minibatch containing the first two instances
     self.assertEqual(x.shape[0], 2)
     self.assertEqual(y.shape[0], 2)
@@ -223,54 +225,55 @@ class TestModelBuilder(BaseTester):
 
   def test_ph_learn(self):
 
-    # build model
-    feature_ph_dict = {"x": self.context.placeholder("x", "instance_t")}
-    labels_ph = self.context.placeholder("y", "label_t")
-    builder = TrippyBuilder()
-    model = builder.build_model(feature_ph_dict, labels_ph)
-    trainer = util.Trainer(self.session, model, feature_ph_dict, labels_ph)
+    with self.graph.as_default():
+      # build model
+      feature_ph_dict = {"x": self.context.placeholder("x", "instance_t")}
+      labels_ph = self.context.placeholder("y", "label_t")
+      builder = TrippyBuilder()
+      model = builder.build_model(feature_ph_dict, labels_ph)
+      trainer = util.Trainer(self.session, model, feature_ph_dict, labels_ph)
 
-    # train
-    trainer.train(self.make_train_dset(5))
+      # train
+      trainer.train(self.make_train_dset(7))
 
-    # check the model fits the train data
-    evaluation = trainer.evaluate(self.make_train_dset(1))
-    self.assertEqual(evaluation["accuracy"], 1.0)
-    self.assertEqual(evaluation["precision@1"], 1.0)
+      # check the model fits the train data
+      evaluation = trainer.evaluate(self.make_train_dset(1))
+      self.assertEqual(evaluation["accuracy"], 1.0)
+      self.assertEqual(evaluation["precision@1"], 1.0)
 
-    # try running the model on something
-    for inst_name in ["u1", "u2", "c1", "c2"]:
-      x = model.context.one_hot_numpy_array(inst_name, "instance_t")
-      x_ph = feature_ph_dict["x"]
-      fd = {x_ph.name: x}
-      y_dict = model.predicted_y.eval(self.session, feed_dict=fd)
-      # the u's are class trippy
-      if inst_name[0] == "u":
-        self.assertGreater(y_dict["trippy"], y_dict["boring"])
-      # the c's are class boring but c1 is hard to get
-      elif inst_name == "c2":
-        self.assertLess(y_dict["trippy"], y_dict["boring"])
+      # try running the model on something
+      for inst_name in ["u1", "u2", "c1", "c2"]:
+        x = model.context.one_hot_numpy_array(inst_name, "instance_t")
+        x_ph = feature_ph_dict["x"]
+        fd = {x_ph.name: x}
+        y_dict = model.predicted_y.eval(self.session, feed_dict=fd)
+        # the u's are class trippy
+        if inst_name[0] == "u":
+          self.assertGreater(y_dict["trippy"], y_dict["boring"])
+        # the c's are class boring but c1 is hard to get
+        elif inst_name == "c2":
+          self.assertLess(y_dict["trippy"], y_dict["boring"])
 
-    # test the model
-    evaluation = trainer.evaluate(self.make_test_dset())
-    self.assertGreaterEqual(evaluation["accuracy"], 0.7)
-    self.assertGreaterEqual(evaluation["precision@1"], 0.7)
+      # test the model
+      evaluation = trainer.evaluate(self.make_test_dset())
+      self.assertGreaterEqual(evaluation["accuracy"], 0.7)
+      self.assertGreaterEqual(evaluation["precision@1"], 0.7)
 
-    # test callback
-    cb_model = builder.build_model(feature_ph_dict, labels_ph)
-    cb_model.loss_history = []
+      # test callback
+      cb_model = builder.build_model(feature_ph_dict, labels_ph)
+      cb_model.loss_history = []
 
-    def my_callback(fd, loss, secs):
-      del fd, secs  # unused
-      cb_model.loss_history.append(loss)
-      return None
+      def my_callback(fd, loss, secs):
+        del fd, secs  # unused
+        cb_model.loss_history.append(loss)
+        return
 
-    cb_model.training_callback = my_callback
-    with tf.Session() as session:
-      cb_trainer = util.Trainer(session, cb_model, feature_ph_dict, labels_ph)
-      cb_trainer.train(self.make_train_dset(5))
-      self.assertEqual(len(cb_model.loss_history), 30)
-      self.assertLess(cb_model.loss_history[-1], 0.05)
+      cb_model.training_callback = my_callback
+      with tf1.Session() as session:
+        cb_trainer = util.Trainer(session, cb_model, feature_ph_dict, labels_ph)
+        cb_trainer.train(self.make_train_dset(5))
+        self.assertEqual(len(cb_model.loss_history), 30)
+        self.assertLess(cb_model.loss_history[-1], 0.05)
 
   def test_estimator_learn(self):
 
@@ -327,7 +330,7 @@ class TestSaveRestore(BaseTester):
 
     # Train and save.
     with tf.Graph().as_default():
-      with tf.Session() as sess1:
+      with tf1.Session() as sess1:
         builder1 = TrippyBuilder()
         context1 = builder1.build_context()
         feature_ph_dict1 = {"x": context1.placeholder("x", "instance_t")}
@@ -337,18 +340,18 @@ class TestSaveRestore(BaseTester):
         trainer1 = util.Trainer(sess1, model1, feature_ph_dict1, labels_ph1)
         trainer1.train(self.make_train_dset(5))
         trial1a = try_model_on_test_instances(model1, sess1, feature_ph_dict1)
-        saver1 = tf.train.Saver()
+        saver1 = tf1.train.Saver()
         saver1.save(sess1, self.checkpoint_location_a)
 
     # Restore, evaluate, train, and save.
     with tf.Graph().as_default():
-      with tf.Session() as sess2:
+      with tf1.Session() as sess2:
         builder2 = TrippyBuilder()
         context2 = builder2.build_context()
         feature_ph_dict2 = {"x": context2.placeholder("x", "instance_t")}
         labels_ph2 = context2.placeholder("y", "label_t")
         model2 = builder2.build_model(feature_ph_dict2, labels_ph2)
-        saver2 = tf.train.Saver()
+        saver2 = tf1.train.Saver()
 
         trainer2 = util.Trainer(sess2, model2, feature_ph_dict2, labels_ph2)
         saver2.restore(sess2, self.checkpoint_location_a)
@@ -364,13 +367,13 @@ class TestSaveRestore(BaseTester):
 
     # Restore and evaluate.
     with tf.Graph().as_default():
-      with tf.Session() as sess3:
+      with tf1.Session() as sess3:
         builder3 = TrippyBuilder()
         context3 = builder3.build_context()
         feature_ph_dict3 = {"x": context3.placeholder("x", "instance_t")}
         labels_ph3 = context3.placeholder("y", "label_t")
         model3 = builder3.build_model(feature_ph_dict3, labels_ph3)
-        saver3 = tf.train.Saver()
+        saver3 = tf1.train.Saver()
 
         trainer3 = util.Trainer(sess3, model3, feature_ph_dict3, labels_ph3)
         saver3.restore(sess3, self.checkpoint_location_b)

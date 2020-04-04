@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Misc utilities for NQL."""
+"""(DEPRECATED) Misc utilities for NQL."""
 
 from __future__ import absolute_import
 from __future__ import division
@@ -21,13 +21,14 @@ from __future__ import print_function
 
 import time
 
+from absl import logging
 import nql
-import tensorflow.compat.v1 as tf
+import tensorflow.compat.v2 as tf
 
 
 
 class Model(object):
-  """Help for building Estimator-friendly NQL models.
+  """(DEPRECATED) Help for building Estimator-friendly NQL models.
 
   To use this, subclass it, and implement config_* methods, so as to define a
   procedure for building an NQL model that can be used with tf.Estimators.
@@ -97,7 +98,7 @@ class Model(object):
 
 
 class ModelBuilder(object):
-  """Help for building Estimator-friendly NQL models.
+  """(DEPRECATED) Help for building Estimator-friendly NQL models.
 
   To use this, subclass it, and implement config_* methods, so as to define a
   procedure for building an NQL model that can be used with tf.Estimators.
@@ -152,7 +153,7 @@ class ModelBuilder(object):
     return context
 
   def build_model(self, feature_ph_dict, labels_ph, params=None, context=None):
-    """Construct and return a Model.
+    """(DEPRECATED) Construct and return a Model.
 
     Args:
       feature_ph_dict: maps feature names to placeholders that will hold the
@@ -308,7 +309,7 @@ class ModelBuilder(object):
 
 
 class Trainer(object):
-  """Collects methods for training and testing Models."""
+  """(DEPRECATED) Collects methods for training and testing Models."""
 
   def __init__(self,
                session,
@@ -332,9 +333,9 @@ class Trainer(object):
     self.labels_ph = labels_ph
     if initialize:
       session.run([
-          tf.global_variables_initializer(),
-          tf.local_variables_initializer(),
-          tf.tables_initializer()
+          tf.compat.v1.global_variables_initializer(),
+          tf.compat.v1.local_variables_initializer(),
+          tf.compat.v1.tables_initializer()
       ])
 
   def as_read_head(self, dset):
@@ -346,7 +347,7 @@ class Trainer(object):
     Returns:
       a TF expression that evaluates to the next minibatch.
     """
-    return tf.data.make_one_shot_iterator(dset).get_next()
+    return tf.compat.v1.data.make_one_shot_iterator(dset).get_next()
 
   def feed_dict_iterator(self, dset):
     """Iterator over feed_dict dictionaries.
@@ -385,7 +386,7 @@ class Trainer(object):
         status = self.model.training_callback(fd, latest_loss,
                                               time.time() - start_time)
         if status:
-          tf.logging.info(status)
+          logging.info(status)
 
   def evaluate(self, dset):
     """Test the model on this dataset over the examples in a dataset.

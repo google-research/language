@@ -21,7 +21,7 @@ from __future__ import print_function
 
 import nql
 import numpy as np
-import tensorflow.compat.v1 as tf
+import tensorflow.compat.v2 as tf
 
 
 
@@ -223,7 +223,7 @@ def placeholder_for_type(context,
       ValueError, if the type_spec is invalid
   """
   if type_spec == str:
-    return tf.placeholder(tf.string, shape=[None], name=name)
+    return tf.compat.v1.placeholder(tf.string, shape=[None], name=name)
   elif isinstance(type_spec, str) and context.is_type(type_spec):
     name = name or ('%s_ph' % type_spec)
     return context.placeholder(name, type_spec).tf

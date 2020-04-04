@@ -20,11 +20,12 @@ from __future__ import division
 
 from __future__ import print_function
 
+from absl import logging
 from nql import io
 from nql import symbol
 import numpy as np
 import scipy.sparse
-import tensorflow.compat.v1 as tf
+import tensorflow.compat.v2 as tf
 
 
 
@@ -515,7 +516,7 @@ class NeuralQueryExpression(object):
     """Evaluate the Tensorflow expression associated with this NeuralQueryExpression.
 
     Args:
-      session: tf.Session used to evaluate if not in eager mode
+      session: (DEPRECATED) tf.Session used to evaluate if not in eager mode
       as_dicts: if true, convert each row of the minibatch to to a dictionary
         where the keys are entity names, and the values are weights for those
         entities.  Each 'row dictionary' is returned in an array. If as_dicts is
@@ -524,7 +525,8 @@ class NeuralQueryExpression(object):
         as_dicts output.
       simplify_unitsize_minibatch: if true and as_dicts is also true, and the
         minibatch size is 1, then just return the single row dictionary.
-      feed_dict: dictionary mapping placeholder names to initial values
+      feed_dict: (DEPRECATED) dictionary mapping placeholder names to initial
+        values
 
     Returns:
       Result of evaluating the underlying NeuralQueryExpression, in a format
@@ -644,7 +646,7 @@ class NeuralQueryContext(object):
 
     Args:
       rel_name: a string naming a relation
-      m: a tf.SparseTensorValue object
+      m: a tf.SparseTensor object
 
     Returns:
       a dictionary
@@ -764,7 +766,7 @@ class NeuralQueryContext(object):
     return self.as_nql(value, type_name, provenance)
 
   def placeholder(self, name, type_name):
-    """An NQL encoding of a Tensorflow placeholder.
+    """(DEPRECATED) An NQL encoding of a Tensorflow placeholder.
 
     The placehold will be configured to hold weighted sets of entities of the
     appropriate type.
@@ -778,7 +780,7 @@ class NeuralQueryContext(object):
     """
     provenance = NQExprProvenance(
         operation='placeholder', args=(type_name, name))
-    value = tf.placeholder(
+    value = tf.compat.v1.placeholder(
         tf.float32, shape=[None, self.get_max_id(type_name)], name=name)
     return self.as_nql(value, type_name, provenance)
 
@@ -955,7 +957,7 @@ class NeuralQueryContext(object):
       raise RelationNameError(rel_name, 'Multiple declarations for relation.')
     reserved = dir(NeuralQueryExpression)
     if rel_name in reserved:
-      tf.logging.warn(
+      logging.warn(
           'rel_name prohibits expr.%s() as it matches a reserved word in: %r',
           rel_name, reserved)
     self._declaration[rel_name] = RelationDeclaration(rel_name, domain_type,
@@ -1357,16 +1359,16 @@ class NeuralQueryContext(object):
       except IndexError:
         weight = 1.0
       except ValueError:
-        tf.logging.warn('confidence %r is not numeric: line %r', parts[-1],
-                        line.strip())
+        logging.warn('confidence %r is not numeric: line %r', parts[-1],
+                     line.strip())
         continue
       if not 3 <= len(parts) <= 4:
-        tf.logging.warn('ignored illegal kg line: %r', line.strip())
+        logging.warn('ignored illegal kg line: %r', line.strip())
         continue
       if rel_name not in self._declaration:
         error = 'ignored relation %s in line: %r', (rel_name, line.strip())
         if ignore_undef_rels:
-          tf.logging.warn(error)
+          logging.warn(error)
           continue
         else:
           raise RelationNameError(rel_name,
@@ -1380,7 +1382,7 @@ class NeuralQueryContext(object):
         range_buf[rel_name].append(j)
         data_buf[rel_name].append(weight)
       if lid % 1000000 == 0:
-        tf.logging.info('%d facts loaded', lid)
+        logging.info('%d facts loaded', lid)
     if freeze:
       for rel_name in data_buf:
         self._symtab[self.get_domain(rel_name)].freeze()
@@ -1405,19 +1407,25 @@ class NeuralQueryContext(object):
 
     Args:
       output_file: Filename string or FileLike object.
-      session: a tf.Session used to find values of trained SparseTensors
+      session: (DEPRECATED) a tf.Session used to find values of trained
+        SparseTensors
     """
     trained_rels = [
         rel_name for rel_name in self.get_relation_names()
         if self.is_trainable(rel_name)
     ]
     sparse_tensors = [self.get_tf_tensor(rel_name) for rel_name in trained_rels]
-    if session is None:
-      session = tf.get_default_session()
-    trained_dict = {
-        name: tensor
-        for name, tensor in zip(trained_rels, session.run(sparse_tensors))
-    }
+    if tf.executing_eagerly():
+      trained_dict = {
+          name: tensor for name, tensor in zip(trained_rels, sparse_tensors)
+      }
+    else:
+      if session is None:
+        session = tf.get_default_session()
+      trained_dict = {
+          name: tensor
+          for name, tensor in zip(trained_rels, session.run(sparse_tensors))
+      }
     io.write_sparse_tensor_dict(output_file, trained_dict)
 
   def deserialize_trained(self, input_file):

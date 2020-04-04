@@ -17,7 +17,7 @@
 import tempfile
 from nql import io
 from nql import symbol
-import tensorflow.compat.v1 as tf
+import tensorflow.compat.v2 as tf
 
 
 def _equal_sparse(a, b):
@@ -33,10 +33,7 @@ def _make_sparse_tensor_dict():
   rel_name2 = 'other_stuff'
   sparse_tensor2 = tf.SparseTensor(
       indices=[[100, 0]], values=[3.], dense_shape=[1000, 2])
-  return {
-      rel_name1: tf.Session().run(sparse_tensor1),
-      rel_name2: tf.Session().run(sparse_tensor2)
-  }
+  return {rel_name1: sparse_tensor1, rel_name2: sparse_tensor2}
 
 
 def _make_symbol_table_dict():

@@ -39,9 +39,12 @@ def shape(tensor, dim=None):
   static_shape = tensor.get_shape()
   dynamic_shape = tf.shape(tensor)
   if dim is not None:
-    return static_shape[dim].value or dynamic_shape[dim]
+    return tf.dimension_value(static_shape[dim]) or dynamic_shape[dim]
   else:
-    return [d.value or dynamic_shape[i] for i, d in enumerate(static_shape)]
+    return [
+        tf.dimension_value(d) or dynamic_shape[i]
+        for i, d in enumerate(static_shape)
+    ]
 
 
 def where(condition, if_true, if_false):
@@ -117,10 +120,11 @@ def padded_where(condition, length):
     - a mask tensor of type int32 with 1s in valid indices of the first tensor,
       and 0s for padded indices.
   """
-  n = condition.shape[-1].value
+  condition_shape = shape(condition)
+  n = condition_shape[-1]
 
   # Build a tensor that counts indices from 0 to length of condition.
-  ixs = tf.broadcast_to(tf.range(n, dtype=tf.int32), shape(condition))
+  ixs = tf.broadcast_to(tf.range(n, dtype=tf.int32), condition_shape)
 
   # Build tensor where True condition values get their index value or
   # n (== len(condition)) otherwise.

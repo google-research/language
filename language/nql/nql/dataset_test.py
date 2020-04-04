@@ -17,7 +17,7 @@ import tempfile
 import nql
 from nql import dataset
 import numpy as np
-import tensorflow.compat.v1 as tf
+import tensorflow.compat.v2 as tf
 
 NP_NONE = np.array([0., 0., 0., 0., 0.])
 NP_A = np.array([1., 0., 0., 0., 0.])
@@ -39,27 +39,21 @@ class TestTFDataset(tf.test.TestCase):
     self.context = nql.NeuralQueryContext()
     self.context.extend_type('uc_t', ['A', 'B', 'C', 'D'])
     self.context.freeze('uc_t')
-    with tf.Session() as session:
-      s_const = tf.constant('hello world', dtype=tf.string)
-      s_eval = session.run(s_const)
-      self.tf_string_type = type(s_eval)
-      self.tf_string_type = bytes
+    self.tf_string_type = bytes
 
   def as_list(self, dset):
-    it = tf.data.make_one_shot_iterator(dset).get_next()
     buf = []
-    with tf.Session() as session:
-      session.run([
-          tf.global_variables_initializer(),
-          tf.local_variables_initializer(),
-          tf.initializers.tables_initializer()
-      ])
+    for it in dset:
       try:
-        while True:
-          buf.append(session.run(it))
+        buf.append(it)
       except tf.errors.OutOfRangeError:
         pass
     return buf
+
+  def check_instances(self, values, exp_values):
+    for (s, a) in values:
+      self.assertEqual(type(s.numpy()), self.tf_string_type)
+      np.testing.assert_array_equal(a.numpy(), exp_values[s.numpy()])
 
   def test_size(self):
     dset = dataset.tuple_dataset(
@@ -114,9 +108,7 @@ class TestTFDataset(tf.test.TestCase):
         b'b': NP_B,
         b'c': NP_C + NP_D,
     }
-    for (s, a) in instances:
-      self.assertEqual(type(s), self.tf_string_type)
-      np.testing.assert_array_equal(a, exp_values[s])
+    self.check_instances(instances, exp_values)
 
   def test_normalize(self):
     dset = dataset.tuple_dataset(
@@ -132,9 +124,7 @@ class TestTFDataset(tf.test.TestCase):
         b'b': NP_B,
         b'c': 0.5 * (NP_C + NP_D),
     }
-    for (s, a) in instances:
-      self.assertEqual(type(s), self.tf_string_type)
-      np.testing.assert_array_equal(a, exp_values[s])
+    self.check_instances(instances, exp_values)
 
   def test_normalize_empty(self):
     dset = dataset.tuple_dataset(
@@ -150,9 +140,7 @@ class TestTFDataset(tf.test.TestCase):
         b'b': NP_UNK,
         b'c': NP_NONE,
     }
-    for (s, a) in instances:
-      self.assertEqual(type(s), self.tf_string_type)
-      np.testing.assert_array_equal(a, exp_values[s])
+    self.check_instances(instances, exp_values)
 
   def test_handle_unk_entity(self):
     dset = dataset.tuple_dataset(
@@ -169,9 +157,7 @@ class TestTFDataset(tf.test.TestCase):
         b'c': NP_C + NP_D,
         b'd': NP_D + NP_UNK,
     }
-    for (s, a) in instances:
-      self.assertEqual(type(s), self.tf_string_type)
-      np.testing.assert_array_equal(a, exp_values[s])
+    self.check_instances(instances, exp_values)
 
   def test_error_recovery(self):
     dset = dataset.tuple_dataset(
@@ -188,9 +174,7 @@ class TestTFDataset(tf.test.TestCase):
         b'c': NP_C + NP_UNK,
         b'd': NP_D,
     }
-    for (s, a) in instances:
-      self.assertEqual(type(s), self.tf_string_type)
-      np.testing.assert_array_equal(a, exp_values[s])
+    self.check_instances(instances, exp_values)
 
   def test_empty_recovery(self):
     dset = dataset.tuple_dataset(
@@ -206,9 +190,7 @@ class TestTFDataset(tf.test.TestCase):
         b'b': NP_UNK,
         b'c': NP_NONE,
     }
-    for (s, a) in instances:
-      self.assertEqual(type(s), self.tf_string_type)
-      np.testing.assert_array_equal(a, exp_values[s])
+    self.check_instances(instances, exp_values)
 
   def test_idempotent_file_usage(self):
     data_tempfile = tempfile.mktemp('tuple_data')
@@ -227,6 +209,7 @@ class TestTFDataset(tf.test.TestCase):
 class TestKhotOverFrozenWithNone(tf.test.TestCase):
 
   def setUp(self):
+    super(TestKhotOverFrozenWithNone, self).setUp()
     self.context = nql.NeuralQueryContext()
     self.context.declare_entity_type(
         'uc_t', fixed_vocab=['A', 'B', 'C', 'D'], unknown_marker=None)

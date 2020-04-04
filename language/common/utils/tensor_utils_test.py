@@ -221,6 +221,30 @@ class TensorUtilsTest(tf.test.TestCase):
         [1, 1, 0, 0, 0, 0],
     ])
 
+  def test_padded_where_dynamic_shape(self):
+    """Tests that padded_where can deal with dynamic shapes."""
+    with tf.Graph().as_default():
+      condition = tf.placeholder(tf.bool, [None, None])
+      indices, mask = tensor_utils.padded_where(condition, 3)
+
+      with tf.Session() as sess:
+        # Test for single batch with 8 elements.
+        results = sess.run([indices, mask],
+                           feed_dict={condition: [[True] * 4 + [False] * 4]})
+        self.assertAllEqual(results[0], [[0, 1, 2]])
+        self.assertAllEqual(results[1], [[1, 1, 1]])
+
+        # Test for three batches with 6 elements each.
+        results = sess.run(
+            [indices, mask],
+            feed_dict={
+                condition: [[False, True, False, True, True, True],
+                            [True, False, True, False, False, True],
+                            [True, True, False, False, True, False]]
+            })
+        self.assertAllEqual(results[0], [[1, 3, 4], [0, 2, 5], [0, 1, 4]])
+        self.assertAllEqual(results[1], [[1, 1, 1], [1, 1, 1], [1, 1, 1]])
+
   def test_shaped_py_func(self):
 
     def _fn(x, y):
