@@ -36,6 +36,7 @@ import os
 
 from absl import app
 from absl import flags
+import six
 
 FLAGS = flags.FLAGS
 
@@ -89,7 +90,7 @@ def main(_):
   ref2 = _read_file(os.path.join(FLAGS.data_dir, "gold-sample-reference2.lex"))
 
   output = []
-  for mr, teams in mr_to_team.iteritems():
+  for mr, teams in six.iteritems(mr_to_team):
     table = _parse_mr(mr)
     ref_i = mr_to_index[mr]
     references = [ref for ref in [ref0[ref_i], ref1[ref_i], ref2[ref_i]] if ref]
@@ -97,8 +98,8 @@ def main(_):
         "table": table,
         "references": references,
     }
-    for team, scores in teams.iteritems():
-      for key, val in scores.iteritems():
+    for team, scores in six.iteritems(teams):
+      for key, val in six.iteritems(scores):
         out[team + "-" + key] = val
     output.append(out)
 

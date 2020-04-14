@@ -69,7 +69,7 @@ flags.DEFINE_integer(
     "The number of buckets is 2^{this value}.")
 
 flags.DEFINE_float(
-    "idf_cutoff_fraction", 0.0,
+    "idf_cutoff_fraction", 0.00001,
     "Fraction of lowest IDF words to remove from sparse search.")
 
 

@@ -247,7 +247,7 @@ def hotpot_eval_fn(dataset, results, name_map, output_prediction_file,
   num_layer_entities = {i: 0. for i in range(layer_weights.shape[0])}
   num_new_entities = {i: 0. for i in range(layer_weights.shape[0])}
   for result in results:
-    qas_id = result["qas_ids"]
+    qas_id = result["qas_ids"].decode("utf-8")
     preds = result["top_idx"]
     scores = result["top_vals"]
     ans = gt_answer[qas_id]
@@ -267,7 +267,10 @@ def hotpot_eval_fn(dataset, results, name_map, output_prediction_file,
     for rr in ranks:
       cnt += 1
       ap += cnt / (rr + 1)
-    aps.append(ap / len(ans))
+    if ans:
+      aps.append(ap / len(ans))
+    else:
+      aps.append(0.)
     found = False
     for key in [2, 5, 10, 20]:
       if found or np.in1d(ans, preds[:key]).all():
@@ -292,6 +295,7 @@ def hotpot_eval_fn(dataset, results, name_map, output_prediction_file,
     all_predictions[qas_id]["predictions"] = [
         (name_map[str(pred)], str(scores[i])) for i, pred in enumerate(preds)
     ]
+  tf.logging.info("Evaluated %d items", len(all_predictions))
   accuracy = {
       key: (num_correct[key] / len(all_predictions)) for key in num_correct
   }

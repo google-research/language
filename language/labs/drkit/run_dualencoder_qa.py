@@ -77,18 +77,18 @@ flags.DEFINE_bool(
     "models and False for cased models.")
 
 flags.DEFINE_integer(
-    "max_seq_length", 384,
+    "max_seq_length", 192,
     "The maximum total input sequence length after WordPiece tokenization. "
     "Sequences longer than this will be truncated, and sequences shorter "
     "than this will be padded.")
 
 flags.DEFINE_integer(
-    "doc_stride", 128,
+    "doc_stride", 64,
     "When splitting up a long document into chunks, how much stride to "
     "take between chunks.")
 
 flags.DEFINE_integer(
-    "max_query_length", 64,
+    "max_query_length", 48,
     "The maximum number of tokens for the question. Questions longer than "
     "this will be truncated to this length.")
 
@@ -96,7 +96,7 @@ flags.DEFINE_bool("do_pretrain", False, "Whether to run training.")
 
 flags.DEFINE_bool("do_eval", False, "Whether to run eval on the dev set.")
 
-flags.DEFINE_integer("pretrain_batch_size", 32,
+flags.DEFINE_integer("pretrain_batch_size", 64,
                      "Total batch size for training.")
 
 flags.DEFINE_integer("eval_train_batch_size", 32,
@@ -109,12 +109,12 @@ flags.DEFINE_float(
     "normalize_emb", None, "Fixed norm to normalize document embeddings to. "
     "If None or 0.0, no normalization is done.")
 
-flags.DEFINE_float("learning_rate", 5e-5, "The initial learning rate for Adam.")
+flags.DEFINE_float("learning_rate", 3e-5, "The initial learning rate for Adam.")
 
-flags.DEFINE_float("num_pretrain_epochs", 3.0,
+flags.DEFINE_float("num_pretrain_epochs", 2.0,
                    "Total number of training epochs to perform.")
 
-flags.DEFINE_float("num_eval_train_epochs", 1.0,
+flags.DEFINE_float("num_eval_train_epochs", 0.0,
                    "Total number of training epochs to perform.")
 
 flags.DEFINE_float(
@@ -134,7 +134,7 @@ flags.DEFINE_integer(
     "nbest_predictions.json output file.")
 
 flags.DEFINE_integer(
-    "max_answer_length", 30,
+    "max_answer_length", 15,
     "The maximum length of an answer that can be generated. This is needed "
     "because the start and end predictions are not conditioned on one another.")
 
@@ -149,7 +149,7 @@ flags.DEFINE_string(
     "`doc_layers`.")
 
 flags.DEFINE_string(
-    "qry_layers_to_use", "-1",
+    "qry_layers_to_use", "4",
     "Comma-separated list of layer representations to use as the fixed "
     "query representation.")
 
@@ -159,7 +159,7 @@ flags.DEFINE_string(
     "`qry_layers`.")
 
 flags.DEFINE_integer(
-    "projection_dim", None, "Number of dimensions to project embeddings to. "
+    "projection_dim", 200, "Number of dimensions to project embeddings to. "
     "Set to None to use full dimensions.")
 
 flags.DEFINE_boolean(
@@ -204,7 +204,7 @@ flags.DEFINE_bool(
     "A number of warnings are expected for a normal SQuAD evaluation.")
 
 flags.DEFINE_bool(
-    "version_2_with_negative", False,
+    "version_2_with_negative", True,
     "If true, the SQuAD examples contain some that do not have an answer.")
 
 flags.DEFINE_float(

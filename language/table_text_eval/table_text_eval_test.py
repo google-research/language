@@ -17,6 +17,7 @@ from __future__ import division
 from __future__ import print_function
 
 from language.table_text_eval import table_text_eval
+from six.moves import zip
 import tensorflow.compat.v1 as tf
 
 TEST_PREDS = [

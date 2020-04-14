@@ -83,7 +83,7 @@ flags.DEFINE_integer("max_entity_len", 15,
                      "Maximum number of tokens in an entity name.")
 
 flags.DEFINE_integer(
-    "num_mips_neighbors", 100,
+    "num_mips_neighbors", 15000,
     "Number of nearest neighbor mentions to retrieve for queries in each hop.")
 
 flags.DEFINE_bool(
@@ -92,11 +92,11 @@ flags.DEFINE_bool(
     "models and False for cased models.")
 
 flags.DEFINE_integer(
-    "projection_dim", None, "Number of dimensions to project embeddings to. "
+    "projection_dim", 200, "Number of dimensions to project embeddings to. "
     "Set to None to use full dimensions.")
 
 flags.DEFINE_integer(
-    "max_query_length", 64,
+    "max_query_length", 30,
     "The maximum number of tokens for the question. Questions longer than "
     "this will be truncated to this length.")
 
@@ -116,7 +116,7 @@ flags.DEFINE_integer("train_batch_size", 32, "Total batch size for training.")
 flags.DEFINE_integer("predict_batch_size", 8,
                      "Total batch size for predictions.")
 
-flags.DEFINE_float("learning_rate", 5e-5, "The initial learning rate for Adam.")
+flags.DEFINE_float("learning_rate", 3e-5, "The initial learning rate for Adam.")
 
 flags.DEFINE_float("num_train_epochs", 3.0,
                    "Total number of training epochs to perform.")
@@ -135,10 +135,10 @@ flags.DEFINE_integer("iterations_per_loop", 1000,
 flags.DEFINE_string("supervision", "entity",
                     "Type of supervision -- `mention` or `entity`.")
 
-flags.DEFINE_float("entity_score_threshold", 1e-4,
+flags.DEFINE_float("entity_score_threshold", 1e-2,
                    "Minimum score of an entity to retrieve sparse neighbors.")
 
-flags.DEFINE_float("softmax_temperature", 1.,
+flags.DEFINE_float("softmax_temperature", 2.,
                    "Temperature before computing softmax.")
 
 flags.DEFINE_string(
@@ -171,7 +171,7 @@ flags.DEFINE_string(
 flags.DEFINE_float("question_dropout", 0.2,
                    "Dropout probability for question BiLSTMs.")
 
-flags.DEFINE_integer("question_num_layers", 2,
+flags.DEFINE_integer("question_num_layers", 5,
                      "Number of layers for question BiLSTMs.")
 
 flags.DEFINE_boolean(
@@ -499,8 +499,7 @@ def model_fn_builder(bert_config,
           mode=mode,
           loss=total_loss,
           train_op=train_op,
-          scaffold_fn=scaffold_fn,
-          host_call=summary_obj.get_host_call())
+          scaffold_fn=scaffold_fn)
     elif mode == tf.estimator.ModeKeys.PREDICT:
       output_spec = tf.estimator.tpu.TPUEstimatorSpec(
           mode=mode, predictions=predictions, scaffold_fn=scaffold_fn)

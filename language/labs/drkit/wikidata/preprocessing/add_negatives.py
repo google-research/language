@@ -134,6 +134,8 @@ def main(_):
         f_tr.write(json.dumps(item) + "\n")
       else:
         f_de.write(json.dumps(item) + "\n")
+  with open(os.path.join(FLAGS.output_prefix, "dev_entities.json"), "w") as f_e:
+    json.dump(list(dev_entities), f_e)
 
 
 if __name__ == "__main__":

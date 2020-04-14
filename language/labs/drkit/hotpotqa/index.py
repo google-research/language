@@ -38,8 +38,6 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_string("wiki_file", None, "Path to corpus.")
 
-flags.DEFINE_string("entity_file", None, "Path to entities.")
-
 flags.DEFINE_string("multihop_output_dir", None, "Path to output files.")
 
 flags.DEFINE_string("pretrain_dir", None,
@@ -50,6 +48,9 @@ flags.DEFINE_string("vocab_file", None,
 
 flags.DEFINE_boolean("do_preprocess", None,
                      "Whether to run paragraph preprocessing.")
+
+flags.DEFINE_boolean("do_copy", None,
+                     "Whether to copy bert checkpoint.")
 
 flags.DEFINE_boolean("do_embed", None, "Whether to run mention embedding.")
 
@@ -159,30 +160,26 @@ def main(_):
   tokenizer = tokenization.FullTokenizer(
       vocab_file=FLAGS.vocab_file, do_lower_case=FLAGS.do_lower_case)
 
-  # Read entities.
-  if FLAGS.do_preprocess:
-    tf.logging.info("Reading entities.")
-    entity2id, entity2name = {}, {}
-    with tf.gfile.Open(FLAGS.entity_file) as f:
-      entities = json.load(f)
-      tf.logging.info("Read %d entities", len(entities))
-      for e, (_, n) in entities.items():
-        if e.lower() in entity2id:
-          continue
-          # tf.logging.warn("%s entity repeated", e)
-        entity2id[e.lower()] = len(entity2id)
-        entity2name[e.lower()] = n
-      tf.logging.info("Kept %d entities", len(entity2id))
-
   # Read paragraphs, mentions and entities.
   if FLAGS.do_preprocess:
+    tf.logging.info("Reading all entities")
+    entity2id, entity2name = {}, {}
+    with tf.gfile.Open(FLAGS.wiki_file) as f:
+      for ii, line in tqdm(enumerate(f)):
+        orig_para = json.loads(line.strip())
+        ee = orig_para["kb_id"].lower()
+        if ee not in entity2id:
+          entity2id[ee] = len(entity2id)
+          entity2name[ee] = orig_para["title"]
+    tf.logging.info("Found %d entities", len(entity2id))
+
+    tf.logging.info("Reading paragraphs from %s", FLAGS.wiki_file)
     mentions = []
     ent_rows, ent_cols, ent_vals = [], [], []
     mention2text = {}
     total_sub_paras = [0]
     all_sub_paras = []
     num_skipped_mentions = 0.
-    tf.logging.info("Reading paragraphs from %s", FLAGS.wiki_file)
     with tf.gfile.Open(FLAGS.wiki_file) as f:
       for ii, line in tqdm(enumerate(f)):
         if ii == FLAGS.max_total_paragraphs:
@@ -291,7 +288,7 @@ def main(_):
         os.path.join(FLAGS.multihop_output_dir, "entity_mask"))
 
   # Copy BERT checkpoint for future use.
-  if FLAGS.do_preprocess:
+  if FLAGS.do_copy:
     tf.logging.info("Copying BERT checkpoint.")
     if tf.gfile.Exists(os.path.join(FLAGS.pretrain_dir, "best_model.index")):
       bert_ckpt = os.path.join(FLAGS.pretrain_dir, "best_model")
@@ -319,7 +316,7 @@ def main(_):
     bert_ckpt = os.path.join(FLAGS.multihop_output_dir, "bert_init")
     if not FLAGS.do_preprocess:
       with tf.gfile.Open(
-          os.path.join(FLAGS.multihop_output_dir, "mentions.npy")) as f:
+          os.path.join(FLAGS.multihop_output_dir, "mentions.npy"), "rb") as f:
         mentions = np.load(f)
       with tf.gfile.Open(
           os.path.join(FLAGS.multihop_output_dir, "subparas.json")) as f:
@@ -373,7 +370,7 @@ def main(_):
       for i in shard_range:
         ckpt_path = os.path.join(FLAGS.multihop_output_dir,
                                  "mention_feats_%d" % i)
-        reader = tf.NewCheckpointReader(ckpt_path)
+        reader = tf.train.NewCheckpointReader(ckpt_path)
         var_to_shape_map = reader.get_variable_to_shape_map()
         tf.logging.info("Reading %s from %s with shape %s", "db_emb_%d" % i,
                         ckpt_path, str(var_to_shape_map["db_emb_%d" % i]))

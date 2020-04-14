@@ -786,8 +786,7 @@ def one_hop(qry_input_ids,
   with tf.device("/cpu:0"):
     # mips search.
     tf_db, mips_search_fn = search_utils.create_mips_searcher(
-        mips_config.ckpt_var_name,
-        [mips_config.num_mentions, mips_config.emb_size], mips_config.ckpt_path,
+        mips_config.ckpt_var_name, mips_config.ckpt_path,
         mips_config.num_neighbors)
 
   batch_size = tf.shape(qry_entity_ids)[0]
@@ -881,8 +880,7 @@ def multi_hop(qry_input_ids,
   with tf.device("/cpu:0"):
     # mips search.
     tf_db, mips_search_fn = search_utils.create_mips_searcher(
-        mips_config.ckpt_var_name,
-        [mips_config.num_mentions, mips_config.emb_size], mips_config.ckpt_path,
+        mips_config.ckpt_var_name, mips_config.ckpt_path,
         mips_config.num_neighbors)
 
   layer_mentions, layer_entities = [], []
@@ -1055,8 +1053,7 @@ def create_twohopcascade_model(bert_config,
   with tf.device("/cpu:0"):
     # mips search.
     tf_db, mips_search_fn = search_utils.create_mips_searcher(
-        mips_config.ckpt_var_name,
-        [mips_config.num_mentions, mips_config.emb_size], mips_config.ckpt_path,
+        mips_config.ckpt_var_name, mips_config.ckpt_path,
         mips_config.num_neighbors)
 
   layer_mentions, layer_entities = [], []
@@ -1422,6 +1419,17 @@ def create_hotpotqa_model(bert_config,
   qry_input_mask = features["qry_input_mask"]
   batch_size = tf.shape(qry_input_ids)[0]
   qry_entity_ids = features["qry_entity_id"]
+  if not isinstance(qry_entity_ids, tf.SparseTensor):
+    # This assumes batch_size == 1.
+    num_ents = features["num_entities"][0]
+    qry_entity_ids = tf.SparseTensor(
+        indices=tf.concat([
+            tf.zeros((num_ents, 1), dtype=tf.int64),
+            tf.expand_dims(tf.range(num_ents, dtype=tf.int64), 1)
+        ],
+                          axis=1),
+        values=qry_entity_ids[0, :num_ents],
+        dense_shape=[1, qa_config.num_entities])
 
   answer_entities = None
   if is_training:
@@ -1544,3 +1552,68 @@ def create_hotpotqa_model(bert_config,
   })
 
   return total_loss, predictions
+
+
+def create_hotpot_answer_model(bert_config, is_training, input_ids, input_mask,
+                               segment_ids, use_one_hot_embeddings):
+  """Creates a classification model."""
+  model = modeling.BertModel(
+      config=bert_config,
+      is_training=is_training,
+      input_ids=input_ids,
+      input_mask=input_mask,
+      token_type_ids=segment_ids,
+      use_one_hot_embeddings=use_one_hot_embeddings)
+
+  final_hidden = model.get_sequence_output()
+
+  final_hidden_shape = modeling.get_shape_list(final_hidden, expected_rank=3)
+  batch_size = final_hidden_shape[0]
+  seq_length = final_hidden_shape[1]
+  hidden_size = final_hidden_shape[2]
+
+  output_weights = tf.get_variable(
+      "cls/squad/output_weights", [2, hidden_size],
+      initializer=tf.truncated_normal_initializer(stddev=0.02))
+
+  output_bias = tf.get_variable(
+      "cls/squad/output_bias", [2], initializer=tf.zeros_initializer())
+
+  final_hidden_matrix = tf.reshape(final_hidden,
+                                   [batch_size * seq_length, hidden_size])
+  logits = tf.matmul(final_hidden_matrix, output_weights, transpose_b=True)
+  logits = tf.nn.bias_add(logits, output_bias)
+
+  logits = tf.reshape(logits, [batch_size, seq_length, 2])
+  logits = tf.transpose(logits, [2, 0, 1])
+
+  unstacked_logits = tf.unstack(logits, axis=0)
+
+  (start_logits, end_logits) = (unstacked_logits[0], unstacked_logits[1])
+
+  cls_weights = tf.get_variable(
+      "cls/squad/cls_weights", [3, hidden_size],
+      initializer=tf.truncated_normal_initializer(stddev=0.02))
+
+  cls_bias = tf.get_variable(
+      "cls/squad/cls_bias", [3], initializer=tf.zeros_initializer())
+
+  final_hidden_matrix = final_hidden[:, 0, :]
+  qtype_logits = tf.matmul(final_hidden_matrix, cls_weights, transpose_b=True)
+  qtype_logits = tf.nn.bias_add(qtype_logits, cls_bias)
+
+  sp_weights = tf.get_variable(
+      "cls/squad/sp_weights", [1, hidden_size],
+      initializer=tf.truncated_normal_initializer(stddev=0.02))
+
+  sp_bias = tf.get_variable(
+      "cls/squad/sp_bias", [1], initializer=tf.zeros_initializer())
+
+  final_hidden_matrix = tf.reshape(final_hidden,
+                                   [batch_size * seq_length, hidden_size])
+  sp_logits = tf.matmul(final_hidden_matrix, sp_weights, transpose_b=True)
+  sp_logits = tf.nn.bias_add(sp_logits, sp_bias)
+  sp_logits = tf.reshape(
+      tf.squeeze(sp_logits, axis=1), [batch_size, seq_length])
+
+  return (start_logits, end_logits, qtype_logits, sp_logits)

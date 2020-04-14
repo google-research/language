@@ -30,7 +30,6 @@ import tensorflow.compat.v1 as tf
 from tqdm import tqdm
 
 
-
 def get_ngrams(seq, n):
   """Yields n-grams upto order n."""
   for nn in range(1, n + 1):
@@ -252,7 +251,7 @@ def init_from_checkpoint(checkpoint_path,
 def load_database(var_name, shape, checkpoint_path, dtype=tf.float32):
   """Load variable from checkpoint."""
   if shape is None:
-    reader = tf.NewCheckpointReader(checkpoint_path)
+    reader = tf.train.NewCheckpointReader(checkpoint_path)
     var_to_shape_map = reader.get_variable_to_shape_map()
     shape = var_to_shape_map[var_name]
   tf_db = tf.get_local_variable(
@@ -261,3 +260,22 @@ def load_database(var_name, shape, checkpoint_path, dtype=tf.float32):
   return tf_db
 
 
+def create_mips_searcher(var_name, checkpoint_path, num_neighbors):
+  """Create searcher for returning top-k closest elements."""
+  tf_db = load_database(var_name, None, checkpoint_path)
+
+  with tf.control_dependencies([tf_db.initializer]):
+    mips_init_barrier = tf.constant(True)
+
+  # Make sure DB is initialized.
+  tf.get_local_variable("mips_init_barrier", initializer=mips_init_barrier)
+
+  def _search(query):
+    with tf.device("/cpu:0"):
+      distance = tf.matmul(query, tf_db, transpose_b=True)
+      topk_dist, topk_idx = tf.nn.top_k(distance, num_neighbors)
+    topk_dist.set_shape([query.shape[0], num_neighbors])
+    topk_idx.set_shape([query.shape[0], num_neighbors])
+    return topk_dist, topk_idx
+
+  return tf_db, _search

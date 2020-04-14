@@ -80,10 +80,11 @@ def _get_all_facts(in_file):
         for subj in item["intermediate_entities"][ir]:
           for obj in item["intermediate_entities"][ir + 1]:
             if relation.endswith("-inv"):
-              facts.add(obj.lower() + "::" + relation[:-4] + "::" +
-                        subj.lower())
+              facts.add(obj["text"].lower() + "::" + relation[:-4] + "::" +
+                        subj["text"].lower())
             else:
-              facts.add(subj.lower() + "::" + relation + "::" + obj.lower())
+              facts.add(subj["text"].lower() + "::" + relation + "::" +
+                        obj["text"].lower())
   return facts
 
 
@@ -130,31 +131,26 @@ def main(_):
   num_ignored = 0
   with tf.gfile.Open(FLAGS.kb_file) as f:
     for line in f:
-      fact = json.loads(line.strip())
-      if fact["type"] != "fact":
-        continue
-      str_fact = (
-          fact["subject"].lower() + "::" + fact["relation"] + "::" +
-          fact["object"].lower())
+      subject, relation, obj = line.strip().split("|")
+      str_fact = subject.lower() + "::" + relation + "::" + obj.lower()
       if str_fact in facts_to_ignore:
         num_ignored += 1
         continue
-      if fact["relation"] not in RELATIONS:
-        tf.logging.warn("%s not in RELATIONS", fact["relation"])
+      if relation not in RELATIONS:
+        tf.logging.warn("%s not in RELATIONS", relation)
         continue
-      if fact["object"].lower() not in entity2id:
-        tf.logging.warn("%s (object) not in entities", fact["object"])
+      if obj.lower() not in entity2id:
+        tf.logging.warn("%s (object) not in entities", obj)
         continue
-      if fact["subject"].lower() not in entity2id:
-        tf.logging.warn("%s (subject) not in entities", fact["subject"])
+      if subject.lower() not in entity2id:
+        tf.logging.warn("%s (subject) not in entities", subject)
         continue
-      subject_id = entity2id[fact["subject"].lower()]
-      object_id = entity2id[fact["object"].lower()]
+      subject_id = entity2id[subject.lower()]
+      object_id = entity2id[obj.lower()]
       if subject_id not in entity2para:
-        tf.logging.warn("%s (%d) not in paragraphs", fact["subject"],
-                        subject_id)
+        tf.logging.warn("%s (%d) not in paragraphs", subject, subject_id)
         continue
-      subject2relation2object[subject_id][fact["relation"]].append(object_id)
+      subject2relation2object[subject_id][relation].append(object_id)
   tf.logging.info("Excluded %d facts in the test file.", num_ignored)
   tf.logging.info("Found %d matching subjects.", len(subject2relation2object))
 

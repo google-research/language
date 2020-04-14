@@ -40,6 +40,7 @@ from tqdm import tqdm
 from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver
 from tensorflow.contrib import data as contrib_data
 from tensorflow.contrib import layers as contrib_layers
+from tensorflow.contrib import tpu as contrib_tpu
 
 FLAGS = flags.FLAGS
 
@@ -92,18 +93,18 @@ flags.DEFINE_bool(
     "models and False for cased models.")
 
 flags.DEFINE_integer(
-    "max_seq_length", 384,
+    "max_seq_length", 192,
     "The maximum total input sequence length after WordPiece tokenization. "
     "Sequences longer than this will be truncated, and sequences shorter "
     "than this will be padded.")
 
 flags.DEFINE_integer(
-    "doc_stride", 128,
+    "doc_stride", 64,
     "When splitting up a long document into chunks, how much stride to "
     "take between chunks.")
 
 flags.DEFINE_integer(
-    "max_query_length", 64,
+    "max_query_length", 20,
     "The maximum number of tokens for the question. Questions longer than "
     "this will be truncated to this length.")
 
@@ -125,7 +126,7 @@ flags.DEFINE_bool("filter_tokens_to_keep", False,
                   "If true, only saves embeddings of mention tokens.")
 
 flags.DEFINE_float(
-    "subject_mention_probability", 1.0,
+    "subject_mention_probability", 0.0,
     "Fraction of training instances for which we use subject "
     "mentions in the text as opposed to canonical names.")
 
@@ -135,9 +136,9 @@ flags.DEFINE_float("ent_decomp_weight", 1.0,
 flags.DEFINE_float("rel_decomp_weight", 1.0,
                    "Weight multiplier for relation extraction loss.")
 
-flags.DEFINE_integer("train_batch_size", 32, "Total batch size for training.")
+flags.DEFINE_integer("train_batch_size", 64, "Total batch size for training.")
 
-flags.DEFINE_integer("predict_batch_size", 8,
+flags.DEFINE_integer("predict_batch_size", 16,
                      "Total batch size for predictions.")
 
 flags.DEFINE_float(
@@ -147,9 +148,9 @@ flags.DEFINE_float(
 flags.DEFINE_float("qry_reconstruction_weight", 0.0,
                    "Weight multiplier for the query BOW reconstruction loss.")
 
-flags.DEFINE_float("learning_rate", 5e-5, "The initial learning rate for Adam.")
+flags.DEFINE_float("learning_rate", 3e-5, "The initial learning rate for Adam.")
 
-flags.DEFINE_float("num_train_epochs", 3.0,
+flags.DEFINE_float("num_train_epochs", 5.0,
                    "Total number of training epochs to perform.")
 
 flags.DEFINE_float(
@@ -169,7 +170,7 @@ flags.DEFINE_integer(
     "nbest_predictions.json output file.")
 
 flags.DEFINE_integer(
-    "max_answer_length", 30,
+    "max_answer_length", 10,
     "The maximum length of an answer that can be generated. This is needed "
     "because the start and end predictions are not conditioned on one another.")
 
@@ -196,7 +197,7 @@ flags.DEFINE_string(
 flags.DEFINE_float("question_dropout", 0.2,
                    "Dropout probability for question BiLSTMs.")
 
-flags.DEFINE_integer("question_num_layers", 2,
+flags.DEFINE_integer("question_num_layers", 5,
                      "Number of layers for question BiLSTMs.")
 
 flags.DEFINE_integer(
@@ -257,7 +258,7 @@ flags.DEFINE_bool(
     "A number of warnings are expected for a normal SQuAD evaluation.")
 
 flags.DEFINE_bool(
-    "version_2_with_negative", False,
+    "version_2_with_negative", True,
     "If true, the SQuAD examples contain some that do not have an answer.")
 
 flags.DEFINE_float(
@@ -1322,7 +1323,7 @@ def create_optimizer(loss, init_lr, num_train_steps, num_warmup_steps, use_tpu,
       exclude_from_weight_decay=["LayerNorm", "layer_norm", "bias"])
 
   if use_tpu:
-    optimizer = tf.estimator.tpu.CrossShardOptimizer(optimizer)
+    optimizer = contrib_tpu.CrossShardOptimizer(optimizer)
 
   tvars = tf.trainable_variables()
   if exclude_bert:
@@ -1558,12 +1559,16 @@ def model_fn_builder(bert_config,
                                   num_warmup_steps, use_tpu,
                                   not qa_config.train_bert)
 
-      output_spec = tf.estimator.tpu.TPUEstimatorSpec(
+      if summary_obj:
+        host_call = summary_obj.get_host_call()
+      else:
+        host_call = None
+      output_spec = contrib_tpu.TPUEstimatorSpec(
           mode=mode,
           loss=total_loss,
           train_op=train_op,
           scaffold_fn=scaffold_fn,
-          host_call=summary_obj.get_host_call())
+          host_call=host_call)
     elif mode == tf.estimator.ModeKeys.PREDICT:
       predictions = {
           "unique_ids": unique_ids,
@@ -1577,7 +1582,7 @@ def model_fn_builder(bert_config,
           "qry_en_features": qry_end,
           "qry_bow_features": qry_bow,
       }
-      output_spec = tf.estimator.tpu.TPUEstimatorSpec(
+      output_spec = contrib_tpu.TPUEstimatorSpec(
           mode=mode, predictions=predictions, scaffold_fn=scaffold_fn)
     else:
       raise ValueError("Only TRAIN and PREDICT modes are supported: %s" %
@@ -2373,13 +2378,13 @@ def main(_):
     tpu_cluster_resolver = contrib_cluster_resolver.TPUClusterResolver(
         FLAGS.tpu_name, zone=FLAGS.tpu_zone, project=FLAGS.gcp_project)
 
-  is_per_host = tf.estimator.tpu.InputPipelineConfig.PER_HOST_V2
-  run_config = tf.estimator.tpu.RunConfig(
+  is_per_host = contrib_tpu.InputPipelineConfig.PER_HOST_V2
+  run_config = contrib_tpu.RunConfig(
       cluster=tpu_cluster_resolver,
       master=FLAGS.master,
       model_dir=FLAGS.output_dir,
       save_checkpoints_steps=FLAGS.save_checkpoints_steps,
-      tpu_config=tf.estimator.tpu.TPUConfig(
+      tpu_config=contrib_tpu.TPUConfig(
           iterations_per_loop=FLAGS.iterations_per_loop,
           num_shards=FLAGS.num_tpu_cores,
           per_host_input_for_training=is_per_host))
@@ -2443,7 +2448,7 @@ def main(_):
 
   # If TPU is not available, this will fall back to normal Estimator on CPU
   # or GPU.
-  estimator = tf.estimator.tpu.TPUEstimator(
+  estimator = contrib_tpu.TPUEstimator(
       use_tpu=FLAGS.use_tpu,
       model_fn=model_fn,
       config=run_config,

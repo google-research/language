@@ -208,7 +208,7 @@ def convert_examples_to_features(examples, tokenizer, max_query_length,
                         " ".join([str(x) for x in relation_input_mask[ii]]))
       tf.logging.info("qry_entity_id: %s (%d)", example.subject_entity[0],
                       entity2id.get(example.subject_entity[0], None))
-      tf.logging.info("answer entity: %s", str(example.answer_entity[0]))
+      tf.logging.info("answer entity: %s", str(example.answer_entity))
 
     feature = InputFeatures(
         qas_id=example.qas_id.encode("utf-8"),
@@ -719,9 +719,6 @@ class HotpotQADataset(object):
             continue
         if len(subject_entities) != len(item["entities"]):
           num_qrys_without_all_entities += 1
-        if len(subject_entities) > 10:
-          tf.logging.warn("%s has %d linked entities", qas_id,
-                          len(subject_entities))
 
         if len(answer_entities) > self.max_qry_answers:
           self.max_qry_answers = len(answer_entities)
