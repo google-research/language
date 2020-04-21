@@ -109,7 +109,9 @@ def convert_wikisql(input_example,
     if not successful_copy and not allow_value_generation:
       return None
 
-    if example.gold_sql_query.actions[-1].symbol == '=':
+    if not example.gold_sql_query.actions:
+      return None
+    elif example.gold_sql_query.actions[-1].symbol == '=':
       return None
 
   except UnicodeEncodeError as e:

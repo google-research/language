@@ -19,6 +19,7 @@ from __future__ import division
 
 from __future__ import print_function
 
+from absl import logging
 import nql
 import numpy as np
 import tensorflow.compat.v2 as tf
@@ -103,7 +104,7 @@ def tuple_generator_builder(
             buf[-1] /= buf_sum
         yield tuple(buf)
       except (nql.EntityNameError, nql.TypeNameError) as ex:
-        tf.logging.warn('Problem %r on line (%d): %r', ex, line_number, line)
+        logging.warn('Problem %r on line (%d): %r', ex, line_number, line)
 
   return tuple_generator
 

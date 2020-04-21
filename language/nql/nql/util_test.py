@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# pylint: disable=g-error-prone-assert-raises
 """Tests for util."""
 
 import os
@@ -273,7 +274,7 @@ class TestModelBuilder(BaseTester):
         cb_trainer = util.Trainer(session, cb_model, feature_ph_dict, labels_ph)
         cb_trainer.train(self.make_train_dset(5))
         self.assertEqual(len(cb_model.loss_history), 30)
-        self.assertLess(cb_model.loss_history[-1], 0.05)
+        self.assertLess(cb_model.loss_history[-1], 0.06)
 
   def test_estimator_learn(self):
 

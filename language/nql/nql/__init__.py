@@ -1381,7 +1381,7 @@ class NeuralQueryContext(object):
         domain_buf[rel_name].append(i)
         range_buf[rel_name].append(j)
         data_buf[rel_name].append(weight)
-      if lid % 1000000 == 0:
+      if lid > 0 and lid % 1000000 == 0:
         logging.info('%d facts loaded', lid)
     if freeze:
       for rel_name in data_buf:
@@ -1690,8 +1690,8 @@ def matmul_any_tensor_dense_tensor(a,
   """
   if a_is_sparse:
     _check_type('a', a, tf.SparseTensor)
-    a1 = tf.sparse.transpose(a) if transpose_a else a
-    return tf.transpose(a=tf.sparse.sparse_dense_matmul(a1, tf.transpose(a=b)))
+    return tf.sparse.sparse_dense_matmul(
+        b, a, adjoint_a=False, adjoint_b=not transpose_a)
   else:
     return tf.transpose(
         a=tf.matmul(a, tf.transpose(a=b), transpose_a=transpose_a))

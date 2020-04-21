@@ -91,7 +91,7 @@ for example in examples[:-1]:
       in_equality = True
 
     if in_equality:
-      if char.isnumeric() or char == '.':
+      if char.isdigit() or char == '.':
         if numerical_value or (not prev_value and gold_query[i - 1] == ' '):
           numerical_value += char
 
@@ -112,6 +112,8 @@ for example in examples[:-1]:
 
   print(example + '\n')
 
-print('Performance on subset: ' +
-      '{0:.2f}'.format(100. * num_exec_correct / num_filtered))
+print(
+    'Performance on subset: ' +
+    '{0:.2f}'.format(100. * num_exec_correct / num_filtered), num_exec_correct,
+    num_filtered)
 print('Filtered from %d to %d examples' % (len(examples) - 1, num_filtered))

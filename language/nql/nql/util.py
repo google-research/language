@@ -189,6 +189,9 @@ class ModelBuilder(object):
         labels: passed to config_model_[training|evaluation]
         mode: from tf.estimator.ModeKeys
         params: dict of options passed to config_* methods
+
+      Returns:
+        a Python function
       """
       # initialize and partially configure the model
       m = Model()

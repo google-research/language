@@ -68,8 +68,11 @@ def _add_generate_action(token, example):
 # TODO(petershaw): De-duplicate with function from `sql_parsing.py`.
 def _add_value_literal(item_str, example, anonymize):
   """Adds a value action to the output."""
+
   if anonymize:
+    example.gold_sql_query.actions.append(SQLAction(symbol='"'))
     example.gold_sql_query.actions.append(SQLAction(symbol='value'))
+    example.gold_sql_query.actions.append(SQLAction(symbol='"'))
     return True
 
   # Add quotes if [1] there aren't quotes and [2] it's not numeric
@@ -372,6 +375,57 @@ def michigan_db_to_foreign_key_tuples_orcale(dataset_name):
         abstract_sql.ForeignKeyRelation('domain', 'domain_conference', 'did',
                                         'did'),
     ]
+  elif dataset_name == 'advising':
+    return [
+        abstract_sql.ForeignKeyRelation('course', 'course_offering',
+                                        'course_id', 'course_id'),
+        abstract_sql.ForeignKeyRelation('course_offering', 'semester',
+                                        'semester', 'semester_id'),
+        abstract_sql.ForeignKeyRelation('course', 'program_course', 'course_id',
+                                        'course_id'),
+        abstract_sql.ForeignKeyRelation('course_offering',
+                                        'offering_instructor', 'offering_id',
+                                        'offering_id'),
+        abstract_sql.ForeignKeyRelation('instructor', 'offering_instructor',
+                                        'instructor_id', 'instructor_id'),
+        abstract_sql.ForeignKeyRelation('course', 'course_prerequisite',
+                                        'course_id', 'course_id'),
+        abstract_sql.ForeignKeyRelation('course', 'course_prerequisite',
+                                        'course_id', 'pre_course_id'),
+        abstract_sql.ForeignKeyRelation('course_offering', 'program_course',
+                                        'course_id', 'course_id'),
+        abstract_sql.ForeignKeyRelation('area', 'course', 'course_id',
+                                        'course_id'),
+        abstract_sql.ForeignKeyRelation('program', 'program_course',
+                                        'program_id', 'program_id'),
+        abstract_sql.ForeignKeyRelation('course', 'student_record', 'course_id',
+                                        'course_id'),
+        abstract_sql.ForeignKeyRelation('offering_instructor', 'student_record',
+                                        'offering_id', 'offering_id'),
+        abstract_sql.ForeignKeyRelation('area', 'student_record', 'course_id',
+                                        'course_id'),
+        abstract_sql.ForeignKeyRelation('gsi', 'student', 'student_id',
+                                        'student_id'),
+        abstract_sql.ForeignKeyRelation('course_offering', 'gsi', 'offering_id',
+                                        'course_offering_id'),
+        abstract_sql.ForeignKeyRelation('program_course', 'student_record',
+                                        'course_id', 'course_id'),
+        abstract_sql.ForeignKeyRelation('student', 'student_record',
+                                        'student_id', 'student_id'),
+        abstract_sql.ForeignKeyRelation('offering_instructor',
+                                        'offering_instructor', 'offering_id',
+                                        'offering_id'),
+        abstract_sql.ForeignKeyRelation('program', 'program_requirement',
+                                        'program_id', 'program_id'),
+        abstract_sql.ForeignKeyRelation('course_offering', 'course_offering',
+                                        'semester', 'semester'),
+        abstract_sql.ForeignKeyRelation('semester', 'student_record',
+                                        'semester_id', 'semester'),
+        abstract_sql.ForeignKeyRelation('area', 'course_offering', 'course_id',
+                                        'course_id'),
+        abstract_sql.ForeignKeyRelation('course', 'course', 'course_id',
+                                        'course_id'),
+    ]
   elif dataset_name == 'atis':
     return [
         abstract_sql.ForeignKeyRelation('airport_service', 'city', 'city_code',
@@ -434,7 +488,33 @@ def michigan_db_to_foreign_key_tuples_orcale(dataset_name):
         abstract_sql.ForeignKeyRelation('fare', 'restriction',
                                         'restriction_code', 'restriction_code'),
     ]
-  elif dataset_name == 'geography':
+  elif dataset_name == 'imdb':
+    return [
+        abstract_sql.ForeignKeyRelation('actor', 'cast', 'aid', 'aid'),
+        abstract_sql.ForeignKeyRelation('cast', 'movie', 'msid', 'mid'),
+        abstract_sql.ForeignKeyRelation('directed_by', 'director', 'did',
+                                        'did'),
+        abstract_sql.ForeignKeyRelation('directed_by', 'movie', 'msid', 'mid'),
+        abstract_sql.ForeignKeyRelation('company', 'copyright', 'id', 'cid'),
+        abstract_sql.ForeignKeyRelation('copyright', 'movie', 'msid', 'mid'),
+        abstract_sql.ForeignKeyRelation('keyword', 'tags', 'id', 'kid'),
+        abstract_sql.ForeignKeyRelation('movie', 'tags', 'mid', 'msid'),
+        abstract_sql.ForeignKeyRelation('classification', 'movie', 'msid',
+                                        'mid'),
+        abstract_sql.ForeignKeyRelation('made_by', 'producer', 'pid', 'pid'),
+        abstract_sql.ForeignKeyRelation('classification', 'genre', 'gid',
+                                        'gid'),
+        abstract_sql.ForeignKeyRelation('movie', 'written_by', 'mid', 'msid'),
+        abstract_sql.ForeignKeyRelation('made_by', 'movie', 'msid', 'mid'),
+        abstract_sql.ForeignKeyRelation('writer', 'written_by', 'wid', 'wid'),
+        abstract_sql.ForeignKeyRelation('copyright', 'tv_series', 'msid',
+                                        'sid'),
+        abstract_sql.ForeignKeyRelation('cast', 'tv_series', 'msid', 'sid'),
+        abstract_sql.ForeignKeyRelation('directed_by', 'tv_series', 'msid',
+                                        'sid'),
+        abstract_sql.ForeignKeyRelation('made_by', 'tv_series', 'msid', 'sid'),
+    ]
+  elif dataset_name == 'geoquery':
     return [
         abstract_sql.ForeignKeyRelation('border_info', 'state', 'border',
                                         'state_name'),
@@ -462,18 +542,6 @@ def michigan_db_to_foreign_key_tuples_orcale(dataset_name):
                                         'state_name'),
         abstract_sql.ForeignKeyRelation('border_info', 'city', 'border',
                                         'state_name'),
-        abstract_sql.ForeignKeyRelation('state', 'state', 'state_name',
-                                        'state_name'),
-        abstract_sql.ForeignKeyRelation('border_info', 'border_info', 'border',
-                                        'border'),
-        abstract_sql.ForeignKeyRelation('city', 'highlow', 'state_name',
-                                        'state_name'),
-        abstract_sql.ForeignKeyRelation('highlow', 'state', 'highest_point',
-                                        'capital'),
-        abstract_sql.ForeignKeyRelation('border_info', 'lake', 'border',
-                                        'state_name'),
-        abstract_sql.ForeignKeyRelation('river', 'river', 'river_name',
-                                        'river_name'),
     ]
   elif dataset_name == 'restaurants':
     return [
@@ -481,6 +549,61 @@ def michigan_db_to_foreign_key_tuples_orcale(dataset_name):
                                         'restaurant_id', 'id'),
         abstract_sql.ForeignKeyRelation('geographic', 'restaurant', 'city_name',
                                         'city_name'),
+    ]
+  elif dataset_name == 'scholar':
+    return [
+        abstract_sql.ForeignKeyRelation('author', 'writes', 'authorid',
+                                        'authorid'),
+        abstract_sql.ForeignKeyRelation('paper', 'writes', 'paperid',
+                                        'paperid'),
+        abstract_sql.ForeignKeyRelation('keyphrase', 'paperkeyphrase',
+                                        'keyphraseid', 'keyphraseid'),
+        abstract_sql.ForeignKeyRelation('paper', 'paperkeyphrase', 'paperid',
+                                        'paperid'),
+        abstract_sql.ForeignKeyRelation('paper', 'venue', 'venueid', 'venueid'),
+        abstract_sql.ForeignKeyRelation('cite', 'paper', 'citedpaperid',
+                                        'paperid'),
+        abstract_sql.ForeignKeyRelation('dataset', 'paperdataset', 'datasetid',
+                                        'datasetid'),
+        abstract_sql.ForeignKeyRelation('writes', 'writes', 'paperid',
+                                        'paperid'),
+        abstract_sql.ForeignKeyRelation('paper', 'paperdataset', 'paperid',
+                                        'paperid'),
+        abstract_sql.ForeignKeyRelation('paperdataset', 'paperkeyphrase',
+                                        'paperid', 'paperid'),
+        abstract_sql.ForeignKeyRelation('paperkeyphrase', 'writes', 'paperid',
+                                        'paperid'),
+        abstract_sql.ForeignKeyRelation('cite', 'writes', 'citedpaperid',
+                                        'paperid'),
+        abstract_sql.ForeignKeyRelation('cite', 'writes', 'citingpaperid',
+                                        'paperid'),
+        abstract_sql.ForeignKeyRelation('cite', 'paper', 'citingpaperid',
+                                        'paperid'),
+        abstract_sql.ForeignKeyRelation('journal', 'paper', 'journalid',
+                                        'journalid'),
+        abstract_sql.ForeignKeyRelation('field', 'paperfield', 'fieldid',
+                                        'fieldid'),
+        abstract_sql.ForeignKeyRelation('cite', 'paperkeyphrase',
+                                        'citingpaperid', 'paperid'),
+        abstract_sql.ForeignKeyRelation('cite', 'paperkeyphrase',
+                                        'citedpaperid', 'paperid'),
+        abstract_sql.ForeignKeyRelation('paper', 'paperfield', 'paperid',
+                                        'paperid'),
+    ]
+  elif dataset_name == 'yelp':
+    return [
+        abstract_sql.ForeignKeyRelation('business', 'category', 'business_id',
+                                        'business_id'),
+        abstract_sql.ForeignKeyRelation('review', 'user', 'user_id', 'user_id'),
+        abstract_sql.ForeignKeyRelation('business', 'review', 'business_id',
+                                        'business_id'),
+        abstract_sql.ForeignKeyRelation('business', 'neighborhood',
+                                        'business_id', 'business_id'),
+        abstract_sql.ForeignKeyRelation('tip', 'user', 'user_id', 'user_id'),
+        abstract_sql.ForeignKeyRelation('business', 'tip', 'business_id',
+                                        'business_id'),
+        abstract_sql.ForeignKeyRelation('business', 'checkin', 'business_id',
+                                        'business_id'),
     ]
   else:
     raise ValueError('Unknown dataset: %s' % dataset_name)
@@ -551,7 +674,7 @@ def populate_abstract_sql(example, sql_string, table_schemas, anonymize):
     example: NLToSQLExample instance with utterance populated.
     sql_string: SQL query as string.
     table_schemas: List of TableSchema tuples.
-    anonymize: Whether to anonymize value literals.
+    anonymize: Whether to anonymize string/numerical values.
 
   Returns:
     Successful copy.

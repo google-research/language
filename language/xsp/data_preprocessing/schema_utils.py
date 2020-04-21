@@ -145,7 +145,7 @@ def process_columns(columns, tokenizer, table_name, aligned_schema_entities):
     column_obj.column_name_wordpieces.extend(
         get_wordpieces(
             column_obj.original_column_name.replace('_', ' '), tokenizer)[0])
-    col_type = column['type']
+    col_type = column['type'].lower()
     if 'int' in col_type or 'float' in col_type or 'double' in col_type or 'decimal' in col_type:
       col_type = 'number'
     if 'varchar' in col_type or 'longtext' in col_type:
