@@ -30,7 +30,7 @@ from language.common.layers import common_layers
 from language.common.layers import cudnn_layers
 from language.common.utils import tensor_utils
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import lookup as contrib_lookup
 
 # Dataset parameters, these need to be pointed at the appropriate targets

@@ -14,7 +14,7 @@
 # limitations under the License.
 """Sentencize the raw wikitext103."""
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 app = tf.compat.v1.app
 flags = tf.flags

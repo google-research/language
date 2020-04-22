@@ -19,7 +19,7 @@ from __future__ import division
 from __future__ import print_function
 
 from language.question_answering.decatt_docreader.layers import decomposable_attention as decatt
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class DecomposableAttentionTest(tf.test.TestCase):

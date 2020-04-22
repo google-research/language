@@ -1,0 +1,30 @@
+body {
+  color: #5f6368;
+  font-family: 'Google Sans', Arial, Helvetica, sans-serif;
+  font-size: 16px;
+}
+
+div.page-background-image {
+  padding: 20px;
+  background-image: url(https://ai.google/static/images/about/about_hero.jpg);
+}
+
+/* Styling for the sub-card that holds the options controls. */
+div.results {
+  width: 800px;
+  padding: 20px;
+}
+div.results table tr td.results-field-label {
+  width: 220px;
+}
+div.results table tr td.results-field-textbox div {
+  margin-right: 80px;
+  width: 100px;
+}
+
+.answer table {
+  border-spacing: 50px;
+  border-collapse: separate;
+  border: 1px solid grey;
+}
+

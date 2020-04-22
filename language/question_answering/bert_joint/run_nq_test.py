@@ -24,7 +24,7 @@ import os
 import tempfile
 from language.question_answering.bert_joint import prepare_nq_data
 from language.question_answering.bert_joint import run_nq
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 flags = tf.flags
 FLAGS = flags.FLAGS

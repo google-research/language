@@ -31,7 +31,7 @@ from bert import tokenization
 from bert_extraction.steal_bert_classifier.embedding_perturbations import embedding_util as em_util
 from bert_extraction.steal_bert_classifier.models import run_classifier as rc
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 flags = tf.flags
 

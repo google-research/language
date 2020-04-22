@@ -20,7 +20,7 @@ from __future__ import print_function
 
 from language.common.inputs import char_utils
 from language.common.layers import common_layers
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class CommonLayersTest(tf.test.TestCase):

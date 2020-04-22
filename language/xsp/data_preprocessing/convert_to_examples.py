@@ -35,7 +35,7 @@ from language.xsp.data_preprocessing.spider_preprocessing import load_spider_tab
 from language.xsp.data_preprocessing.wikisql_preprocessing import convert_wikisql
 from language.xsp.data_preprocessing.wikisql_preprocessing import load_wikisql_tables
 
-import tensorflow.gfile as gfile
+import tensorflow.compat.v1.gfile as gfile
 
 FLAGS = flags.FLAGS
 

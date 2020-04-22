@@ -19,7 +19,7 @@ from __future__ import division
 from __future__ import print_function
 
 from language.common.inputs import char_utils
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class CharUtilsTest(tf.test.TestCase):

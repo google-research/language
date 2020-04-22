@@ -20,7 +20,7 @@ from __future__ import print_function
 
 import os
 from bert import modeling
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def get_input_mask(max_seq_len, source_len):

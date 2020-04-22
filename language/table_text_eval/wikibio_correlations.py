@@ -42,7 +42,7 @@ from absl import flags
 from language.table_text_eval import table_text_eval
 import numpy as np
 from scipy.stats import pearsonr
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 FLAGS = flags.FLAGS

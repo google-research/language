@@ -41,7 +41,9 @@ import math
 
 from absl import app
 from absl import flags
-import tensorflow as tf
+from six.moves import range
+from six.moves import zip
+import tensorflow.compat.v1 as tf
 
 FLAGS = flags.FLAGS
 

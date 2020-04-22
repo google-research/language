@@ -25,7 +25,7 @@ import random
 from bert_extraction.steal_bert_qa.utils import evaluate_squad
 import numpy as np
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import tqdm
 
 app = tf.compat.v1.app

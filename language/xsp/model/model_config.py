@@ -19,7 +19,7 @@ from __future__ import print_function
 
 import collections
 import json
-import tensorflow.gfile as gfile
+import tensorflow.compat.v1.gfile as gfile
 
 
 class DataOptions(

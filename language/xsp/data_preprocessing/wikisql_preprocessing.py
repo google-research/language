@@ -28,7 +28,7 @@ from language.xsp.data_preprocessing.sql_parsing import ParseError
 from language.xsp.data_preprocessing.sql_parsing import populate_sql
 from language.xsp.data_preprocessing.sql_utils import preprocess_sql
 import sqlparse
-import tensorflow.gfile as gfile
+import tensorflow.compat.v1.gfile as gfile
 
 
 def normalize_sql(sql, replace_period=True):
@@ -109,7 +109,9 @@ def convert_wikisql(input_example,
     if not successful_copy and not allow_value_generation:
       return None
 
-    if example.gold_sql_query.actions[-1].symbol == '=':
+    if not example.gold_sql_query.actions:
+      return None
+    elif example.gold_sql_query.actions[-1].symbol == '=':
       return None
 
   except UnicodeEncodeError as e:

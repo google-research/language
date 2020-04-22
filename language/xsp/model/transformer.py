@@ -18,7 +18,7 @@ from language.xsp.model import beam_search
 from language.xsp.model import common_layers
 from language.xsp.model import constants
 from language.xsp.model import decode_utils
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 # TODO(alanesuhr): Bias beam search based on sequence length.
 ALPHA = 0.0
@@ -33,8 +33,7 @@ LOGIT_MASK_VALUE = -100
 def _set_initializer():
   """Set initializer used for all model variables."""
   tf.get_variable_scope().set_initializer(
-      tf.variance_scaling_initializer(
-          factor=1.0, mode="FAN_AVG", uniform=False))
+      tf.variance_scaling_initializer(scale=1.0, mode="fan_avg"))
 
 
 def _build_transformer_decoder(encoder_output,
@@ -66,7 +65,7 @@ def _build_transformer_decoder(encoder_output,
   _set_initializer()
 
   # Only apply dropout during training, not eval or inference.
-  perform_dropout = (mode == tf.ModeKeys.TRAIN)
+  perform_dropout = (mode == tf.estimator.ModeKeys.TRAIN)
   if perform_dropout:
     decoder_input = tf.nn.dropout(
         decoder_input,
@@ -205,6 +204,7 @@ def _get_action_logits(encoder_output,
                        output_vocab_size,
                        model_config,
                        input_copy_mask=None,
+                       clean_output_mask=None,
                        use_gating_mechanism=True):
   """Generate output logits given decoder output.
 
@@ -226,12 +226,15 @@ def _get_action_logits(encoder_output,
     output_vocab_size: Integer size of output_vocab_embeddings_table outer dim.
     model_config: ModelConfig proto.
     input_copy_mask: Mask of the input sequence for copying.
+    clean_output_mask: Mask of the output vocab. For clean
+      inference only.
     use_gating_mechanism: Whether to use gating mechanism.
 
   Returns:
     Tensor of shape (batch_size, output_vocab_size + input length) representing
     unnormalized logits for both copy and generate actions.
   """
+
   with tf.variable_scope("logits_transforms"):
     decoder_dims = decoder_output.get_shape()[-1]
     target_embedding_dims = model_config.model_parameters.target_embedding_dims
@@ -285,6 +288,17 @@ def _get_action_logits(encoder_output,
       generate_logits *= tf.expand_dims(prob_gen, axis=-1)
       # These are the 'copy' logits so are scaled by 1 - P_gen.
       copy_logits *= tf.expand_dims(1 - prob_gen, axis=-1)
+
+    if clean_output_mask is not None:
+      clean_mask = (1 - tf.dtypes.cast(
+          clean_output_mask, dtype=tf.dtypes.float32)) * LOGIT_MASK_VALUE
+
+      batch_size = common_layers.get_shape_list(generate_logits)[0]
+      output_vocab_size = common_layers.get_shape_list(generate_logits)[-1]
+
+      clean_mask = tf.reshape(
+          tf.tile(clean_mask, [batch_size]), [batch_size, output_vocab_size])
+      generate_logits += tf.expand_dims(clean_mask, axis=1)
 
     if input_copy_mask is not None:
       copy_mask = (1 - tf.dtypes.cast(
@@ -353,7 +367,8 @@ def _beam_decode(input_embeddings,
                  model_config,
                  mode,
                  beam_size,
-                 input_copy_mask=None):
+                 input_copy_mask=None,
+                 clean_output_mask=None):
   """Beam search decoding."""
   # Assume batch size is 1.
   batch_size = 1
@@ -402,7 +417,8 @@ def _beam_decode(input_embeddings,
         output_vocab_embeddings_table,
         output_vocab_size,
         model_config,
-        input_copy_mask=input_copy_mask)
+        input_copy_mask=input_copy_mask,
+        clean_output_mask=clean_output_mask)
     # Squeeze length dimension, as it should be 1.
     logits = tf.squeeze(logits, axis=[1])
     # Shape of logits should now be:
@@ -445,7 +461,8 @@ def _greedy_decode(input_embeddings,
                    source_len,
                    model_config,
                    mode,
-                   input_copy_mask=None):
+                   input_copy_mask=None,
+                   clean_output_mask=None):
   """Fast decoding."""
   encoder_output = common_layers.linear_transform(
       input_embeddings,
@@ -471,13 +488,15 @@ def _greedy_decode(input_embeddings,
         mode,
         model_config,
         single_step_index=current_index)
+
     logits = _get_action_logits(
         encoder_output,
         decoder_output,
         output_vocab_embeddings_table,
         output_vocab_size,
         model_config,
-        input_copy_mask=input_copy_mask)
+        input_copy_mask=input_copy_mask,
+        clean_output_mask=clean_output_mask)
 
     # Squeeze batch dimension and length dimension, as both should be 1.
     logits = tf.squeeze(logits, axis=[0, 1])
@@ -597,6 +616,7 @@ def infer(model_config,
           output_vocab_embeddings_table,
           mode,
           input_copy_mask=None,
+          clean_output_mask=None,
           beam_size=1):
   """Constructs encoder and decoder transformation for training and eval.
 
@@ -613,6 +633,7 @@ def infer(model_config,
       embeddings for output symbols.
     mode: Enum indicating model mode, which should be INFER.
     input_copy_mask: Mask for copying actions.
+    clean_output_mask: MAsk for preventing generating new values.
     beam_size: Size of beam for inference.
 
   Returns:
@@ -628,14 +649,28 @@ def infer(model_config,
   if input_embeddings.get_shape()[0] != 1:
     raise ValueError("Batch size must be 1 for inference.")
   if beam_size > 1:
-    return _beam_decode(input_embeddings, ALPHA, output_vocab_size,
-                        constants.TARGET_END_SYMBOL_ID,
-                        constants.TARGET_START_SYMBOL_ID,
-                        output_vocab_embeddings_table, source_len, model_config,
-                        mode, beam_size, input_copy_mask)
+    return _beam_decode(
+        input_embeddings,
+        ALPHA,
+        output_vocab_size,
+        constants.TARGET_END_SYMBOL_ID,
+        constants.TARGET_START_SYMBOL_ID,
+        output_vocab_embeddings_table,
+        source_len,
+        model_config,
+        mode,
+        beam_size,
+        input_copy_mask,
+        clean_output_mask=clean_output_mask)
   else:
-    return _greedy_decode(input_embeddings, output_vocab_size,
-                          constants.TARGET_END_SYMBOL_ID,
-                          constants.TARGET_START_SYMBOL_ID,
-                          output_vocab_embeddings_table, source_len,
-                          model_config, mode, input_copy_mask)
+    return _greedy_decode(
+        input_embeddings,
+        output_vocab_size,
+        constants.TARGET_END_SYMBOL_ID,
+        constants.TARGET_START_SYMBOL_ID,
+        output_vocab_embeddings_table,
+        source_len,
+        model_config,
+        mode,
+        input_copy_mask,
+        clean_output_mask=clean_output_mask)

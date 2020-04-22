@@ -19,7 +19,7 @@ from __future__ import division
 from __future__ import print_function
 
 from language.labs.consistent_zero_shot_nmt.models import losses
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class LossesTest(tf.test.TestCase):

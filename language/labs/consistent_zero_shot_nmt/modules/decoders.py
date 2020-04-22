@@ -26,7 +26,7 @@ from language.labs.consistent_zero_shot_nmt.utils import common_utils as U
 from language.labs.consistent_zero_shot_nmt.utils import model_utils
 from tensor2tensor.data_generators import text_encoder
 from tensor2tensor.layers import common_layers
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import seq2seq as contrib_seq2seq
 from tensorflow.contrib import training as contrib_training
 

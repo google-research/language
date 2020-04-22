@@ -22,7 +22,7 @@ from __future__ import print_function
 import json
 import os
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 _EPSILON = 1e-8  # for numerical stability
 

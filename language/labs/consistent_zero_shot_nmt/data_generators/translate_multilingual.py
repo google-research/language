@@ -27,7 +27,7 @@ from tensor2tensor.data_generators import translate
 from tensor2tensor.layers import modalities
 from tensor2tensor.utils import metrics
 from tensor2tensor.utils import mlperf_log
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 # Length of the language tag strings.

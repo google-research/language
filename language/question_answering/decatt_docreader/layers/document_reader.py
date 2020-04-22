@@ -19,7 +19,7 @@ from __future__ import print_function
 
 from language.common.layers import cudnn_layers
 from language.common.utils import tensor_utils
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def _attend_to_question(context_emb, question_emb, question_mask, hidden_size):

@@ -20,7 +20,7 @@ from __future__ import print_function
 
 from language.common.inputs import dataset_utils
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class DatasetUtilsTest(tf.test.TestCase):

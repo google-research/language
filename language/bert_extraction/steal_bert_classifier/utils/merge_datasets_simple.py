@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Concatenate a list of datasets."""
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 app = tf.compat.v1.app
 flags = tf.flags

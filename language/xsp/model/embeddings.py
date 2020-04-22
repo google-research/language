@@ -18,8 +18,8 @@ import math
 from language.xsp.model import bert_utils
 from language.xsp.model import common_layers
 from language.xsp.model import constants
-import tensorflow as tf
-import tensorflow.gfile as gfile
+import tensorflow.compat.v1 as tf
+import tensorflow.compat.v1.gfile as gfile
 
 # Added to avoid division by zero.
 EPSILON = 0.00000001
@@ -143,3 +143,25 @@ def get_output_vocab_embeddings_table(model_config, output_vocab_filepath):
             num_symbols, model_config.model_parameters.target_embedding_dims
         ],
         initializer=_default_initializer(model_config.model_parameters))
+
+
+def get_clean_output_mask(output_vocab_filepath, clean_output_vocab_path):
+  """Get the masks for generating only clean actions."""
+  regular_output_symbols = _get_vocab_symbols(output_vocab_filepath)
+  clean_output_symbols = _get_vocab_symbols(clean_output_vocab_path)
+
+  output_mask = []
+
+  for _ in range(constants.NUM_RESERVED_OUTPUT_SYMBOLS):
+    output_mask.append(1)
+
+  for symbol in regular_output_symbols:
+    if symbol in clean_output_symbols:
+      output_mask.append(1)
+    else:
+      output_mask.append(0)
+
+  tf.logging.info("Using clean output vocab ")
+  tf.logging.info("   original vocab size: " + str(len(regular_output_symbols)))
+  tf.logging.info("   after cleaning: " + str(sum(output_mask)))
+  return output_mask

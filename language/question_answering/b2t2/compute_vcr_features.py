@@ -28,7 +28,7 @@ import zipfile
 
 import absl
 from bert import tokenization
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 flags = absl.flags
 FLAGS = flags.FLAGS

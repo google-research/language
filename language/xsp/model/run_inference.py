@@ -35,7 +35,7 @@ from language.xsp.model import model_builder
 from language.xsp.model.model_config import load_config
 
 import sqlparse
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 FLAGS = flags.FLAGS
 
@@ -43,6 +43,9 @@ flags.DEFINE_string('config_filepath', '', 'The location of the model config.')
 
 flags.DEFINE_string('output_vocab_filepath', '',
                     'The location of the output vocabulary.')
+
+flags.DEFINE_string('clean_output_vocab_filepath', None,
+                    'Path to the clean output vocabfile.')
 
 flags.DEFINE_string('checkpoint_filepath', '',
                     'The location of the checkpoint.')
@@ -104,9 +107,14 @@ def _action_id_to_table_name_map(segment_ids, copy_strings):
   return action_id_to_table_name_map
 
 
-def clean_predicted_sequence(action_ids, action_types, scores, vocab,
-                             copy_strings, segment_ids,
-                             restore_preds_from_asql):
+def clean_predicted_sequence(action_ids,
+                             action_types,
+                             scores,
+                             vocab,
+                             copy_strings,
+                             segment_ids,
+                             restore_preds_from_asql,
+                             clean_vocab=None):
   """Cleans a set of predicted SQL queries."""
   action_id_to_table_name_map = None
   if restore_preds_from_asql:
@@ -122,7 +130,11 @@ def clean_predicted_sequence(action_ids, action_types, scores, vocab,
         break
       # Indices into vocab are offset by 3.
       symbol = vocab[pred_idx - 3]
-      string_seq.append(symbol)
+      if clean_vocab:
+        if symbol in clean_vocab:
+          string_seq.append(symbol)
+      else:
+        string_seq.append(symbol)
     else:
       # Copy symbol from input.
       symbol = copy_strings[action_id]
@@ -176,7 +188,10 @@ def setup_graph():
       model_config.model_parameters.use_alignment_features)
 
   model_fn = model_builder.build_model_fn(
-      model_config, FLAGS.output_vocab_filepath, beam_size=FLAGS.beam_size)
+      model_config,
+      FLAGS.output_vocab_filepath,
+      FLAGS.clean_output_vocab_filepath,
+      beam_size=FLAGS.beam_size)
   mode = tf.estimator.ModeKeys.PREDICT
   predictions = model_fn(features, labels, mode).predictions
   saver = tf.train.Saver()
@@ -212,7 +227,8 @@ def get_prediction(placeholder,
                    outputs,
                    vocab,
                    beam_size,
-                   restore_preds_from_asql=False):
+                   restore_preds_from_asql=False,
+                   clean_vocab=None):
   """Gets predicted outputs for a specific input to the model."""
   copy_strings = _get_copy_strings(tf_example)
   segment_ids = _get_segment_ids(tf_example)
@@ -230,7 +246,8 @@ def get_prediction(placeholder,
         vocab,
         copy_strings,
         segment_ids,
-        restore_preds_from_asql=restore_preds_from_asql)
+        restore_preds_from_asql=restore_preds_from_asql,
+        clean_vocab=clean_vocab)
     predictions.append(prediction)
     scores.append(score)
   return predictions, scores
@@ -258,6 +275,12 @@ class RunInferenceDoFn(beam.DoFn):
     with tf.gfile.Open(FLAGS.output_vocab_filepath) as infile:
       self._vocab = [line.strip() for line in infile]
 
+    if FLAGS.clean_output_vocab_filepath:
+      with tf.gfile.Open(FLAGS.clean_output_vocab_filepath) as infile:
+        self._clean_vocab = [line.strip() for line in infile]
+    else:
+      self._clean_vocab = None
+
     self._checkpoint = checkpoint
     self._graph_state = None
 
@@ -266,12 +289,10 @@ class RunInferenceDoFn(beam.DoFn):
     if self._graph_state is None:
       self._graph_state = self._GraphState(self._checkpoint)
 
-    predicted_sequences, scores = get_prediction(self._graph_state.placeholder,
-                                                 example,
-                                                 self._graph_state.sess,
-                                                 self._graph_state.outputs,
-                                                 self._vocab, FLAGS.beam_size,
-                                                 FLAGS.restore_preds_from_asql)
+    predicted_sequences, scores = get_prediction(
+        self._graph_state.placeholder, example, self._graph_state.sess,
+        self._graph_state.outputs, self._vocab, FLAGS.beam_size,
+        FLAGS.restore_preds_from_asql, self._clean_vocab)
 
     return {
         'utterance': dict(example.context.feature)['key'].bytes_list.value[0],
@@ -289,6 +310,7 @@ def inference_wrapper(inference_fn, sharded=False):
   """Wrapper for running inference."""
   dataset_name = FLAGS.dataset_name
 
+  predictions = FLAGS.predictions_path + '*'
   # Don't run inference if predictions have already been generated.
   if not tf.gfile.Glob(FLAGS.predictions_path + '*'):
     inference_fn(FLAGS.input, FLAGS.predictions_path, FLAGS.checkpoint_filepath,
@@ -296,19 +318,20 @@ def inference_wrapper(inference_fn, sharded=False):
 
   # If using Abstract SQL, need to restore under-specified FROM clauses
   # output above.
-  predictions = FLAGS.predictions_path + '*'
   if FLAGS.restore_preds_from_asql:
     spider = dataset_name.lower() == 'spider'
-    restore_from_asql.restore_from_clauses(
-        predictions,
-        FLAGS.restored_predictions_path,
-        spider_examples_json=FLAGS.spider_examples_json if spider else '',
-        spider_tables_json=FLAGS.spider_tables_json if spider else '',
-        michigan_schema=None if spider else read_schema(
-            os.path.join(FLAGS.data_filepath, FLAGS.dataset_name +
-                         '_schema.csv')),
-        dataset_name=FLAGS.dataset_name,
-        use_oracle_foriegn_keys=FLAGS.use_oracle_foriegn_keys)
+
+    if not tf.io.gfile.exists(FLAGS.restored_predictions_path):
+      restore_from_asql.restore_from_clauses(
+          predictions,
+          FLAGS.restored_predictions_path,
+          spider_examples_json=FLAGS.spider_examples_json if spider else '',
+          spider_tables_json=FLAGS.spider_tables_json if spider else '',
+          michigan_schema=None if spider else read_schema(
+              os.path.join(FLAGS.data_filepath, FLAGS.dataset_name +
+                           '_schema.csv')),
+          dataset_name=FLAGS.dataset_name,
+          use_oracle_foriegn_keys=FLAGS.use_oracle_foriegn_keys)
     predictions = FLAGS.restored_predictions_path
 
   if FLAGS.match_and_save:

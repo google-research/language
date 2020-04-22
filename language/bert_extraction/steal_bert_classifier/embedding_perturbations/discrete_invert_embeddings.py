@@ -30,7 +30,7 @@ from bert_extraction.steal_bert_classifier.embedding_perturbations import embedd
 from bert_extraction.steal_bert_classifier.models import run_classifier as rc
 
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 flags = tf.flags
 

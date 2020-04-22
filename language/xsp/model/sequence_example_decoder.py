@@ -14,7 +14,7 @@
 # limitations under the License.
 """A decoder for tf.SequenceExample."""
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class TFSequenceExampleDecoder(tf.contrib.slim.data_decoder.DataDecoder):
@@ -64,7 +64,7 @@ class TFSequenceExampleDecoder(tf.contrib.slim.data_decoder.DataDecoder):
         example[k] = tf.reshape(example[k], value.shape)
 
     if not items:
-      items = self._items_to_handlers.keys()
+      items = list(self._items_to_handlers.keys())
 
     outputs = []
     for item in items:

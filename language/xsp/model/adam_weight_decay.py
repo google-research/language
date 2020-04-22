@@ -14,10 +14,13 @@
 # limitations under the License.
 """Adam optimizer with weight decay used for BERT."""
 
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
 
 import re
-import tensorflow as tf
+from six.moves import zip
+import tensorflow.compat.v1 as tf
 
 
 class AdamWeightDecayOptimizer(tf.train.Optimizer):
@@ -238,7 +241,7 @@ def create_optimizer(loss,
   (grads, _) = tf.clip_by_global_norm(grads, clip_norm=1.0)
 
   train_op = optimizer.apply_gradients(
-      zip(grads, tvars), global_step=global_step)
+      list(zip(grads, tvars)), global_step=global_step)
 
   # Normally the global step update is done inside of `apply_gradients`.
   # However, `AdamWeightDecayOptimizer` doesn't do this. But if you use

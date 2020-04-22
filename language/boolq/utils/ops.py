@@ -19,7 +19,7 @@ from __future__ import division
 from __future__ import print_function
 
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 # pylint: disable=g-direct-tensorflow-import
 from tensorflow.python.data.ops import dataset_ops
 

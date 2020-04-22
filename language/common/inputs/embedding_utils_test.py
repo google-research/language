@@ -23,7 +23,7 @@ import tempfile
 from language.common.inputs import embedding_utils
 
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class EmbeddingUtilsTest(tf.test.TestCase):

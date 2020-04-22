@@ -29,14 +29,18 @@ from __future__ import print_function
 import argparse
 import json
 import os
-import signal
 
 import numpy as np
 import sqlite3
+import timeout_decorator
 from tqdm import tqdm
 
 # Maximum allowable timeout for executing predicted and gold queries.
-TIMEOUT = 10
+TIMEOUT = 15
+
+# Maximum number of candidates we should consider
+MAX_CANDIDATE = 20
+
 
 # These are substrings of exceptions from sqlite3 that indicate certain classes
 # of schema and syntax errors.
@@ -50,15 +54,6 @@ SYNTAX_INCORRECTNESS_STRINGS = {
     'no such function', 'clause is required before',
     'incorrect number of bindings', 'datatype mismatch', 'syntax error'
 }
-
-
-class TimeoutExceptionError(Exception):
-  pass
-
-
-def timeout_handler(signum, frame):
-  del signum, frame  # Unused.
-  raise TimeoutExceptionError
 
 
 def normalize_sql_str(string):
@@ -93,11 +88,11 @@ def result_table_to_string(table):
 def try_executing_query(prediction, cursor, case_sensitive=True, verbose=False):
   """Attempts to execute a SQL query against a database given a cursor."""
   exception_str = None
-  signal.signal(signal.SIGALRM, timeout_handler)
-  signal.alarm(TIMEOUT)
 
-  # Try executing the query against the database. Catch exceptions (so that
-  # executability of the query can be evaluated).
+  prediction_str = prediction[:]
+  prediction_str = prediction_str.replace(';', '').strip()
+  print('Current prediction:' + prediction_str)
+
   try:
     if not case_sensitive:
       # TODO(alanesuhr): Verify that this correctly makes the query case-
@@ -117,12 +112,9 @@ def try_executing_query(prediction, cursor, case_sensitive=True, verbose=False):
       if verbose:
         print('Executing case-insensitive query:')
         print(new_prediction)
-
-    cursor.execute(prediction)
-    pred_results = cursor.fetchall()
-    pred_results = [list(result) for result in pred_results]
-  except TimeoutExceptionError:
-    signal.alarm(0)
+    pred_results = timeout_execute(cursor, prediction)
+  except timeout_decorator.timeout_decorator.TimeoutError:
+    print('!time out!')
     pred_results = []
     exception_str = 'timeout'
   except (sqlite3.Warning, sqlite3.Error, sqlite3.DatabaseError,
@@ -130,9 +122,16 @@ def try_executing_query(prediction, cursor, case_sensitive=True, verbose=False):
           sqlite3.OperationalError, sqlite3.NotSupportedError) as e:
     exception_str = str(e).lower()
     pred_results = []
-  signal.alarm(0)
 
   return pred_results, exception_str
+
+
+@timeout_decorator.timeout(seconds=TIMEOUT, use_signals=False)
+def timeout_execute(cursor, prediction):
+  cursor.execute(prediction)
+  pred_results = cursor.fetchall()
+  pred_results = [list(result) for result in pred_results]
+  return pred_results
 
 
 def find_used_entities_in_string(query, columns, tables):
@@ -224,6 +223,10 @@ def execute_prediction(prediction, empty_table_cursor, cursor, case_sensitive,
   best_prediction = None
   pred_results = None
   exception_str = None
+
+  if len(sorted_by_scores) > MAX_CANDIDATE:
+    sorted_by_scores = sorted_by_scores[:MAX_CANDIDATE]
+
   for i, (pred, _) in enumerate(sorted_by_scores):
     # Try predicting
     if verbose:
@@ -258,12 +261,23 @@ def execute_prediction(prediction, empty_table_cursor, cursor, case_sensitive,
       exception_str = None
 
       if verbose:
-        print('... on actual database')
+        print('No exception... on actual database')
       pred_results = try_executing_query(pred, cursor, case_sensitive,
                                          verbose)[0]
       break
 
   return best_prediction, pred_results, exception_str
+
+
+def _convert_to_unicode_string(value):
+  if isinstance(value, int) or isinstance(value, float):
+    return str(value).decode('utf-8', 'ignore')
+  elif isinstance(value, unicode):
+    return value
+  elif isinstance(value, str):
+    return value.decode('utf-8', 'ignore')
+  else:
+    return str(value).decode('utf-8', 'ignore')
 
 
 def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
@@ -337,6 +351,7 @@ def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
     if verbose:
       print('Finding the highest-rated prediction for utterance:\n\t' +
             printable_utterance)
+
     best_prediction, pred_results, exception_str = execute_prediction(
         prediction, empty_cursor, cursor, case_sensitive, verbose)
 
@@ -385,19 +400,18 @@ def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
     ofile.write('Gold query:\n')
     ofile.write('\t' + u''.join(gold_query).encode('utf-8').strip() + '\n')
 
-    # Compare the execution results
+    # Get the gold results
     if cache_dict is None or gold_query not in cache_dict:
       if verbose:
         print('Trying to execute the gold query:\n\t' + gold_query)
       gold_results, gold_exception_str = try_executing_query(
           gold_query, cursor, case_sensitive, verbose)
+
       if gold_exception_str:
         gold_error += 1
         gold_results = []
-
       elif cache_dict is not None:
         cache_dict[u''.join(gold_query).decode('utf-8')] = gold_results
-
     else:
       gold_results = cache_dict[gold_query]
 
@@ -417,12 +431,14 @@ def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
         gold_set = set()
         for pred in pred_results:
           if isinstance(pred, list):
-            pred_set.add(' '.join([str(item) for item in pred]))
+            pred_set.add(u' '.join(
+                [_convert_to_unicode_string(item) for item in pred]))
           else:
             pred_set.add(pred)
         for gold in gold_results:
           if isinstance(gold, list):
-            gold_set.add(' '.join([str(item) for item in gold]))
+            gold_set.add(u' '.join(
+                [_convert_to_unicode_string(item) for item in gold]))
           else:
             gold_set.add(gold)
 
@@ -519,7 +535,11 @@ def main(predictions_filepath, output_filepath, cache_filepath, verbose):
   cache_dict = None
 
   # Only instantiate the cache dict if using Spider.
-  if 'spider' not in predictions_filepath.lower():
+  print('cache path: ' + cache_filepath)
+
+  basefilename = os.path.basename(predictions_filepath).lower()
+
+  if 'spider' not in basefilename:
     cache_dict = dict()
     if os.path.exists(cache_filepath):
       print('Loading cache from %s' % cache_filepath)
@@ -530,9 +550,9 @@ def main(predictions_filepath, output_filepath, cache_filepath, verbose):
   # Create the text file that results will be written to.
   with open(output_filepath, 'w') as ofile:
     execute_predictions(predictions, cache_dict, ofile,
-                        'scholar' not in predictions_filepath, verbose)
+                        'scholar' not in basefilename, verbose)
 
-  if 'spider' not in predictions_filepath.lower():
+  if 'spider' not in basefilename:
     try:
       cache_str = json.dumps(cache_dict)
       with open(cache_filepath, 'w') as ofile:

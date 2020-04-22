@@ -14,7 +14,7 @@
 # limitations under the License.
 """Script to combine multiple shards from discrete_invert_embeddings to a single dataset."""
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tqdm import tqdm
 
 app = tf.compat.v1.app

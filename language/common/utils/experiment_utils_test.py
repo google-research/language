@@ -18,7 +18,7 @@ from __future__ import division
 from __future__ import print_function
 
 from language.common.utils import experiment_utils
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class ExperimentUtilsTest(tf.test.TestCase):

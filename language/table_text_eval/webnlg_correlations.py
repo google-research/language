@@ -31,7 +31,7 @@ from language.table_text_eval import table_text_eval
 import nltk
 import numpy as np
 from scipy.stats import pearsonr
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tqdm import tqdm
 
 

@@ -19,7 +19,7 @@ from __future__ import print_function
 
 from language.question_answering.decatt_docreader.utils import span_utils
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class SpanUtilsTest(tf.test.TestCase):

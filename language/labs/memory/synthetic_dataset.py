@@ -33,7 +33,7 @@ import random
 import string
 
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def generate_pattern_data(num_patterns, pattern_size):

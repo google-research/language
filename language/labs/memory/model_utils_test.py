@@ -20,7 +20,7 @@ from __future__ import print_function
 
 from language.labs.memory.model_utils import hamming_loss
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class ModelUtilsTest(tf.test.TestCase):

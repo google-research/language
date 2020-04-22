@@ -21,7 +21,7 @@ from __future__ import print_function
 import os.path
 
 from language.common.utils import file_utils
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class BestSavedModelAndCheckpointExporter(tf.estimator.BestExporter):
@@ -32,7 +32,8 @@ class BestSavedModelAndCheckpointExporter(tf.estimator.BestExporter):
                serving_input_receiver_fn,
                compare_fn=None,
                metric_name=None,
-               higher_is_better=True):
+               higher_is_better=True,
+               assets_extra=None):
     """Creates an exporter that compares models on the given eval and metric.
 
     While the SavedModel is useful for inference, the checkpoint is useful for
@@ -48,6 +49,13 @@ class BestSavedModelAndCheckpointExporter(tf.estimator.BestExporter):
         either this or `compare_fn`.
       higher_is_better: Whether higher or lower eval metric values are better.
         Only used when `metric_name` is specified.
+      assets_extra: An optional dict specifying how to populate the
+        `assets.extra` directory within the exported SavedModel. Each key should
+        give the destination path (including the filename) relative to the
+        `assets.extra` directory. The corresponding value gives the full path of
+        the source file to be copied. For example, the simple case of copying a
+        single file without renaming it is specified as
+        {'my_asset_file.txt': '/path/to/my_asset_file.txt'}.
     """
     self._metric_name = metric_name
 
@@ -62,7 +70,8 @@ class BestSavedModelAndCheckpointExporter(tf.estimator.BestExporter):
         name="best_%s" % eval_spec_name,
         serving_input_receiver_fn=serving_input_receiver_fn,
         event_file_pattern="eval_%s/*.tfevents.*" % eval_spec_name,
-        compare_fn=compare_fn or _default_compare_fn)
+        compare_fn=compare_fn or _default_compare_fn,
+        assets_extra=assets_extra)
 
   def export(self, estimator, export_path, checkpoint_path, eval_result,
              is_the_final_export):

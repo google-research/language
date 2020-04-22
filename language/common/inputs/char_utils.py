@@ -20,7 +20,7 @@ from __future__ import print_function
 from functools import partial
 
 from language.common.utils import tensor_utils
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 # The character ids are defined by ord(c) for c in word.encode("utf-8").
 # Ids 0-255 are reserved for utf-8 encoding bytes.

@@ -29,7 +29,7 @@ from language.labs.consistent_zero_shot_nmt.modules import language_models
 from language.labs.consistent_zero_shot_nmt.utils import model_utils
 from tensor2tensor.layers import common_layers
 from tensor2tensor.utils import registry
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import seq2seq as contrib_seq2seq
 from tensorflow.contrib import training as contrib_training
 

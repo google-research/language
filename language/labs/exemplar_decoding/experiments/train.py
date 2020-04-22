@@ -22,7 +22,7 @@ from absl import flags
 from language.common.utils import experiment_utils
 import language.labs.exemplar_decoding.models.model_function as model_function
 import language.labs.exemplar_decoding.utils.data as data
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 flags.DEFINE_string("train_path", None, "Path to train examples.")
 

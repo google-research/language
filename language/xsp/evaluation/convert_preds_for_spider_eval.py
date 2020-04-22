@@ -48,7 +48,9 @@ import json
 from absl import app
 from absl import flags
 
-import tensorflow as tf
+from language.xsp.evaluation import official_evaluation
+import sqlite3
+import tensorflow.compat.v1 as tf
 
 FLAGS = flags.FLAGS
 
@@ -56,6 +58,10 @@ flags.DEFINE_string('input_path', '', 'Path to predictions.')
 flags.DEFINE_string('output_path', '',
                     'Path to write Spider-formatted predictions.')
 flags.DEFINE_string('spider_examples_json', '', 'Path to Spider json examples')
+flags.DEFINE_bool(
+    'use_executable_sql_only', True,
+    'If true, run the query on the empty databases'
+    'to filter un-executable queries')
 
 
 def _load_json(filepath):
@@ -65,13 +71,7 @@ def _load_json(filepath):
 
 def _load_predictions_dicts(filepath):
   """Returns list of predictions dicts."""
-  predictions_dicts = []
-  with tf.gfile.Open(filepath) as input_file:
-    for line in input_file:
-      if not line:
-        continue
-      predictions_dict = json.loads(line)
-      predictions_dicts.append(predictions_dict)
+  predictions_dicts = json.load(open(filepath))
   return predictions_dicts
 
 
@@ -79,15 +79,49 @@ def _utterance_to_one_best_sql_map(predictions_dicts):
   """Get map of utterance to best prediction."""
   # Assume sorted in descending order by score.
   utterance_to_one_best_sql_map = {}
-  for predictions_dict in predictions_dicts:
-    if not predictions_dict['predictions']:
-      print('No predictions for example: %s' % predictions_dict)
+  for prediction in predictions_dicts:
+    if not prediction['predictions']:
+      print('No predictions for example: %s' % prediction)
       continue
-    utterance = predictions_dict['utterance']
-    one_best_prediction = predictions_dict['predictions'][0]
-    # TODO(petershaw): Stricter check here for duplicates, e.g.:
-    # if utterance in utterance_to_one_best_sql_map:
-    #    raise ValueError('Utterance %s already in map.' % utterance)
+
+    utterance = prediction['utterance']
+    paired_preds_and_scores = zip(prediction['predictions'],
+                                  prediction['scores'])
+    sorted_by_scores = sorted(
+        paired_preds_and_scores, key=lambda x: x[1], reverse=True)
+
+    if FLAGS.use_executable_sql_only:
+      empty_path = prediction['empty_database_path']
+      try:
+        empty_conn = sqlite3.connect(empty_path)
+        empty_conn.text_factory = str
+      except sqlite3.OperationalError as e:
+        print(e)
+        print(empty_path)
+        exit()
+
+      cursor = empty_conn.cursor()
+      best_prediction = None
+      for _, (pred, _) in enumerate(sorted_by_scores):
+        # Try predicting
+        print('Trying to execute query:\n\t' + pred)
+        print('... on empty database')
+        temp_exception_str = official_evaluation.try_executing_query(
+            pred, cursor, case_sensitive=True)[1]
+
+        if temp_exception_str:
+          if temp_exception_str == 'timeout':
+            # Technically, this query didn't have a syntax problem, so
+            # continue and set this as the best prediction.
+            best_prediction = pred
+            break
+        else:
+          best_prediction = pred
+          break
+
+      one_best_prediction = best_prediction
+    else:
+      one_best_prediction = sorted_by_scores[0][0]
     utterance_to_one_best_sql_map[utterance] = one_best_prediction
   return utterance_to_one_best_sql_map
 

@@ -30,7 +30,7 @@ from bert import modeling
 from bert import optimization
 from bert import tokenization
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver
 from tensorflow.contrib import tpu as contrib_tpu
 
@@ -625,7 +625,7 @@ def convert_single_example(example, tokenizer, is_training):
     tokens.append("[SEP]")
     segment_ids.append(0)
 
-    for i in xrange(doc_span.length):
+    for i in range(doc_span.length):
       split_token_index = doc_span.start + i
       token_to_orig_map[len(tokens)] = tok_to_orig_index[split_token_index]
       tokens.append(all_doc_tokens[split_token_index])
@@ -774,7 +774,7 @@ class CreateTFExampleFn(object):
             [input_feature.answer_type])
       else:
         token_map = [-1] * len(input_feature.input_ids)
-        for k, v in input_feature.token_to_orig_map.iteritems():
+        for k, v in input_feature.token_to_orig_map.items():
           token_map[k] = v
         features["token_map"] = create_int_feature(token_map)
 
@@ -817,7 +817,7 @@ def read_nq_examples(input_file, is_training):
 
   def _open(path):
     if path.endswith(".gz"):
-      return gzip.GzipFile(fileobj=tf.gfile.Open(path, "r"))
+      return gzip.GzipFile(fileobj=tf.gfile.Open(path, "rb"))
     else:
       return tf.gfile.Open(path, "r")
 
@@ -1089,7 +1089,7 @@ class FeatureWriter(object):
       features["answer_types"] = create_int_feature([feature.answer_type])
     else:
       token_map = [-1] * len(feature.input_ids)
-      for k, v in feature.token_to_orig_map.iteritems():
+      for k, v in feature.token_to_orig_map.items():
         token_map[k] = v
       features["token_map"] = create_int_feature(token_map)
 
@@ -1125,7 +1125,7 @@ class ScoreSummary(object):
 def read_candidates_from_one_split(input_path):
   """Read candidates from a single jsonl file."""
   candidates_dict = {}
-  with gzip.GzipFile(fileobj=tf.gfile.Open(input_path)) as input_file:
+  with gzip.GzipFile(fileobj=tf.gfile.Open(input_path, "rb")) as input_file:
     tf.logging.info("Reading examples from: %s", input_path)
     for line in input_file:
       e = json.loads(line)
@@ -1160,7 +1160,7 @@ def compute_predictions(example):
   n_best_size = 10
   max_answer_length = 30
 
-  for unique_id, result in example.results.iteritems():
+  for unique_id, result in example.results.items():
     if unique_id not in example.features:
       raise ValueError("No feature found with unique_id:", unique_id)
     token_map = example.features[unique_id]["token_map"].int64_list.value
@@ -1249,9 +1249,11 @@ def compute_pred_dict(candidates_dict, dev_features, raw_results):
   feature_ids = tf.to_int32(np.array(feature_ids)).eval(session=sess)
   features_by_id = zip(feature_ids, features)
 
-  # Join examplew with features and raw results.
+  # Join examples with features and raw results.
   examples = []
-  merged = sorted(examples_by_id + raw_results_by_id + features_by_id)
+  merged = sorted(
+      list(examples_by_id) + raw_results_by_id + list(features_by_id),
+      key=lambda x: x[0])
   for idx, datum in merged:
     if isinstance(datum, tuple):
       examples.append(EvalExample(datum[0], datum[1]))
@@ -1397,7 +1399,7 @@ def main(_):
     tf.logging.info("  Num orig examples = %d", len(eval_examples))
     tf.logging.info("  Num split examples = %d", len(eval_features))
     tf.logging.info("  Batch size = %d", FLAGS.predict_batch_size)
-    for spans, ids in num_spans_to_ids.iteritems():
+    for spans, ids in num_spans_to_ids.items():
       tf.logging.info("  Num split into %d = %d", spans, len(ids))
 
     predict_input_fn = input_fn_builder(
@@ -1430,7 +1432,7 @@ def main(_):
     ]
     nq_pred_dict = compute_pred_dict(candidates_dict, eval_features,
                                      [r._asdict() for r in all_results])
-    predictions_json = {"predictions": nq_pred_dict.values()}
+    predictions_json = {"predictions": list(nq_pred_dict.values())}
     with tf.gfile.Open(FLAGS.output_prediction_file, "w") as f:
       json.dump(predictions_json, f, indent=4)
 

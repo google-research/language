@@ -16,7 +16,7 @@
 import collections
 import os
 import re
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def _get_assignment_map_from_checkpoint(tvars, init_checkpoint,

@@ -531,6 +531,10 @@ def _get_fk_relations_helper(unvisited_tables, visited_tables,
 
 def _get_fk_relations_linking_tables(table_names, fk_relations):
   """Returns (List of table names, List of (col name, col name))."""
+
+  if not table_names:
+    raise UnsupportedSqlError('The SQL query has not referenced any tables!')
+
   fk_relations_map = {}
   for relation in fk_relations:
     # TODO(petershaw): Consider adding warning if overwriting key.

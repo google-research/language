@@ -20,8 +20,9 @@ from __future__ import print_function
 import multiprocessing
 
 from language.xsp.model import constants
-import tensorflow as tf
-import tensorflow.gfile as gfile
+from six.moves import zip
+import tensorflow.compat.v1 as tf
+import tensorflow.compat.v1.gfile as gfile
 
 
 def get_source_len_fn(key):
@@ -142,7 +143,7 @@ def decode_features_and_labels(sequence_decoder,
       """(key, serialized SequenceExample) to dict of <feature name, Tensor>."""
       decode_items = feature_keys + label_keys
       decoded = sequence_decoder.decode(record, items=decode_items)
-      return dict(zip(decode_items, decoded))
+      return dict(list(zip(decode_items, decoded)))
 
     tf.logging.info('Reading from sources: ' + str(data_sources))
 

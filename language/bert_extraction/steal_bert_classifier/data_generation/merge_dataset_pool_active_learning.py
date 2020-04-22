@@ -23,7 +23,7 @@ import numpy as np
 
 from scipy import stats
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tqdm import tqdm
 
 app = tf.compat.v1.app

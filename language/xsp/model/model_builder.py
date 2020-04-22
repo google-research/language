@@ -27,7 +27,7 @@ from language.xsp.model import loss
 from language.xsp.model import metrics
 from language.xsp.model import tpu_utils
 from language.xsp.model import transformer
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def _compute_loss(logits, decode_steps, target_len, weights, output_vocab_size,
@@ -48,6 +48,7 @@ def _compute_loss(logits, decode_steps, target_len, weights, output_vocab_size,
 
 def build_model_fn(model_config,
                    output_vocab_filepath,
+                   clean_output_vocab_path=None,
                    use_tpu=False,
                    beam_size=1):
   """Builds model function based on model_config."""
@@ -79,6 +80,12 @@ def build_model_fn(model_config,
 
     output_vocab_size = embeddings.get_output_vocab_size(output_vocab_filepath)
 
+    clean_output_mask = None
+    if clean_output_vocab_path:
+      clean_output_mask_list = embeddings.get_clean_output_mask(
+          output_vocab_filepath, clean_output_vocab_path)
+      clean_output_mask = tf.convert_to_tensor(clean_output_mask_list)
+
     # For inference, just compute the inference predictions and return.
     if mode == tf.estimator.ModeKeys.PREDICT:
       predictions = transformer.infer(
@@ -89,6 +96,7 @@ def build_model_fn(model_config,
           output_embeddings_table,
           mode,
           input_copy_mask=features[constants.COPIABLE_INPUT_KEY],
+          clean_output_mask=clean_output_mask,
           beam_size=beam_size)
 
       if use_tpu:

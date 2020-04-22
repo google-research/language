@@ -20,7 +20,7 @@ from absl import app
 from absl import flags
 
 from language.xsp.data_preprocessing.nl_to_sql_example import NLToSQLExample
-import tensorflow.gfile as gfile
+import tensorflow.compat.v1.gfile as gfile
 
 FLAGS = flags.FLAGS
 

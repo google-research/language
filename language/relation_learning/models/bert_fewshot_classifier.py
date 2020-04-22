@@ -26,7 +26,7 @@ from absl import flags
 from bert import modeling
 from bert import tokenization
 from language.relation_learning.data import fewrel
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 FLAGS = flags.FLAGS
 

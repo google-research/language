@@ -18,7 +18,7 @@ from __future__ import division
 from __future__ import print_function
 
 from language.question_answering.decatt_docreader.layers import document_reader
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 class DocumentReaderTest(tf.test.TestCase):

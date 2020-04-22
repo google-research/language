@@ -29,7 +29,7 @@ from absl import flags
 import apache_beam as beam
 from language.xsp.data_preprocessing.nl_to_sql_example import NLToSQLExample
 from language.xsp.model.model_config import load_config
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 FLAGS = flags.FLAGS
 
@@ -279,7 +279,8 @@ class ConvertToSequenceExampleDoFn(beam.DoFn):
       # Add 3 to this because there are 3 placeholder tokens in the output
       # vocabulary that will be used during train (PAD, BEG, and END).
       return self.output_vocabulary.index(token) + 3
-    print('Could not find token ' + token + ' in output vocabulary.')
+    print('Could not find token ' + token.encode('ascii', 'ignore') +
+          ' in output vocabulary.')
 
   def _convert_input_to_indexed_sequence(self, model_input, random_permutation):
     # Everything is tokenized, but need to combine the utterance with the

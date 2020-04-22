@@ -24,7 +24,7 @@ import language.labs.exemplar_decoding.models.hypernet as hypernet
 from language.labs.exemplar_decoding.utils import data
 from language.labs.exemplar_decoding.utils import rouge_utils
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def repetitive_ngrams(n, text):

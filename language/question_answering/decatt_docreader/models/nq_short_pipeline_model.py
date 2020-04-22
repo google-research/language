@@ -28,7 +28,7 @@ from language.common.utils import tensor_utils
 from language.question_answering.decatt_docreader.datasets import nq_short_pipeline_dataset
 from language.question_answering.decatt_docreader.layers import document_reader
 from language.question_answering.decatt_docreader.utils import span_utils
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import data as contrib_data
 
 flags.DEFINE_string("embeddings_path", None, "Path to pretrained embeddings.")

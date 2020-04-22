@@ -21,10 +21,12 @@ from __future__ import division
 from __future__ import print_function
 
 from language.common.utils import tensor_utils
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
-from tensorflow.contrib.tpu.python.ops import tpu_ops
-from tensorflow.contrib.tpu.python.tpu import tpu_function
+# pylint: disable=g-direct-tensorflow-import
+from tensorflow.python.tpu import tpu_function
+from tensorflow.python.tpu.ops import tpu_ops
+# pylint: enable=g-direct-tensorflow-import
 
 
 def num_tpu_shards():
@@ -89,5 +91,5 @@ def cross_shard_concat(input_tensor):
         [local_batch_size * num_shards, dim1, dim2, ...]
   """
   padded_tensor = cross_shard_pad(input_tensor)
-  concat_tensor = tf.contrib.tpu.cross_replica_sum(padded_tensor)
+  concat_tensor = tf.tpu.cross_replica_sum(padded_tensor)
   return concat_tensor

@@ -14,7 +14,7 @@
 # limitations under the License.
 """Utilities for defining evaluation metrics during training."""
 from language.xsp.model import decode_utils
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def _sequence_correct(labels, predictions):

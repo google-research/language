@@ -26,8 +26,8 @@ from absl import flags
 import language.xsp.model.input_pipeline as input_pipeline
 import language.xsp.model.model_builder as model_builder
 import language.xsp.model.model_config as model_config
-import tensorflow as tf
-import tensorflow.gfile as gfile
+import tensorflow.compat.v1 as tf
+import tensorflow.compat.v1.gfile as gfile
 
 
 FLAGS = flags.FLAGS
@@ -118,8 +118,10 @@ def main(unused_argv):
           iterations_per_loop=training_options.tpu_iterations_per_loop,
           num_shards=FLAGS.num_tpu_shards))
 
-  # Set up estimator
-  model_fn = model_builder.build_model_fn(config, FLAGS.output_vocab, use_tpu)
+  # Set up estimator, in training allows noisy examples so do not use
+  # clean output vocab
+  model_fn = model_builder.build_model_fn(
+      config, FLAGS.output_vocab, clean_output_vocab_path="", use_tpu=use_tpu)
 
   estimator = tf.contrib.tpu.TPUEstimator(
       model_fn=model_fn,

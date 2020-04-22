@@ -25,7 +25,7 @@ import json
 from language.xsp.data_preprocessing import abstract_sql
 from language.xsp.data_preprocessing import abstract_sql_converters
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 
 def _load_json(filepath):
@@ -108,9 +108,9 @@ def _get_restored_predictions(predictions_dict,
           prediction, table_schemas, foreign_keys)
     except abstract_sql.UnsupportedSqlError as e:
       # Remove predictions that fail conversion.
-      print(e)
+      print('Unsupport Error: ' + str(e))
     except abstract_sql.ParseError as e:
-      print('Parse Error!!!\n%s\n\n' % e)
+      print('Parse Error!!!')
     else:
       restored_predictions.append(restored_prediction)
       restored_scores.append(score)

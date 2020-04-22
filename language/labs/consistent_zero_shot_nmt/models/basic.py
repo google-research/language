@@ -29,7 +29,7 @@ from tensor2tensor.layers import common_hparams
 from tensor2tensor.layers import common_layers
 from tensor2tensor.utils import registry
 from tensor2tensor.utils import t2t_model
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.contrib import seq2seq as contrib_seq2seq
 
 

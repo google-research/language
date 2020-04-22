@@ -19,7 +19,7 @@ from __future__ import print_function
 import json
 from bert_extraction.steal_bert_qa.utils import evaluate_squad
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 app = tf.compat.v1.app
 flags = tf.flags
