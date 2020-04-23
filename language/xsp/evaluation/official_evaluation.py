@@ -101,9 +101,8 @@ def try_executing_query(prediction, cursor, case_sensitive=True, verbose=False):
       last_quote = ''
       for char in prediction:
         new_prediction += char
-        if not last_quote:
-          if char in {'"', '\''}:
-            last_quote = char
+        if char in {'"', '\''} and not last_quote:
+          last_quote = char
         elif char == last_quote:
           last_quote = ''
           new_prediction += ' COLLATE NOCASE'
