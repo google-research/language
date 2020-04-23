@@ -95,8 +95,6 @@ def try_executing_query(prediction, cursor, case_sensitive=True, verbose=False):
 
   try:
     if not case_sensitive:
-      # TODO(alanesuhr): Verify that this correctly makes the query case-
-      # insensitive for the Scholar domain.
       new_prediction = ''
       last_quote = ''
       for char in prediction:
