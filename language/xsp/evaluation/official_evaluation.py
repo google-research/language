@@ -399,16 +399,23 @@ def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
 
     # Get the gold results
     if cache_dict is None or gold_query not in cache_dict:
-      if verbose:
-        print('Trying to execute the gold query:\n\t' + gold_query)
-      gold_results, gold_exception_str = try_executing_query(
-          gold_query, cursor, case_sensitive, verbose)
+      if printable_utterance not in cache_dict:
+        print(gold_query)
+        print(printable_utterance)
+        raise ValueError('Cache miss!')
 
-      if gold_exception_str:
-        gold_error += 1
-        gold_results = []
-      elif cache_dict is not None:
-        cache_dict[u''.join(gold_query).decode('utf-8')] = gold_results
+        if verbose:
+          print('Trying to execute the gold query:\n\t' + gold_query)
+        gold_results, gold_exception_str = try_executing_query(
+            gold_query, cursor, case_sensitive, verbose)
+  
+        if gold_exception_str:
+          gold_error += 1
+          gold_results = []
+        elif cache_dict is not None:
+          cache_dict[u''.join(gold_query).decode('utf-8')] = gold_results
+      else:
+        gold_results = cache_dict[cache_dict[printable_utterance]]
     else:
       gold_results = cache_dict[gold_query]
 
