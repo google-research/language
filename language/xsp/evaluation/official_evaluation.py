@@ -95,15 +95,12 @@ def try_executing_query(prediction, cursor, case_sensitive=True, verbose=False):
 
   try:
     if not case_sensitive:
-      # TODO(alanesuhr): Verify that this correctly makes the query case-
-      # insensitive for the Scholar domain.
       new_prediction = ''
       last_quote = ''
       for char in prediction:
         new_prediction += char
-        if not last_quote:
-          if char in {'"', '\''}:
-            last_quote = char
+        if char in {'"', '\''} and not last_quote:
+          last_quote = char
         elif char == last_quote:
           last_quote = ''
           new_prediction += ' COLLATE NOCASE'
@@ -280,8 +277,8 @@ def _convert_to_unicode_string(value):
     return str(value).decode('utf-8', 'ignore')
 
 
-def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
-                        verbose):
+def execute_predictions(predictions, cache_dict, ofile, case_sensitive, verbose,
+                        update_cache):
   """Executes predicted/gold queries and computes performance.
 
   Writes results to ofile.
@@ -295,6 +292,7 @@ def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
       case sensitive with respect to strings.
     verbose: Whether to print detailed information about evaluation (e.g., for
       debugging).
+    update_cache: Whether to execute and cache gold queries.
   """
   # Keeps tracks of metrics throughout all of the evaluation.
   exec_results_same = list()
@@ -402,16 +400,25 @@ def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
 
     # Get the gold results
     if cache_dict is None or gold_query not in cache_dict:
-      if verbose:
-        print('Trying to execute the gold query:\n\t' + gold_query)
-      gold_results, gold_exception_str = try_executing_query(
-          gold_query, cursor, case_sensitive, verbose)
+      if printable_utterance not in cache_dict:
+        if update_cache:
+          if verbose:
+            print('Trying to execute the gold query:\n\t' + gold_query)
+          gold_results, gold_exception_str = try_executing_query(
+              gold_query, cursor, case_sensitive, verbose)
 
-      if gold_exception_str:
-        gold_error += 1
-        gold_results = []
-      elif cache_dict is not None:
-        cache_dict[u''.join(gold_query).decode('utf-8')] = gold_results
+          if gold_exception_str:
+            gold_error += 1
+            gold_results = []
+          elif cache_dict is not None:
+            cache_dict[u''.join(gold_query).decode('utf-8')] = gold_results
+        else:
+          print(gold_query)
+          print(printable_utterance)
+          raise ValueError('Cache miss!')
+
+      else:
+        gold_results = cache_dict[cache_dict[printable_utterance]]
     else:
       gold_results = cache_dict[gold_query]
 
@@ -524,7 +531,8 @@ def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
               '\n')
 
 
-def main(predictions_filepath, output_filepath, cache_filepath, verbose):
+def main(predictions_filepath, output_filepath, cache_filepath, verbose,
+         update_cache):
   # Load the predictions filepath.
   with open(predictions_filepath) as infile:
     predictions = json.load(infile)
@@ -550,7 +558,7 @@ def main(predictions_filepath, output_filepath, cache_filepath, verbose):
   # Create the text file that results will be written to.
   with open(output_filepath, 'w') as ofile:
     execute_predictions(predictions, cache_dict, ofile,
-                        'scholar' not in basefilename, verbose)
+                        'scholar' not in basefilename, verbose, update_cache)
 
   if 'spider' not in basefilename:
     try:
@@ -576,7 +584,11 @@ if __name__ == '__main__':
       '--verbose',
       type=bool,
       help='If set to True, evaluation will be verbose.')
+  parser.add_argument(
+      '--update_cache',
+      type=bool,
+      help='If set to True, will execute and cache gold queries.')
   args = parser.parse_args()
 
   main(args.predictions_filepath, args.output_filepath, args.cache_filepath,
-       args.verbose)
+       args.verbose, args.update_cache)
