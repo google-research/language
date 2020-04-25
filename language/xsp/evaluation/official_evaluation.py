@@ -278,7 +278,7 @@ def _convert_to_unicode_string(value):
 
 
 def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
-                        verbose):
+                        verbose, update_cache):
   """Executes predicted/gold queries and computes performance.
 
   Writes results to ofile.
@@ -400,20 +400,22 @@ def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
     # Get the gold results
     if cache_dict is None or gold_query not in cache_dict:
       if printable_utterance not in cache_dict:
-        print(gold_query)
-        print(printable_utterance)
-        raise ValueError('Cache miss!')
+        if update_cache:
+            if verbose:
+              print('Trying to execute the gold query:\n\t' + gold_query)
+            gold_results, gold_exception_str = try_executing_query(
+                gold_query, cursor, case_sensitive, verbose)
+      
+            if gold_exception_str:
+              gold_error += 1
+              gold_results = []
+            elif cache_dict is not None:
+              cache_dict[u''.join(gold_query).decode('utf-8')] = gold_results
+        else:
+          print(gold_query)
+          print(printable_utterance)
+          raise ValueError('Cache miss!')
 
-        if verbose:
-          print('Trying to execute the gold query:\n\t' + gold_query)
-        gold_results, gold_exception_str = try_executing_query(
-            gold_query, cursor, case_sensitive, verbose)
-  
-        if gold_exception_str:
-          gold_error += 1
-          gold_results = []
-        elif cache_dict is not None:
-          cache_dict[u''.join(gold_query).decode('utf-8')] = gold_results
       else:
         gold_results = cache_dict[cache_dict[printable_utterance]]
     else:
@@ -580,7 +582,11 @@ if __name__ == '__main__':
       '--verbose',
       type=bool,
       help='If set to True, evaluation will be verbose.')
+  parser.add_argument(
+      '--update_cache',
+      type=bool,
+      help='If set to True, will execute and cache gold queries.')
   args = parser.parse_args()
 
   main(args.predictions_filepath, args.output_filepath, args.cache_filepath,
-       args.verbose)
+       args.verbose, args.update_cache)
