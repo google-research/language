@@ -121,6 +121,7 @@ def _get_tables(tokens):
   sql_tables = []
   table_names = set()
   previous_token = None
+  in_from_clause_context = False
   for token in tokens:
     # Don't recurse into nested statements.
     if isinstance(token, list):
@@ -133,13 +134,16 @@ def _get_tables(tokens):
               'Abstract SQL does not support joining a table with itself!')
         table_names.add(sql_table.table_name)
         sql_tables.append(sql_table)
-    elif _is_table_mention(previous_token, token):
+    elif _is_table_mention(previous_token, token, in_from_clause_context):
+      in_from_clause_context = True
       sql_table = _get_sql_table(token.value)
       if sql_table.table_name in table_names:
         raise UnsupportedSqlError(
             'Abstract SQL does not support joining a table with itself!')
       table_names.add(sql_table.table_name)
       sql_tables.append(sql_table)
+    elif token.value != ',':
+      in_from_clause_context = False
     previous_token = token
   return sql_tables
 
@@ -152,9 +156,15 @@ def _is_underspecified_table_mention(previous_token, current_token):
   return False
 
 
-def _is_table_mention(previous_token, current_token):
+def _is_table_mention(previous_token,
+                      current_token,
+                      in_from_clause_context=False):
   """Returns True if current_token represents a table."""
-  if previous_token and previous_token.value in ('from', 'join'):
+  # Handle FROM clauses that use both `join` to separate table mentions
+  # or commas.
+  if previous_token and (
+      previous_token.value in ('from', 'join', 'inner join') or
+      (in_from_clause_context and previous_token.value == ',')):
     if current_token.value == '(':
       # Nested query.
       return False
@@ -270,7 +280,9 @@ def _populate_spans_for_token(grouped_tokens, tables, aliases_to_table_names,
                               table_schemas, sql_spans):
   """Add SqlSpan tuples to sql_spans given grouped_tokens and schema."""
   previous_token = None
+  in_from_clause_context = False
   for token in grouped_tokens:
+    is_table_mention = False
     if isinstance(token, list):
       nested_spans = []
       _populate_spans_for_statement(token, nested_spans, table_schemas)
@@ -282,9 +294,10 @@ def _populate_spans_for_token(grouped_tokens, tables, aliases_to_table_names,
       for token_value in token.value.split(' '):
         sql_table = _get_sql_table(token_value)
         sql_spans.append(make_sql_span(table_name=sql_table.table_name))
-    elif _is_table_mention(previous_token, token):
+    elif _is_table_mention(previous_token, token, in_from_clause_context):
       sql_table = _get_sql_table(token.value)
       sql_spans.append(make_sql_span(table_name=sql_table.table_name))
+      is_table_mention = True
     elif _is_column_mention(token):
       _add_column_spans(token, tables, aliases_to_table_names, table_schemas,
                         sql_spans)
@@ -297,6 +310,12 @@ def _populate_spans_for_token(grouped_tokens, tables, aliases_to_table_names,
       # Otherwise, assume token is a SQL token.
       # TODO(petershaw): Consider not splitting (*).
       sql_spans.append(make_sql_span(sql_token=token.value))
+
+    if is_table_mention or in_from_clause_context and token.value == ',':
+      in_from_clause_context = True
+    else:
+      in_from_clause_context = False
+
     previous_token = token
 
 
@@ -460,7 +479,8 @@ def _get_table_names_from_columns(sql_spans):
   in_from_clause = False
   for span in sql_spans:
     if in_from_clause:
-      if span.sql_token and span.sql_token.lower() not in ('join', 'on', '='):
+      if span.sql_token and span.sql_token.lower() not in ('join', 'on', '=',
+                                                           'inner join'):
         in_from_clause = False
     else:
       if span.sql_token and span.sql_token.lower() == 'from':
@@ -497,7 +517,8 @@ def replace_from_clause(sql_spans):
   in_from_clause = False
   for span in sql_spans:
     if in_from_clause:
-      if span.sql_token and span.sql_token.lower() not in ('join', 'on', '='):
+      if span.sql_token and span.sql_token.lower() not in ('join', 'on', '=',
+                                                           'inner join'):
         in_from_clause = False
     else:
       if span.sql_token and span.sql_token.lower() == 'from':
@@ -519,6 +540,7 @@ def replace_from_clause(sql_spans):
 
 def _get_fk_relations_helper(unvisited_tables, visited_tables,
                              fk_relations_map):
+  """Returns a ForeignKeyRelation connecting to an unvisited table, or None."""
   for table_to_visit in unvisited_tables:
     for table in visited_tables:
       if (table, table_to_visit) in fk_relations_map:
@@ -535,9 +557,11 @@ def _get_fk_relations_linking_tables(table_names, fk_relations):
   if not table_names:
     raise UnsupportedSqlError('The SQL query has not referenced any tables!')
 
+  # Build map of (child table, parent table) to (child column, parent column).
   fk_relations_map = {}
   for relation in fk_relations:
     # TODO(petershaw): Consider adding warning if overwriting key.
+    # This can lead to ambiguous conversions back to fully-specified SQL.
     fk_relations_map[(relation.child_table,
                       relation.parent_table)] = (relation.child_column,
                                                  relation.parent_column)
@@ -545,6 +569,8 @@ def _get_fk_relations_linking_tables(table_names, fk_relations):
     fk_relations_map[(relation.parent_table,
                       relation.child_table)] = (relation.parent_column,
                                                 relation.child_column)
+  # Greedily connect all tables using available foreign key relations.
+  # Artbirary choose the first table_name to start.
   visited_tables = [table_names[0]]
   unvisited_tables = table_names[1:]
   fk_relations = []

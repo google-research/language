@@ -54,7 +54,7 @@ flags.DEFINE_string('abstract_sql_output', '',
                     'Path to output reconstructed abstract SQL.')
 flags.DEFINE_bool('restore_from_clause', True,
                   'Whether to remove and restore the FROM clause.')
-flags.DEFINE_bool('keep_going', True,
+flags.DEFINE_bool('keep_going', False,
                   'Whether to keep going after a ParseError.')
 
 
