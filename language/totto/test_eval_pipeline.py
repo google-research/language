@@ -45,9 +45,8 @@ class TestEval:
     """Tests whether the references are returned as expected."""
     input_path = "sample/dev_sample.jsonl"
     references = self._format_preds(input_path)
-    final_example = ("In the match, against Ireland, Shaiman Anwar scored 106, "
-                     "becoming the second UAE player to hit an ODI century "
-                     "(after Khurram Khan).".lower())
+    final_example = ("the nashville (2012 tv series) premiered on october 10, "
+                     "2012 had 8.93 million viewers.")
     # Ensure that the final example is correct.
     assert references[-1][-1] == final_example
 
@@ -61,6 +60,6 @@ class TestEval:
     with open(output_path, "r") as f:
       predictions = [p.strip().lower() for p in f]
 
-    expected_bleu = 66.5
+    expected_bleu = 45.5
     bleu = sacrebleu.corpus_bleu(predictions, references_sacrebleu)
     assert round(bleu.score, 1) == expected_bleu
