@@ -18,14 +18,15 @@
 Run this script to test that the libraries called in the totto_eval script are
 returning the correct output.
 """
-
 import json
-import prepare_references_for_eval
+
+from absl.testing import absltest
+from language.totto import prepare_references_for_eval
 import sacrebleu
 import six
 
 
-class TestEval:
+class TestEval(absltest.TestCase):
   """Test class for reference formatting and BLEU scoring."""
 
   def _format_preds(self, input_path):
@@ -43,7 +44,7 @@ class TestEval:
 
   def test_ref_format(self):
     """Tests whether the references are returned as expected."""
-    input_path = "sample/dev_sample.jsonl"
+    input_path = "language/totto/sample/dev_sample.jsonl"
     references = self._format_preds(input_path)
     final_example = ("the nashville (2012 tv series) premiered on october 10, "
                      "2012 had 8.93 million viewers.")
@@ -52,14 +53,18 @@ class TestEval:
 
   def test_bleu_eval(self):
     """Tests whether we are seeing the expected BLEU score."""
-    input_path = "sample/dev_sample.jsonl"
+    input_path = "language/totto/sample/dev_sample.jsonl"
     references = self._format_preds(input_path)
     # Sacrebleu expects dimension transpose (1 list per reference count).
     references_sacrebleu = [list(x) for x in zip(*references)]
-    output_path = "sample/output_sample.txt"
+    output_path = "language/totto/sample/output_sample.txt"
     with open(output_path, "r") as f:
       predictions = [p.strip().lower() for p in f]
 
     expected_bleu = 45.5
     bleu = sacrebleu.corpus_bleu(predictions, references_sacrebleu)
     assert round(bleu.score, 1) == expected_bleu
+
+
+if __name__ == "__main__":
+  absltest.main()

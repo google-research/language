@@ -19,8 +19,9 @@ import os
 
 from absl import app
 from absl import flags
+
+from language.totto import table_to_text_html_utils
 import six
-import table_to_text_html_utils
 
 flags.DEFINE_string("input_path", None, "Input json file.")
 

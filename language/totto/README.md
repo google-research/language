@@ -21,10 +21,22 @@ You can find more details, analyses, and baseline results in [our paper](#). You
 }
 ```
 
+## Clone the repository
+First clone the research language repository and `cd` into that directory. All
+commands should be run from that location.
+
+```
+git clone https://github.com/google-research/language.git language_repo
+cd language_repo
+```
+
 ## Visualizing sample data
 
 To help understand the dataset, you can find a sample of the train and dev sets in the `sample/` folder. We additionaly provide the `create_table_to_text_html.py` script that visualizes an example, the output of which you can also find in the `sample/` folder.
 
+```
+python -m language.totto.create_table_text_html --input_path=<input jsonl path> --output_dir=<output directory>
+```
 
 ## Running the evaluation scripts locally
 
@@ -39,7 +51,7 @@ To encourage comparability of results between different systems, we encourage re
 You can test whether you are getting the correct outputs by running it on our provided development samples in the `sample/` folder, which also contains associated `sample_outputs.txt`. To do so, please run the following command:
 
 ```
-totto_eval.sh --prediction_path sample/sample_outputs.txt --example_path sample/dev_sample.jsonl
+bash language/totto/totto_eval.sh --prediction_path language/totto/sample/sample_outputs.txt --example_path language/totto/sample/dev_sample.jsonl
 ```
 
 You should see the following output:
@@ -67,4 +79,17 @@ Precision = 0.8317 Recall = 0.6256 F-score = 0.7135
 
 ## Testing the evaluation result
 
-If you want to ensure that the results from totto_eval.sh are as expected, please run `pytest` inside of this folder. This will run the tests provided in the `test_eval_pipeline.py` file.
+If you want to ensure that the results from totto_eval.sh are as expected, please run:
+
+```
+python -m language.totto.eval_pipeline_test
+```
+
+## Baseline preprocessing
+For reproducibility, we supply our basic table linearization code used for the baselines in the paper. The code takes as input a jsonl file and will augment each json example with additional fields: `full_table_str`, `subtable_str`, `full_table_metadata_str`, and `subtable_metadata_str` for each of the table linearizations described in the paper.
+
+Please note that given the complexity of some of the tables in our dataset (e.g. cells that span multiple rows and columns), many aspects of this preprocessing code (such as header extraction or the linearization scheme) may not be optimal. Developing new techniques of effectively representing open domain structured input is a part of the challenge of this dataset.
+
+```
+python -m language.totto.baseline_preprocessing.preprocess_data_main --input_path=<input jsonl path> --output_path=<output jsonl path>
+```

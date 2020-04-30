@@ -19,8 +19,9 @@ import os
 
 from absl import app
 from absl import flags
+
+from language.totto import table_to_text_utils
 import six
-import table_to_text_utils
 
 FLAGS = flags.FLAGS
 
@@ -119,7 +120,7 @@ def main(_):
       cell_indices = json_example["highlighted_cells"]
       highlighted_subtable = (
           table_to_text_utils.get_highlighted_subtable(
-              table=table, cell_indices=cell_indices, with_headers=False))
+              table=table, cell_indices=cell_indices))
 
       # Get PARENT format code.
       table_prec_format = table_to_text_utils.get_table_parent_format(
