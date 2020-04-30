@@ -75,4 +75,6 @@ def main(_):
 
 
 if __name__ == "__main__":
+  flags.mark_flags_as_required(
+      ["input_prediction_path", "input_target_path", "output_dir"])
   app.run(main)

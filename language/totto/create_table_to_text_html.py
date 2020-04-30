@@ -51,6 +51,9 @@ def main(_):
       if index >= FLAGS.examples_to_visualize:
         break
 
+  print("Num examples processed: %d" % index)
+
 
 if __name__ == "__main__":
+  flags.mark_flags_as_required(["input_path", "output_dir"])
   app.run(main)

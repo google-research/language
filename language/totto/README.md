@@ -1,6 +1,6 @@
 # ToTTo Supplementary Repository
 
-This repository serves as a supplementary for the main repository found [here](https://github.com/google-research-datasets/ToTTo/).
+This code repository serves as a supplementary for the main repository found [here](https://github.com/google-research-datasets/ToTTo/).
 
 ## ToTTo Dataset
 
@@ -10,7 +10,7 @@ During the dataset creation process, tables from English Wikipedia are matched w
 
 By providing multiple different descriptions from the same table, this dataset can be utilized as a testbed for the controllable generation of table description.
 
-You can find more details, analyses, and baseline results in [our paper](https://arxiv.org/abs/2004.14373). You can cite it as follows:
+You can find more details, analyses, and baseline results in [our paper](https://arxiv.org/abs/2004.14373). You can download the data from the [main repository](https://github.com/google-research-datasets/ToTTo/) and cite our paper as follows:
 
 ```
 @article{parikh2020totto,
@@ -29,12 +29,21 @@ git clone https://github.com/google-research/language.git language_repo
 cd language_repo
 ```
 
+## Prerequisites
+
+The code requires python 3 and a few libraries. Please make sure that you have all the necessary libraries installed. You can use your favorite python environment manager (e.g., virtualenv or conda) to install the requirements listed in `eval_requirements.txt`.
+```
+pip3 install -r language/totto/eval_requirements.txt
+```
+
+
+
 ## Visualizing sample data
 
 To help understand the dataset, you can find a sample of the train and dev sets in the `sample/` folder. We additionaly provide the `create_table_to_text_html.py` script that visualizes an example, the output of which you can also find in the `sample/` folder.
 
 ```
-python -m language.totto.create_table_text_html --input_path=<input jsonl path> --output_dir=<output directory>
+python3 -m language.totto.create_table_to_text_html --input_path="language/totto/sample/train_sample.jsonl" --output_dir="."
 ```
 
 ## Running the evaluation scripts locally
@@ -42,16 +51,16 @@ python -m language.totto.create_table_text_html --input_path=<input jsonl path> 
 To encourage comparability of results between different systems, we encourage researchers to evaluate their systems using the scripts provided in this repository. For an all-in-one solution, you can call `totto_eval.sh` with the following arguments:
 
 - `--prediction_path`: Path to your model's predictions, one prediction text per line. [Required]
-- `--example_path`: Path to the `public_dev_data.jsonl` you want to evaluate. [Required]
+- `--target_path`: Path to the `public_dev_data.jsonl` you want to evaluate. [Required]
 - `--output_dir`: where to save the downloaded scripts and formatted outputs. [Default: `./temp/`]
 
-`totto_eval.sh` requires python 3 and a few libraries. Please make sure that you have all the necessary libraries installed. You can use your favorite python environment manager (e.g., virtualenv or conda) to install the requirements listed in `eval_requirements.txt`.
 
 You can test whether you are getting the correct outputs by running it on our provided development samples in the `sample/` folder, which also contains associated `sample_outputs.txt`. To do so, please run the following command:
 
 ```
-bash language/totto/totto_eval.sh --prediction_path language/totto/sample/sample_outputs.txt --example_path language/totto/sample/dev_sample.jsonl
+bash language/totto/totto_eval.sh --prediction_path language/totto/sample/output_sample.txt --target_path language/totto/sample/dev_sample.jsonl
 ```
+(If you get an error regarding `getopt` it is likely that you need to install `gnu-getopt`.)
 
 You should see the following output:
 
@@ -81,7 +90,7 @@ Precision = 0.8317 Recall = 0.6256 F-score = 0.7135
 If you want to ensure that the results from totto_eval.sh are as expected, please run:
 
 ```
-python -m language.totto.eval_pipeline_test
+python3 -m language.totto.eval_pipeline_test
 ```
 
 ## Baseline preprocessing
@@ -90,5 +99,5 @@ For reproducibility, we supply our basic table linearization code used for the b
 Please note that given the complexity of some of the tables in our dataset (e.g. cells that span multiple rows and columns), many aspects of this preprocessing code (such as header extraction or the linearization scheme) may not be optimal. Developing new techniques of effectively representing open domain structured input is a part of the challenge of this dataset.
 
 ```
-python -m language.totto.baseline_preprocessing.preprocess_data_main --input_path=<input jsonl path> --output_path=<output jsonl path>
+python3 -m language.totto.baseline_preprocessing.preprocess_data_main --input_path="language/totto/sample/train_sample.jsonl" --output_path="./processed_train_sample.jsonl"
 ```

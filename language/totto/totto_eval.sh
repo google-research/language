@@ -101,7 +101,7 @@ if [ ! -d "${OUTPUT_DIR}/mosesdecoder" ]; then
 fi
 
 # echo "Preparing references."
-python -m language.totto.prepare_references_for_eval \
+python3 -m language.totto.prepare_references_for_eval \
   --input_path="${TARGET_PATH}" \
   --output_dir="${OUTPUT_DIR}" \
   --mode="${MODE}"
@@ -112,7 +112,7 @@ if [ $ret -ne 0 ]; then
 fi
 
 echo "Preparing predictions."
-python -m language.totto.prepare_predictions_for_eval \
+python3 -m language.totto.prepare_predictions_for_eval \
   --input_prediction_path="${PREDICTION_PATH}" \
   --input_target_path="${TARGET_PATH}" \
   --output_dir="${OUTPUT_DIR}"
@@ -151,7 +151,7 @@ if [ $ret -ne 0 ]; then
 fi
 
 echo "Computing PARENT (overall)"
-python -m language.totto.totto_parent_eval \
+python3 -m language.totto.totto_parent_eval \
   --reference_path="${OUTPUT_DIR}/detok_references-multi" \
   --generation_path="${OUTPUT_DIR}/detok_predictions" \
   --precision_table_path="${OUTPUT_DIR}/detok_tables_parent_precision_format" \
@@ -163,7 +163,7 @@ echo "Computing BLEU (overlap subset)"
 cat ${OUTPUT_DIR}/detok_overlap_predictions | sacrebleu ${OUTPUT_DIR}/detok_overlap_references-multi0 ${OUTPUT_DIR}/detok_overlap_references-multi1 ${OUTPUT_DIR}/detok_overlap_references-multi2
 
 echo "Computing PARENT (overlap subset)"
-python -m language.totto.totto_parent_eval \
+python3 -m language.totto.totto_parent_eval \
   --reference_path="${OUTPUT_DIR}/detok_overlap_references-multi" \
   --generation_path="${OUTPUT_DIR}/detok_overlap_predictions" \
   --precision_table_path="${OUTPUT_DIR}/detok_overlap_tables_parent_precision_format" \
@@ -175,7 +175,7 @@ echo "Computing BLEU (non-overlap subset)"
 cat ${OUTPUT_DIR}/detok_nonoverlap_predictions | sacrebleu ${OUTPUT_DIR}/detok_nonoverlap_references-multi0 ${OUTPUT_DIR}/detok_nonoverlap_references-multi1 ${OUTPUT_DIR}/detok_nonoverlap_references-multi2
 
 echo "Computing PARENT (non-overlap subset)"
-python -m language.totto.totto_parent_eval \
+python3 -m language.totto.totto_parent_eval \
   --reference_path="${OUTPUT_DIR}/detok_nonoverlap_references-multi" \
   --generation_path="${OUTPUT_DIR}/detok_nonoverlap_predictions" \
   --precision_table_path="${OUTPUT_DIR}/detok_nonoverlap_tables_parent_precision_format" \

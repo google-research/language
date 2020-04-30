@@ -93,6 +93,7 @@ def _generate_processed_examples(input_path):
       processed_json_example["subtable_metadata_str"] = subtable_metadata_str
       processed_json_examples.append(processed_json_example)
 
+  print("Num examples processed: %d" % len(processed_json_examples))
   return processed_json_examples
 
 

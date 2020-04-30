@@ -55,6 +55,46 @@ def get_references(json_example, mode="dev"):
   return multi_reference, multi_overlap_reference, multi_nonoverlap_reference
 
 
+def get_parent_tables(json_example, mode="dev"):
+  """Get tables in PARENT format for each json example."""
+  table = json_example["table"]
+  table_page_title = json_example["table_page_title"]
+  table_section_title = json_example["table_section_title"]
+  table_section_text = json_example["table_section_text"]
+
+  cell_indices = json_example["highlighted_cells"]
+  highlighted_subtable = (
+      table_to_text_utils.get_highlighted_subtable(
+          table=table, cell_indices=cell_indices))
+
+  # Get PARENT format code.
+  table_prec = table_to_text_utils.get_table_parent_format(
+      table=table,
+      table_page_title=table_page_title,
+      table_section_title=table_section_title,
+      table_section_text=table_section_text)
+
+  table_rec = table_to_text_utils.get_subtable_parent_format(
+      subtable=highlighted_subtable,
+      table_page_title=table_page_title,
+      table_section_title=table_section_title)
+
+  overlap_table_prec = None
+  overlap_table_rec = None
+  nonoverlap_table_prec = None
+  nonoverlap_table_rec = None
+  if mode == "dev" or mode == "test":
+    if json_example["overlap_subset"]:
+      overlap_table_prec = table_prec
+      overlap_table_rec = table_rec
+    else:
+      nonoverlap_table_prec = table_prec
+      nonoverlap_table_rec = table_rec
+
+  return (table_prec, table_rec, overlap_table_prec, overlap_table_rec,
+          nonoverlap_table_prec, nonoverlap_table_rec)
+
+
 def write_references(references, output_path_base):
   """Write single and multiple references to file."""
   # Just write a single reference file for now.
@@ -112,38 +152,19 @@ def main(_):
       if multi_nonoverlap_reference:
         nonoverlap_references.append(multi_nonoverlap_reference)
 
-      table = json_example["table"]
-      table_page_title = json_example["table_page_title"]
-      table_section_title = json_example["table_section_title"]
-      table_section_text = json_example["table_section_text"]
+      (table_prec, table_rec, overlap_table_prec, overlap_table_rec,
+       nonoverlap_table_prec, nonoverlap_table_rec) = (
+           get_parent_tables(json_example, FLAGS.mode))
 
-      cell_indices = json_example["highlighted_cells"]
-      highlighted_subtable = (
-          table_to_text_utils.get_highlighted_subtable(
-              table=table, cell_indices=cell_indices))
+      parent_prec_tables.append(table_prec)
+      parent_rec_tables.append(table_rec)
+      if overlap_table_prec and overlap_table_rec:
+        overlap_parent_prec_tables.append(overlap_table_prec)
+        overlap_parent_rec_tables.append(overlap_table_rec)
 
-      # Get PARENT format code.
-      table_prec_format = table_to_text_utils.get_table_parent_format(
-          table=table,
-          table_page_title=table_page_title,
-          table_section_title=table_section_title,
-          table_section_text=table_section_text)
-
-      table_rec_format = table_to_text_utils.get_subtable_parent_format(
-          subtable=highlighted_subtable,
-          table_page_title=table_page_title,
-          table_section_title=table_section_title)
-
-      parent_prec_tables.append(table_prec_format)
-      parent_rec_tables.append(table_rec_format)
-
-      if FLAGS.mode == "dev" or FLAGS.mode == "test":
-        if json_example["overlap_subset"]:
-          overlap_parent_prec_tables.append(table_prec_format)
-          overlap_parent_rec_tables.append(table_rec_format)
-        else:
-          nonoverlap_parent_prec_tables.append(table_prec_format)
-          nonoverlap_parent_rec_tables.append(table_rec_format)
+      if nonoverlap_table_prec and nonoverlap_table_rec:
+        nonoverlap_parent_prec_tables.append(nonoverlap_table_prec)
+        nonoverlap_parent_rec_tables.append(nonoverlap_table_rec)
 
   print("Writing references.")
   all_output_path_base = os.path.join(output_dir, "references")
@@ -179,4 +200,5 @@ def main(_):
 
 
 if __name__ == "__main__":
+  flags.mark_flags_as_required(["input_path", "output_dir", "mode"])
   app.run(main)
