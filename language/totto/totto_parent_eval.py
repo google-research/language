@@ -429,9 +429,11 @@ def parent(predictions,
     reference_recalls.append(ref_rec[max_i])
     table_recalls.append(table_rec[max_i])
 
-  avg_precision = sum(precisions) / len(precisions)
-  avg_recall = sum(recalls) / len(recalls)
-  avg_f_score = sum(all_f_scores) / len(all_f_scores)
+  # Multiply by 100 to resemble BLEU output.
+  avg_precision = 100 * sum(precisions) / len(precisions)
+  avg_recall = 100 * sum(recalls) / len(recalls)
+  avg_f_score = 100 * sum(all_f_scores) / len(all_f_scores)
+  all_f_scores = [100 * f for f in all_f_scores]
 
   return avg_precision, avg_recall, avg_f_score, all_f_scores
 
@@ -456,7 +458,7 @@ def main(_):
       entailment_fn=overlap_probability)
 
   print("Evaluated %d examples." % len(all_f))
-  print("Precision = %.4f Recall = %.4f F-score = %.4f" %
+  print("Precision = %.2f Recall = %.2f F-score = %.2f" %
         (precision, recall, f_score))
 
 

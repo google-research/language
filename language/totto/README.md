@@ -1,6 +1,6 @@
 # ToTTo Supplementary Repository
 
-This code repository serves as a supplementary for the main repository found [here](https://github.com/google-research-datasets/ToTTo/).
+This code repository serves as a supplementary for the main repository. The main repository can be found [here](https://github.com/google-research-datasets/ToTTo/).
 
 ## ToTTo Dataset
 
@@ -40,7 +40,7 @@ pip3 install -r language/totto/eval_requirements.txt
 
 ## Visualizing sample data
 
-To help understand the dataset, you can find a sample of the train and dev sets in the `sample/` folder. We additionaly provide the `create_table_to_text_html.py` script that visualizes an example, the output of which you can also find in the `sample/` folder.
+To help understand the dataset, you can find a sample of the train and dev sets in the `sample/` folder. We additionally provide the `create_table_to_text_html.py` script that visualizes an example, the output of which you can also find in the `sample/` folder.
 
 ```
 python3 -m language.totto.create_table_to_text_html --input_path="language/totto/sample/train_sample.jsonl" --output_dir="."
