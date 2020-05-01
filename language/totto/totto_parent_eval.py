@@ -69,7 +69,9 @@ flags.DEFINE_float("lambda_weight", None,
 
 
 def _normalize_text(s):
-  return sacrebleu.tokenizer.tokenize_13a(s.strip().lower())
+  # pylint: disable=unnecessary-lambda
+  tokenize_fn = lambda x: sacrebleu.tokenizer.tokenize_13a(x)
+  return tokenize_fn(s.strip().lower())
 
 
 def _text_reader(text_file):
@@ -82,7 +84,7 @@ def _text_reader(text_file):
     text_file: String filename.
   """
   texts = []
-  with io.open(text_file) as f:
+  with io.open(text_file, encoding="utf-8") as f:
     for line in f:
       line = _normalize_text(line)
       texts.append(line.split())
@@ -137,7 +139,7 @@ def _table_reader(table_file):
   Args:
     table_file: String filename.
   """
-  with io.open(table_file) as f:
+  with io.open(table_file, encoding="utf-8") as f:
     for line in f:
       entries = line.lower().split("\t")
       # pylint: disable=g-complex-comprehension

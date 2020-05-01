@@ -98,30 +98,30 @@ def get_parent_tables(json_example, mode="dev"):
 def write_references(references, output_path_base):
   """Write single and multiple references to file."""
   # Just write a single reference file for now.
-  with open(output_path_base, "w") as f:
+  with open(output_path_base, "w", encoding="utf-8") as f:
     for multi_reference in references:
       f.write(multi_reference[0].lower() + "\n")
 
   # Write out multireferences.
   if FLAGS.mode == "dev" or FLAGS.mode == "test":
     output_path_multi0 = output_path_base + "-multi0"
-    with open(output_path_multi0, "w") as f:
+    with open(output_path_multi0, "w", encoding="utf-8") as f:
       for multi_reference in references:
         f.write(multi_reference[0].lower() + "\n")
 
     output_path_multi1 = output_path_base + "-multi1"
-    with open(output_path_multi1, "w") as f:
+    with open(output_path_multi1, "w", encoding="utf-8") as f:
       for multi_reference in references:
         f.write(multi_reference[1].lower() + "\n")
 
     output_path_multi2 = output_path_base + "-multi2"
-    with open(output_path_multi2, "w") as f:
+    with open(output_path_multi2, "w", encoding="utf-8") as f:
       for multi_reference in references:
         f.write(multi_reference[2].lower() + "\n")
 
 
 def write_table_parent_format(tables, output_path):
-  with open(output_path, "w") as f:
+  with open(output_path, "w", encoding="utf-8") as f:
     for table in tables:
       f.write(table.lower() + "\n")
 
@@ -140,7 +140,7 @@ def main(_):
   nonoverlap_parent_prec_tables = []
   nonoverlap_parent_rec_tables = []
 
-  with open(input_path, "r") as input_file:
+  with open(input_path, "r", encoding="utf-8") as input_file:
     for line in input_file:
       line = six.ensure_text(line, "utf-8")
       json_example = json.loads(line)

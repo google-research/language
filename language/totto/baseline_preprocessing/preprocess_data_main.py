@@ -41,7 +41,7 @@ FLAGS = flags.FLAGS
 def _generate_processed_examples(input_path):
   """Generate TF examples."""
   processed_json_examples = []
-  with open(input_path, "r") as input_file:
+  with open(input_path, "r", encoding="utf-8") as input_file:
     for line in input_file:
       if len(processed_json_examples) % 100 == 0:
         print("Num examples processed: %d" % len(processed_json_examples))
@@ -101,7 +101,7 @@ def main(_):
   input_path = FLAGS.input_path
   output_path = FLAGS.output_path
   processed_json_examples = _generate_processed_examples(input_path)
-  with open(output_path, "w") as f:
+  with open(output_path, "w", encoding="utf-8") as f:
     for json_example in processed_json_examples:
       f.write(json.dumps(json_example) + "\n")
 

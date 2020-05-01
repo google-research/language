@@ -19,6 +19,7 @@ Run this script to test that the libraries called in the totto_eval script are
 returning the correct output.
 """
 import json
+import os
 
 from absl.testing import absltest
 from language.totto import prepare_references_for_eval
@@ -30,10 +31,16 @@ import six
 class TestEval(absltest.TestCase):
   """Test class for reference formatting and BLEU scoring."""
 
+  def _get_abs_path(self, relative_path):
+    """Get absolute path."""
+    curr_path = os.path.abspath(__file__)
+    curr_dir, _ = os.path.split(curr_path)
+    return os.path.join(curr_dir, relative_path)
+
   def _format_refs(self, input_path):
     """helper function to get the multi_reference for a file."""
     references = []
-    with open(input_path, "r") as input_file:
+    with open(input_path, "r", encoding="utf-8") as input_file:
       for line in input_file:
         line = six.ensure_text(line, "utf-8")
         json_example = json.loads(line)
@@ -47,7 +54,7 @@ class TestEval(absltest.TestCase):
     """helper function to get the tables in parent format for a file."""
     prec_tables = []
     rec_tables = []
-    with open(input_path, "r") as input_file:
+    with open(input_path, "r", encoding="utf-8") as input_file:
       for line in input_file:
         line = six.ensure_text(line, "utf-8")
         json_example = json.loads(line)
@@ -79,7 +86,7 @@ class TestEval(absltest.TestCase):
 
   def test_ref_format(self):
     """Tests whether the references are returned as expected."""
-    input_path = "language/totto/sample/dev_sample.jsonl"
+    input_path = self._get_abs_path("sample/dev_sample.jsonl")
     references = self._format_refs(input_path)
     final_example = ("the nashville (2012 tv series) premiered on october 10, "
                      "2012 had 8.93 million viewers.")
@@ -88,12 +95,12 @@ class TestEval(absltest.TestCase):
 
   def test_bleu_eval(self):
     """Tests whether we are seeing the expected BLEU score."""
-    input_path = "language/totto/sample/dev_sample.jsonl"
+    input_path = self._get_abs_path("sample/dev_sample.jsonl")
     references = self._format_refs(input_path)
     # Sacrebleu expects dimension transpose (1 list per reference count).
     references_sacrebleu = [list(x) for x in zip(*references)]
-    output_path = "language/totto/sample/output_sample.txt"
-    with open(output_path, "r") as f:
+    output_path = self._get_abs_path("sample/output_sample.txt")
+    with open(output_path, "r", encoding="utf-8") as f:
       predictions = [p.strip().lower() for p in f]
 
     expected_bleu = 45.5
@@ -101,7 +108,7 @@ class TestEval(absltest.TestCase):
     assert round(bleu.score, 1) == expected_bleu
 
   def test_parent_eval(self):
-    input_path = "language/totto/sample/dev_sample.jsonl"
+    input_path = self._get_abs_path("sample/dev_sample.jsonl")
     references = self._format_refs(input_path)
     reference_tokens = []
     for multi_ref in references:
@@ -109,12 +116,10 @@ class TestEval(absltest.TestCase):
       reference_tokens.append(multi_ref_tokens)
     prec_tables, rec_tables = self._format_tables(input_path)
 
-    output_path = "language/totto/sample/output_sample.txt"
-    with open(output_path, "r") as f:
+    output_path = self._get_abs_path("sample/output_sample.txt")
+    with open(output_path, "r", encoding="utf-8") as f:
       prediction_tokens = [p.strip().lower().split() for p in f]
 
-    # print(reference_tokens)
-    # print(prediction_tokens)
     precision, recall, f_score, all_f_scores = (
         totto_parent_eval.parent(
             predictions=prediction_tokens,

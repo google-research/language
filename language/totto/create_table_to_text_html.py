@@ -36,14 +36,14 @@ FLAGS = flags.FLAGS
 def main(_):
   input_path = FLAGS.input_path
   output_dir = FLAGS.output_dir
-  with open(input_path, "r") as input_file:
+  with open(input_path, "r", encoding="utf-8") as input_file:
     index = 0
     for line in input_file:
       line = six.ensure_text(line, "utf-8")
       json_example = json.loads(line)
       html_str = table_to_text_html_utils.get_example_html(json_example)
       output_path = os.path.join(output_dir, "example-" + str(index) + ".html")
-      with open(output_path, "w") as output_file:
+      with open(output_path, "w", encoding="utf-8") as output_file:
         output_file.write(html_str + "\n")
       index += 1
       if index % 100 == 0:

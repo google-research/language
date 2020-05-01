@@ -30,7 +30,7 @@ flags.DEFINE_string("output_dir", None, "Output directory.")
 
 def write_predictions(predictions, output_path):
   """Write predictions to file."""
-  with open(output_path, "w") as f:
+  with open(output_path, "w", encoding="utf-8") as f:
     for prediction in predictions:
       if not prediction:
         prediction = "<null>"
@@ -45,13 +45,13 @@ def main(_):
   predictions = []
   overlap_predictions = []
   nonoverlap_predictions = []
-  with open(input_prediction_path, "r") as input_file:
+  with open(input_prediction_path, "r", encoding="utf-8") as input_file:
     for line in input_file:
       line = line.strip()
       predictions.append(line)
 
   json_examples = []
-  with open(input_target_path, "r") as input_file:
+  with open(input_target_path, "r", encoding="utf-8") as input_file:
     for line in input_file:
       line = six.ensure_text(line, "utf-8")
       json_example = json.loads(line)
