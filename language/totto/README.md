@@ -4,11 +4,11 @@ This code repository serves as a supplementary for the main repository. The main
 
 ## ToTTo Dataset
 
-ToTTo is a dataset for the controlled generation of descriptions of tabular data comprising over 100,000 examples. Each example is a aligned pair of a highlighted table and the description of the highlighted content.
+ToTTo is an open-domain English table-to-text dataset with over 120,000 training examples that proposes a controlled generation task: given a Wikipedia table and a set of highlighted table cells, produce a one-sentence description.
 
 During the dataset creation process, tables from English Wikipedia are matched with (noisy) descriptions. Each table cell mentioned in the description is highlighted and the descriptions are iteratively cleaned and corrected to faithfully reflect the content of the highlighted cells.
 
-By providing multiple different descriptions from the same table, this dataset can be utilized as a testbed for the controllable generation of table description.
+We hope this dataset can serve as a useful research benchmark for high-precision conditional text generation.
 
 You can find more details, analyses, and baseline results in [our paper](https://arxiv.org/abs/2004.14373). You can download the data from the [main repository](https://github.com/google-research-datasets/ToTTo/) and cite our paper as follows:
 
@@ -42,6 +42,8 @@ pip3 install -r language/totto/eval_requirements.txt
 
 To help understand the dataset, you can find a sample of the train and dev sets in the `sample/` folder. We additionally provide the `create_table_to_text_html.py` script that visualizes an example, the output of which you can also find in the `sample/` folder.
 
+A sample command is given below:
+
 ```
 python3 -m language.totto.create_table_to_text_html --input_path="language/totto/sample/train_sample.jsonl" --output_dir="."
 ```
@@ -51,7 +53,7 @@ python3 -m language.totto.create_table_to_text_html --input_path="language/totto
 To encourage comparability of results between different systems, we encourage researchers to evaluate their systems using the scripts provided in this repository. For an all-in-one solution, you can call `totto_eval.sh` with the following arguments:
 
 - `--prediction_path`: Path to your model's predictions, one prediction text per line. [Required]
-- `--target_path`: Path to the `public_dev_data.jsonl` you want to evaluate. [Required]
+- `--target_path`: Path to the `totto_dev_data.jsonl` you want to evaluate. [Required]
 - `--output_dir`: where to save the downloaded scripts and formatted outputs. [Default: `./temp/`]
 
 
@@ -97,6 +99,8 @@ python3 -m language.totto.eval_pipeline_test
 For reproducibility, we supply our basic table linearization code used for the baselines in the paper. The code takes as input a jsonl file and will augment each json example with additional fields: `full_table_str`, `subtable_str`, `full_table_metadata_str`, and `subtable_metadata_str` for each of the table linearizations described in the paper.
 
 Please note that given the complexity of some of the tables in our dataset (e.g. cells that span multiple rows and columns), many aspects of this preprocessing code (such as header extraction or the linearization scheme) may not be optimal. Developing new techniques of effectively representing open domain structured input is a part of the challenge of this dataset.
+
+A sample command is given below:
 
 ```
 python3 -m language.totto.baseline_preprocessing.preprocess_data_main --input_path="language/totto/sample/train_sample.jsonl" --output_path="./processed_train_sample.jsonl"
