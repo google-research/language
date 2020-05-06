@@ -36,7 +36,7 @@ export DATA_SCHEME="WIKI"
 export PARA_DATA_SCHEME = ""
 if [ "$DATA_SCHEME" = "WIKI" ]; then
   PARA_DATA_SCHEME="thief_para"
-else:
+else
   PARA_DATA_SCHEME="frequency_sampling_sample_length"
 fi
 
