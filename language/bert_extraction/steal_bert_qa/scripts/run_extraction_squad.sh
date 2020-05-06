@@ -33,7 +33,7 @@ export OUTPUT_DIR=/home/naveen/scratch/google-language-fork/outputDirExtracted
 export DATA_SCHEME="WIKI"
 
 # Task-specific variables
-export PARA_DATA_SCHEME = ""
+export PARA_DATA_SCHEME=""
 if [ "$DATA_SCHEME" = "WIKI" ]; then
   PARA_DATA_SCHEME="thief_para"
 else
