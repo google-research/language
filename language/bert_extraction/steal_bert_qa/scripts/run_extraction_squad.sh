@@ -17,7 +17,7 @@
 export BERT_DIR=/path/to/bert/uncased_L-24_H-1024_A-16
 export SQUAD_DIR=/path/to/store/SQUAD/data
 
-export WIKI103_DIR=/directory/to/store/wikitext103/
+export WIKI103_DIR=/directory/to/store/wikitext-103-raw/
 export EXTRACTION_DATA=/path/to/extraction/dataset/
 export VICTIM_MODEL=/path/to/victim/model/checkpoint
 export OUTPUT_DIR=/path/to/output/extracted/model/checkpoints
@@ -25,7 +25,7 @@ export OUTPUT_DIR=/path/to/output/extracted/model/checkpoints
 export BERT_DIR=/home/naveen/scratch/google-language-fork/bertModelDir/uncased_L-4_H-256_A-4
 export SQUAD_DIR=/home/naveen/scratch/google-language-fork/squadDir
 
-export WIKI103_DIR=/home/naveen/scratch/google-language-fork/wikiDir
+export WIKI103_DIR=/home/naveen/scratch/google-language-fork/wikiDir/wikitext-103-raw
 export EXTRACTION_DATA=/home/naveen/scratch/google-language-fork/extractionDir
 export VICTIM_MODEL=/home/naveen/scratch/google-language-fork/outputDir
 export OUTPUT_DIR=/home/naveen/scratch/google-language-fork/outputDirExtracted
@@ -49,6 +49,7 @@ python -m language.bert_extraction.steal_bert_qa.utils.wiki103_para_split \
   --wiki103_raw=$WIKI103_DIR/wiki.train.raw \
   --output_path=$WIKI103_DIR/wikitext103-paragraphs.txt
 
+exit 1
 # STEP 2
 # Download the SQuAD datasets. This is a one-time step, can be ignored once done.
 wget -O $SQUAD_DIR/train-v1.1.json https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json
