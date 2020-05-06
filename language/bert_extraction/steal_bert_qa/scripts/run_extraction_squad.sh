@@ -72,7 +72,8 @@ python -m language.bert_extraction.steal_bert_qa.data_generation.preprocess_thie
   --para_scheme=$PARA_DATA_SCHEME \
   --question_sampling_scheme="random_postprocess_uniform" \
   --thief_dataset=$WIKI103_DIR/wikitext103-paragraphs.txt \
-  --output_path=$EXTRACTION_DATA/new_train.json
+  --output_path=$EXTRACTION_DATA/new_train.json \
+  --version="1.1"
 
 exit 1
 # STEP 4
