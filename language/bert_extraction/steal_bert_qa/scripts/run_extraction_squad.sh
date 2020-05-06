@@ -49,7 +49,6 @@ python -m language.bert_extraction.steal_bert_qa.utils.wiki103_para_split \
   --wiki103_raw=$WIKI103_DIR/wiki.train.raw \
   --output_path=$WIKI103_DIR/wikitext103-paragraphs.txt
 
-exit 1
 # STEP 2
 # Download the SQuAD datasets. This is a one-time step, can be ignored once done.
 wget -O $SQUAD_DIR/train-v1.1.json https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json
@@ -75,7 +74,7 @@ python -m language.bert_extraction.steal_bert_qa.data_generation.preprocess_thie
   --thief_dataset=$WIKI103_DIR/wikitext103-paragraphs.txt \
   --output_path=$EXTRACTION_DATA/new_train.json
 
-
+exit 1
 # STEP 4
 # Run the victim model classifier in inference mode to get outputs for the queries
 # Set --version_2_with_negative=true for SQuAD 2.0
