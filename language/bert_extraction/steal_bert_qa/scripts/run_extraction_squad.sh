@@ -21,12 +21,20 @@ export WIKI103_DIR=/directory/to/store/wikitext103/
 export EXTRACTION_DATA=/path/to/extraction/dataset/
 export VICTIM_MODEL=/path/to/victim/model/checkpoint
 export OUTPUT_DIR=/path/to/output/extracted/model/checkpoints
+
+export BERT_DIR=/home/naveen/scratch/google-language-fork/bertModelDir/uncased_L-4_H-256_A-4
+export SQUAD_DIR=/home/naveen/scratch/google-language-fork/squadDir
+
+export WIKI103_DIR=/home/naveen/scratch/google-language-fork/wikiDir
+export EXTRACTION_DATA=/home/naveen/scratch/google-language-fork/extractionDir
+export VICTIM_MODEL=/home/naveen/scratch/google-language-fork/outputDir
+export OUTPUT_DIR=/home/naveen/scratch/google-language-fork/outputDirExtracted
 # Can be set to wiki or random
-export $DATA_SCHEME="WIKI"
+export DATA_SCHEME="WIKI"
 
 # Task-specific variables
-
-if ["$DATA_SCHEME" = "WIKI"]; then
+export PARA_DATA_SCHEME = ""
+if [ "$DATA_SCHEME" = "WIKI" ]; then
   PARA_DATA_SCHEME="thief_para"
 else:
   PARA_DATA_SCHEME="frequency_sampling_sample_length"
