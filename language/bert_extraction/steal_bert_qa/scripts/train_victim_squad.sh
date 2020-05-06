@@ -49,9 +49,9 @@ python -m language.bert_extraction.steal_bert_qa.models.run_squad \
   --num_train_epochs=3.0 \
   --output_dir=$OUTPUT_DIR
 
- STEP 3
- Evaluate the predictions of the victim model using the SQuAD eval script
- For SQuAD 2.0, use the script language.bert_extraction.steal_bert_qa.utils.evaluate_squad_2
+# STEP 3
+# Evaluate the predictions of the victim model using the SQuAD eval script
+# For SQuAD 2.0, use the script language.bert_extraction.steal_bert_qa.utils.evaluate_squad_2
 python -m language.bert_extraction.steal_bert_qa.utils.evaluate_squad \
   --dataset_file=$SQUAD_DIR/dev-v1.1.json \
   --prediction_file=$OUTPUT_DIR/predictions.json
