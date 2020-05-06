@@ -159,7 +159,8 @@ def postprocess_question(question, q_tokens, q_probs, sampling_scheme):
     q_word = random.choice(q_tokens)
   else:
     q_word = q_tokens[np.argmax(np.random.multinomial(1, q_probs))]
-  question = q_word.encode("ascii", "ignore") + " " + question + "?"
+  # using q_word.encode throws a can't concat str to bytes. Review and check the same for then ext function's encode 
+  question = q_word + " " + question + "?"
   return question
 
 
