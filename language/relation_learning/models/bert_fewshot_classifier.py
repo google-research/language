@@ -26,6 +26,7 @@ from absl import flags
 from bert import modeling
 from bert import tokenization
 from language.relation_learning.data import fewrel
+import six
 import tensorflow.compat.v1 as tf
 
 FLAGS = flags.FLAGS
@@ -156,7 +157,7 @@ def file_based_convert_examples_to_features(examples, max_seq_length, tokenizer,
     for name in query_features:
       features_list_dict[name].feature.extend(query_features[name])
 
-    for _, test_set in example.sets.iteritems():
+    for _, test_set in six.iteritems(example.sets):
       for test_example in test_set:
         test_features = feature_list_from_input_feature(
             convert_single_example(ex_index, test_example, max_seq_length,
