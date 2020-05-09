@@ -26,7 +26,7 @@ export BERT_DIR=/home/naveen/scratch/google-language-fork/bertModelDir/uncased_L
 export SQUAD_DIR=/home/naveen/scratch/google-language-fork/squadDir
 
 export WIKI103_DIR=/home/naveen/scratch/google-language-fork/wikiDir/wikitext-103-raw
-export EXTRACTION_DATA=/home/naveen/scratch/google-language-fork/extractionDir
+export EXTRACTION_DATA=/home/naveen/scratch/google-language-fork/extractionDirNew
 export VICTIM_MODEL=/home/naveen/scratch/google-language-fork/outputDir
 export OUTPUT_DIR=/home/naveen/scratch/google-language-fork/outputDirExtracted
 # Can be set to wiki or random
@@ -45,16 +45,16 @@ fi
 
 # Make sure you have downloaded and extracted the *raw* WikiText103 dataset from
 # https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-103-raw-v1.zip
-python -m language.bert_extraction.steal_bert_qa.utils.wiki103_para_split \
-  --wiki103_raw=$WIKI103_DIR/wiki.train.raw \
-  --output_path=$WIKI103_DIR/wikitext103-paragraphs.txt
+#python -m language.bert_extraction.steal_bert_qa.utils.wiki103_para_split \
+#  --wiki103_raw=$WIKI103_DIR/wiki.train.raw \
+#  --output_path=$WIKI103_DIR/wikitext103-paragraphs.txt
 
 # STEP 2
 # Download the SQuAD datasets. This is a one-time step, can be ignored once done.
-wget -O $SQUAD_DIR/train-v1.1.json https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json
-wget -O $SQUAD_DIR/train-v2.0.json https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v2.0.json
-wget -O $SQUAD_DIR/dev-v1.1.json https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json
-wget -O $SQUAD_DIR/dev-v2.0.json https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v2.0.json
+#wget -O $SQUAD_DIR/train-v1.1.json https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json
+#wget -O $SQUAD_DIR/train-v2.0.json https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v2.0.json
+#wget -O $SQUAD_DIR/dev-v1.1.json https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json
+#wget -O $SQUAD_DIR/dev-v2.0.json https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v2.0.json
 
 # STEP 3
 # Build the WIKI/RANDOM set of queries to extract the model
@@ -67,79 +67,78 @@ wget -O $SQUAD_DIR/dev-v2.0.json https://rajpurkar.github.io/SQuAD-explorer/data
 
 # You can also switch to SQuAD 2.0 using the same scripts.
 
-python -m language.bert_extraction.steal_bert_qa.data_generation.preprocess_thief_dataset_squad \
-  --input_path=$SQUAD_DIR/train-v1.1.json \
-  --para_scheme=$PARA_DATA_SCHEME \
-  --question_sampling_scheme="random_postprocess_uniform" \
-  --thief_dataset=$WIKI103_DIR/wikitext103-paragraphs.txt \
-  --output_path=$EXTRACTION_DATA/new_train.json \
-  --version="1.1"
+#python -m language.bert_extraction.steal_bert_qa.data_generation.preprocess_thief_dataset_squad \
+#  --input_path=$SQUAD_DIR/train-v1.1.json \
+#  --para_scheme=$PARA_DATA_SCHEME \
+#  --question_sampling_scheme="random_postprocess_uniform" \
+#  --thief_dataset=$WIKI103_DIR/wikitext103-paragraphs.txt \
+#  --output_path=$EXTRACTION_DATA/new_train.json \
+#  --version="1.1"
 
-exit 1
 # STEP 4
 # Run the victim model classifier in inference mode to get outputs for the queries
 # Set --version_2_with_negative=true for SQuAD 2.0
-python -m language.bert_extraction.steal_bert_qa.models.run_squad \
-  --exp_name="train_victim_squad" \
-  --version_2_with_negative=false \
-  --do_train=false \
-  --do_predict=true \
-  --do_lower_case=true \
-  --predict_input_file=$EXTRACTION_DATA/new_train.json \
-  --predict_output_dir=$EXTRACTION_DATA \
-  --vocab_file=$BERT_DIR/vocab.txt \
-  --bert_config_file=$BERT_DIR/bert_config.json \
-  --init_checkpoint=$BERT_DIR/bert_model.ckpt \
-  --max_seq_length=384 \
-  --output_dir=$VICTIM_MODEL
+#python -m language.bert_extraction.steal_bert_qa.models.run_squad \
+#  --exp_name="train_victim_squad" \
+#  --version_2_with_negative=false \
+#  --do_train=false \
+#  --do_predict=true \
+#  --do_lower_case=true \
+#  --predict_input_file=$EXTRACTION_DATA/new_train.json \
+#  --predict_output_dir=$EXTRACTION_DATA \
+#  --vocab_file=$BERT_DIR/vocab.txt \
+#  --bert_config_file=$BERT_DIR/bert_config.json \
+#  --init_checkpoint=$BERT_DIR/bert_model.ckpt \
+#  --max_seq_length=384 \
+#  --output_dir=$VICTIM_MODEL
 
 # STEP 5
 # Combine the queries with the outputs of the victim model
-python -m language.bert_extraction.steal_bert_qa.utils.combine_qa \
-  --questions_path=$EXTRACTION_DATA/new_train.json \
-  --predictions_path=$EXTRACTION_DATA/predictions.json \
-  --output_path=$EXTRACTION_DATA/train-v1.1.json
+#python -m language.bert_extraction.steal_bert_qa.utils.combine_qa \
+#  --questions_path=$EXTRACTION_DATA/new_train.json \
+#  --predictions_path=$EXTRACTION_DATA/predictions.json \
+#  --output_path=$EXTRACTION_DATA/train-v1.1.json
 
 # STEP 6
 # Train the extracted model on the extracted data
 # Set --version_2_with_negative=true for SQuAD 2.0
-python -m language.bert_extraction.steal_bert_qa.models.run_squad \
-  --exp_name="train_extracted_squad" \
-  --version_2_with_negative=false \
-  --do_train=true \
-  --do_predict=true \
-  --do_lower_case=true \
-  --save_checkpoints_steps=5000 \
-  --train_file=$EXTRACTION_DATA/train-v1.1.json \
-  --predict_input_file=$SQUAD_DIR/dev-v1.1.json \
-  --predict_output_dir=$OUTPUT_DIR \
-  --vocab_file=$BERT_DIR/vocab.txt \
-  --bert_config_file=$BERT_DIR/bert_config.json \
-  --init_checkpoint=$BERT_DIR/bert_model.ckpt \
-  --max_seq_length=384 \
-  --train_batch_size=32 \
-  --learning_rate=5e-5 \
-  --num_train_epochs=3.0 \
-  --output_dir=$OUTPUT_DIR
+#python -m language.bert_extraction.steal_bert_qa.models.run_squad \
+#  --exp_name="train_extracted_squad" \
+#  --version_2_with_negative=false \
+#  --do_train=true \
+#  --do_predict=true \
+#  --do_lower_case=true \
+#  --save_checkpoints_steps=5000 \
+#  --train_file=$EXTRACTION_DATA/train-v1.1.json \
+#  --predict_input_file=$SQUAD_DIR/dev-v1.1.json \
+#  --predict_output_dir=$OUTPUT_DIR \
+#  --vocab_file=$BERT_DIR/vocab.txt \
+#  --bert_config_file=$BERT_DIR/bert_config.json \
+#  --init_checkpoint=$BERT_DIR/bert_model.ckpt \
+#  --max_seq_length=384 \
+#  --train_batch_size=32 \
+#  --learning_rate=5e-5 \
+#  --num_train_epochs=3.0 \
+#  --output_dir=$OUTPUT_DIR
 
 # STEP 7
 # Run inference on the victim model, this is needed for estimating agreement
 # This step is automatically executed if you use the train_victim_squad.sh script
 # so it can be ignored.
 # Set --version_2_with_negative=true for SQuAD 2.0
-python -m language.bert_extraction.steal_bert_qa.models.run_squad \
-  --exp_name="train_victim_squad" \
-  --version_2_with_negative=false \
-  --do_train=false \
-  --do_predict=true \
-  --do_lower_case=true \
-  --predict_input_file=$SQUAD_DIR/dev-1.1.json \
-  --predict_output_dir=$VICTIM_MODEL \
-  --vocab_file=$BERT_DIR/vocab.txt \
-  --bert_config_file=$BERT_DIR/bert_config.json \
-  --init_checkpoint=$BERT_DIR/bert_model.ckpt \
-  --max_seq_length=384 \
-  --output_dir=$VICTIM_MODEL
+#python -m language.bert_extraction.steal_bert_qa.models.run_squad \
+#  --exp_name="train_victim_squad" \
+#  --version_2_with_negative=false \
+#  --do_train=false \
+#  --do_predict=true \
+#  --do_lower_case=true \
+#  --predict_input_file=$SQUAD_DIR/dev-v1.1.json \
+#  --predict_output_dir=$VICTIM_MODEL \
+#  --vocab_file=$BERT_DIR/vocab.txt \
+#  --bert_config_file=$BERT_DIR/bert_config.json \
+#  --init_checkpoint=$BERT_DIR/bert_model.ckpt \
+#  --max_seq_length=384 \
+#  --output_dir=$VICTIM_MODEL
 
 # STEP 8.1
 # Evaluate the accuracy of the extracted model (vs original dev set)
@@ -148,6 +147,7 @@ python -m language.bert_extraction.steal_bert_qa.utils.evaluate_squad \
   --dataset_file=$SQUAD_DIR/dev-v1.1.json \
   --predictions_file=$OUTPUT_DIR/predictions.json
 
+exit 1
 # STEP 8.2
 # Evaluate the agreement of the extracted model (vs the victim model's accuracy)
 # For SQuAD 2.0, use the script language.bert_extraction.steal_bert_qa.utils.evaluate_squad_2
