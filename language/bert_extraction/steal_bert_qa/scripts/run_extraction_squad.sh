@@ -143,14 +143,13 @@ fi
 # STEP 8.1
 # Evaluate the accuracy of the extracted model (vs original dev set)
 # For SQuAD 2.0, use the script language.bert_extraction.steal_bert_qa.utils.evaluate_squad_2
-python -m language.bert_extraction.steal_bert_qa.utils.evaluate_squad \
-  --dataset_file=$SQUAD_DIR/dev-v1.1.json \
-  --prediction_file=$OUTPUT_DIR/predictions.json
+#python -m language.bert_extraction.steal_bert_qa.utils.evaluate_squad \
+#  --dataset_file=$SQUAD_DIR/dev-v1.1.json \
+#  --prediction_file=$OUTPUT_DIR/predictions.json
 
-exit 1
 # STEP 8.2
 # Evaluate the agreement of the extracted model (vs the victim model's accuracy)
 # For SQuAD 2.0, use the script language.bert_extraction.steal_bert_qa.utils.evaluate_squad_2
 python -m language.bert_extraction.steal_bert_qa.utils.evaluate_squad \
-  --predictions_file=$VICTIM_MODEL/predictions.json \
-  --predictions_file2=$OUTPUT_DIR/predictions.json
+  --prediction_file=$VICTIM_MODEL/predictions.json \
+  --prediction_file2=$OUTPUT_DIR/predictions.json
