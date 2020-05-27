@@ -20,7 +20,7 @@ from bert_extraction.steal_bert_classifier.data_generation import preprocess_uti
 import tensorflow.compat.v1 as tf
 import tqdm
 
-app = tf.compat.v1.app
+app = tf.app
 flags = tf.flags
 gfile = tf.gfile
 logging = tf.logging
