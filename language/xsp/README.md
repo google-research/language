@@ -2,6 +2,20 @@
 
 This directory contains code necessary to replicate the training and evaluation for the ACL 2020 paper ["Exploring Unexplored Generalization Challenges for Cross-Database Semantic Parsing](https://www.aclweb.org/anthology/2020.acl-main.742/) (Alane Suhr, Ming-Wei Chang, Peter Shaw, and Kenton Lee).
 
+## Setup and running python scripts
+
+We suggest creating a conda environment for installation of dependencies.
+
+```
+conda create --name xsp
+source activate xsp
+pip install -r requirements.txt
+```
+
+Run all python scripts at the top-level of this repository using `-m`. For example,
+
+`python -m language.xsp.data_preprocessing.convert_to_examples`
+
 ## Directory Structure
 
 Our code is organized into four subdirectories:
@@ -61,7 +75,7 @@ There are two steps for preprocessing the training data: (1) converting to a sta
 
 #### (a) Converting raw data to JSON
 
-`data_preprocessing:convert_to_examples` will convert from the original format of each dataset  to a JSON list file containing serialized `NLToSQLExample` objects (see `data_preprocessing/nl_to_sql_example.py`).
+`data_preprocessing/convert_to_examples.py` will convert from the original format of each dataset  to a JSON list file containing serialized `NLToSQLExample` objects (see `data_preprocessing/nl_to_sql_example.py`).
 
 This target takes several arguments:
 
@@ -83,5 +97,5 @@ The steps to preprocess the evaluation data are similar to above, except for the
 * (a) Converting raw data to JSON
     * The value of `split` is dependent on the data being evaluated. E.g, for ATIS, this would be `dev`; for Restaurants, this would be `0,1,2,3,4,5,6,7,8,9'.
     * `generate_sql` should be set to `False`.
-* (b) Creating the output vocabulary
+* (b) Creating the output vocabulary: not necessary for evaluation data.
 
