@@ -35,6 +35,22 @@ The rest of the README will refer to these directories:
 
 ## (1) Downloading the data
 
+The script `data_download.sh` contains directives to download all the data necessary to train and evaluate a model. For some operations, it is automatic, but for others it requires the user to manually download data from specific URLs. See the below for running this script for training and evaluation.
+
+### For training
+
+To download the training data (Spider and WikiSQL), run the `data_download.sh` script. For better organization, we suggest creating a separate directory to store the data, e.g., `data/`, then running the download script inside the directory.
+
+To download only Spider and WikiSQL, run the script with the value `train_only` as the first argument. For example, in this directory:
+
+```
+mkdir data/
+cd data/
+sh ../data_download.sh train_only
+```
+
+### For evaluation
+
 TODO
 
 ## (2) Data preprocessing
