@@ -1,5 +1,7 @@
 #~/usr/bin/env bash
 
+TRAIN_ONLY_ARG="train_only"
+
 # 1. Need to download the Spider dataset from the website directly (wget won't
 # work with Google drive links).
 
@@ -7,8 +9,10 @@
 
 if ! ( test -d spider )
 then
-    echo "Download the Spider dataset before proceeding!" 
+    echo "Download the Spider dataset before proceeding (URL: https://drive.google.com/uc?export=download&id=1_AckYkinAnhqmRQtGsQgUKAnTHxxX5J0). After downloading, the current working directory should contain a subdirectory called spider." 
     exit
+else
+    echo "Spider is already downloaded."
 fi
 
 if ! (test -d spider/train.json)
@@ -23,7 +27,7 @@ fi
 # WikiSQL
 if ! (test -d wikisql)
 then
-    echo "Downloading WikiSQL annotations."
+    echo "************************ DOWNLOADING DATASET: WikiSQL ************************"
     mkdir wikisql
     wget https://github.com/jkkummerfeld/text2sql-data/blob/master/data/wikisql.json.bz2?raw=true
     mv wikisql.json.bz2?raw=true wikisql/wikisql.json.bz2
@@ -38,10 +42,12 @@ then
 
     mv data/* wikisql/
     rm -rf data
+else
+    echo "WikiSQL is already downloaded."
 fi
 
 # Exit here if not downloading the evaluation data.
-if [ "$1" == "train_only"]; then
+if [ "$TRAIN_ONLY_ARG" = "$1" ]; then
     echo "Downloading training data only."
     exit
 fi
