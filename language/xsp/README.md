@@ -2,20 +2,6 @@
 
 This directory contains code necessary to replicate the training and evaluation for the ACL 2020 paper ["Exploring Unexplored Generalization Challenges for Cross-Database Semantic Parsing](https://www.aclweb.org/anthology/2020.acl-main.742/) (Alane Suhr, Ming-Wei Chang, Peter Shaw, and Kenton Lee).
 
-## Setup and running python scripts
-
-We suggest creating a conda environment for installation of dependencies.
-
-```
-conda create --name xsp
-source activate xsp
-pip install -r requirements.txt
-```
-
-Run all python scripts at the top-level of this repository using `-m`. For example,
-
-`python -m language.xsp.data_preprocessing.convert_to_examples`
-
 ## Directory Structure
 
 Our code is organized into four subdirectories:
@@ -47,7 +33,21 @@ The rest of the README will refer to these directories:
 * `experiment_trial_*` contain saves for one or more trials of the experiment.
 * `tf_examples` contains the TFRecords files for the input examples.
 
-## (1) Downloading the data
+## (1) Environment setup and running python scripts
+
+We suggest creating a conda environment for installation of dependencies.
+
+```
+conda create --name xsp tensorflow==1.15
+source activate xsp
+pip install -r language/xsp/requirements.txt
+```
+
+Run all python scripts while in the top-level of this repository using `-m`. For example,
+
+`python -m language.xsp.data_preprocessing.convert_to_examples`
+
+## (1) Downloading resources
 
 The script `data_download.sh` contains directives to download all the data necessary to train and evaluate a model. For some operations, it is automatic, but for others it requires the user to manually download data from specific URLs. See the below for running this script for training and evaluation.
 
@@ -62,6 +62,8 @@ mkdir data/
 cd data/
 sh ../data_download.sh train_only
 ```
+
+You must also download resources for training the models (e.g., a pre-trained BERT model). Clone the [official BERT repository](https://github.com/google-research/bert) and download the BERT-Large, uncased model. We didn't use the original BERT-Large model in our main experimental results, but performance using BERT-Large is slightly behind BERT-Large+ on the Spider development set (see Table 3 in the main paper). This download will include both the BERT parameters and the vocabulary, which you will need.
 
 ### For evaluation
 
