@@ -14,13 +14,9 @@
 # limitations under the License.
 # Lint as: python3
 """Evaluate predictions."""
-import json
-
 from absl import app
 from absl import flags
 from language.orqa.utils import eval_utils
-
-import tensorflow.compat.v1 as tf
 
 FLAGS = flags.FLAGS
 
@@ -40,45 +36,14 @@ flags.DEFINE_boolean(
     "applicable to CuratedTrec")
 
 
-def is_correct(answers, prediction):
-  if FLAGS.is_regex:
-    metric_fn = eval_utils.regex_match_score
-  else:
-    metric_fn = eval_utils.exact_match_score
-  return eval_utils.metric_max_over_ground_truths(
-      metric_fn=metric_fn, prediction=prediction, ground_truths=answers)
-
-
 def main(_):
-  if FLAGS.is_regex != ("CuratedTrec" in FLAGS.references_path):
-    print("Warning: regex evaluation should (only) be applied to CuratedTrec.")
-
-  references = {}
-  with tf.io.gfile.GFile(FLAGS.references_path) as f:
-    for line in f:
-      example = json.loads(line)
-      references[example["question"]] = example["answer"]
-  print("Found {} references in {}".format(
-      len(references), FLAGS.references_path))
-
-  predictions = {}
-  with tf.io.gfile.GFile(FLAGS.predictions_path) as f:
-    for line in f:
-      example = json.loads(line)
-      predictions[example["question"]] = example["prediction"]
-  print("Found {} predictions in {}".format(
-      len(predictions), FLAGS.predictions_path))
-
-  missing_predictions = 0
-  correct = 0
-  for q, a in references.items():
-    if q in predictions:
-      correct += int(is_correct(answers=a, prediction=predictions[q]))
-    else:
-      missing_predictions += 1
-  print("Found {} missing predictions.".format(missing_predictions))
-  print("Accuracy: {:.4f} ({}/{})".format(correct / float(len(references)),
-                                          correct, len(references)))
+  metrics = eval_utils.evaluate_predictions(FLAGS.references_path,
+                                            FLAGS.predictions_path,
+                                            FLAGS.is_regex)
+  print("Found {} missing predictions.".format(metrics["missing_predictions"]))
+  print("Accuracy: {:.4f} ({}/{})".format(metrics["accuracy"],
+                                          metrics["num_correct"],
+                                          metrics["num_total"]))
 
 
 if __name__ == "__main__":

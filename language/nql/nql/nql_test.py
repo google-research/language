@@ -109,6 +109,19 @@ class TestDeclaredTypes(tf.test.TestCase):
     nql_expr = self.context.as_nql(tf_expr, 'vowel_t')
     self.assertEqual(nql_expr.type_name, 'vowel_t')
 
+  def test_implicit_tf_conversion(self):
+    self.context.declare_entity_type('vowel_t', fixed_vocab='aeiou')
+    tf_expr = tf.constant([[0, 0, 1, 0, 0, 0]])
+    nql_expr = self.context.as_nql(tf_expr, 'vowel_t')
+    self.assertAllEqual(tf.convert_to_tensor(nql_expr), tf_expr)
+
+  def test_implicit_tf_conversion_with_wrong_dtype(self):
+    self.context.declare_entity_type('vowel_t', fixed_vocab='aeiou')
+    tf_expr = tf.constant([[0, 0, 1, 0, 0, 0]], dtype=tf.float32)
+    nql_expr = self.context.as_nql(tf_expr, 'vowel_t')
+    with self.assertRaises(TypeError):
+      tf.convert_to_tensor(nql_expr, dtype=tf.int32)
+
 
 class TestLoad(tf.test.TestCase):
 
