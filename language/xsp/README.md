@@ -63,7 +63,7 @@ cd data/
 sh ../data_download.sh train_only
 ```
 
-You must also download resources for training the models (e.g., a pre-trained BERT model). Clone the [official BERT repository](https://github.com/google-research/bert) and download the BERT-Large, uncased model. We didn't use the original BERT-Large model in our main experimental results, but performance using BERT-Large is slightly behind BERT-Large+ on the Spider development set (see Table 3 in the main paper). This download will include both the BERT parameters and the vocabulary, which you will need.
+You must also download resources for training the models (e.g., a pre-trained BERT model). Clone the [official BERT repository](https://github.com/google-research/bert) and download the BERT-Large, uncased model. We didn't use the original BERT-Large model in our main experimental results, but performance using BERT-Large is slightly behind BERT-Large+ on the Spider development set (see Table 3 in the main paper). You can ignore the vocabulary file in the zipped directory.
 
 ### For evaluation
 
@@ -85,9 +85,19 @@ This target takes several arguments:
 * `input_filepath`: The path containing the examples (usually pointing to a JSON file). The file should have been downloaded in the data download step above. The parent directory containing the JSON file should contain a CSV that defines the schema(s) of the database.
 * `splits`: A list of the dataset splits that should be processed (e.g., for training, `train`).
 * `output_filepath`: The name of the file to write the JSON to.
-* `tokenizer_vocabulary`: The location of a vocabulary file that the tokenizer will use to tokenize natural language strings.
+* `tokenizer_vocabulary`: The location of a vocabulary file that the tokenizer will use to tokenize natural language strings. This file contains special placeholder vocabulary tokens for new tokens we added, including tokens for table separators and column types. TODO: Commit the vocabulary file that we used.
 * `generate_sql`: Whether to process the gold SQL queries and include them in the JSON list file. If training, this should be `True`; if evaluating, this should be `False`.
 * `anonymize_values`: Whether to anonymize the values (e.g., strings and numerical values) present in the gold SQL queries by replacing them with a placeholder value. Only relevant if `generate_sql` is `True`.
+
+An example of running this for creating the Spider and WikiSQL training data is:
+
+```
+# Spider
+python -m language.xsp.data_preprocessing.convert_to_examples --dataset_name=spider --input_filepath=language/xsp/data/spider/ --splits=train --output_filepath=language/xsp/examples/spider_examples.json --generate_sql=True --tokenizer_vocabulary=language/xsp/data_preprocessing/input_bert_vocabulary.txt
+
+# WikiSQL
+python -m language.xsp.data_preprocessing.convert_to_examples --dataset_name=wikisql --input_filepath=language/xsp/data/wikisql/ --splits=train --output_filepath=language/xsp/examples/wikisql_examples.json --generate_sql=True --tokenizer_vocabulary=language/xsp/data_preprocessing/input_bert_vocabulary.txt
+```
 
 #### (b) Creating the output vocabulary
 
