@@ -75,7 +75,7 @@ def convert_wikisql(input_example,
 
     # Some preprocessing of the WikiSQL SQL queries.
     sql = input_example[1].rstrip('; ')
-    sql = sql.replace('TABLE', schema.keys()[0])
+    sql = sql.replace('TABLE', list(schema.keys())[0])
     sql = sql.replace('_FIELD', '')
     string_split_sql = sql.split(' ')
     if string_split_sql[1].lower() in {'count', 'min', 'max', 'avg', 'sum'}:

@@ -690,10 +690,6 @@ def populate_abstract_sql(example, sql_string, table_schemas, anonymize):
     if span.sql_token:
       if span.sql_token[0] in {'$', '#', '|'}:
         return False
-      try:
-        span.sql_token.decode('ascii')
-      except UnicodeDecodeError:
-        return None
   return populate_example_from_sql_spans(sql_spans, example, anonymize)
 
 

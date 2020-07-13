@@ -49,8 +49,7 @@ def anonymize_aliases(sql):
   # First, split all TABLE.COLUMN examples into three tokens.
   for token in tokens:
     token = token.replace('"', '\'')
-    if token != '.' and token.count('.') == 1 and not unicode(
-        token.replace('.', '', 1), 'utf-8').isnumeric():
+    if token != '.' and token.count('.') == 1 and not token.replace('.', '', 1).isnumeric():
       table, column = token.split('.')
       sql_tokens.extend([table, '.', column])
     else:
@@ -106,11 +105,6 @@ class SQLAction(object):
   """Describes a single generation action for a SQL query."""
 
   def __init__(self, symbol=None, entity_copy=None, utterance_copy=None):
-    # Only one of these three should be set.
-    if symbol:
-      assert isinstance(symbol,
-                        (str, unicode)), 'Symbol %r is not a string!' % symbol
-
     # Make sure only one of the things are set.
     assert len([obj for obj in [symbol, entity_copy, utterance_copy] if obj
                ]) <= 1
