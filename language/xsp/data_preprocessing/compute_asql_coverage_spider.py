@@ -61,7 +61,7 @@ def compute_spider_coverage(spider_examples_json, spider_tables_json):
   num_reconstruction_failtures = 0
   for example in examples:
     num_examples += 1
-    print('Parsing example number %s.' % num_examples)
+    print('Parsing example number %s: %s' % (num_examples, example['query']))
     gold_sql_query = example['query']
     foreign_keys = foreign_key_map[example['db_id']]
     table_schema = table_schema_map[example['db_id']]

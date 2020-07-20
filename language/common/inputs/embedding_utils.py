@@ -20,6 +20,7 @@ from __future__ import print_function
 from language.common.inputs import dataset_utils
 
 import numpy as np
+from six.moves import range
 import tensorflow.compat.v1 as tf
 from tensorflow.contrib import lookup as contrib_lookup
 

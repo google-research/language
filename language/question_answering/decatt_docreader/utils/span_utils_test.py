@@ -19,6 +19,8 @@ from __future__ import print_function
 
 from language.question_answering.decatt_docreader.utils import span_utils
 import numpy as np
+from six.moves import range
+from six.moves import zip
 import tensorflow.compat.v1 as tf
 
 

@@ -54,4 +54,4 @@ python -m language.bert_extraction.steal_bert_qa.models.run_squad \
 # For SQuAD 2.0, use the script language.bert_extraction.steal_bert_qa.utils.evaluate_squad_2
 python -m language.bert_extraction.steal_bert_qa.utils.evaluate_squad \
   --dataset_file=$SQUAD_DIR/dev-v1.1.json \
-  --predictions_file=$OUTPUT_DIR/predictions.json
+  --prediction_file=$OUTPUT_DIR/predictions.json

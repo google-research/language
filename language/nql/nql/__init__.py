@@ -321,7 +321,10 @@ class NeuralQueryExpression(object):
     Returns:
       Function that creates the appropriate 'follow' construct.
     """
-    return lambda inverted=+1: self.follow(rel_name, inverted=inverted)
+    if self.context.is_relation(rel_name):
+      return lambda inverted=+1: self.follow(rel_name, inverted=inverted)
+    else:
+      raise AttributeError()
 
   def weighted_by(self, weight_rel_name,
                   category_name):
@@ -1740,6 +1743,12 @@ def nonneg_crossentropy(expr, target):
   return tf.reduce_mean(input_tensor=cross_entropies, axis=0)
 
 
+class NonnegativeCrossentropy(tf.keras.losses.Loss):
+
+  def call(self, y_true, y_pred):
+    return nonneg_crossentropy(y_pred, y_true)
+
+
 class RelationDeclaration(object):
   """Holds information about a relation.
 
@@ -1812,3 +1821,14 @@ class NQExprProvenance(object):
       return v.pprintable() if isinstance(v, NQExprProvenance) else v
 
     return dict([(k, as_pprintable(v)) for k, v in self.__dict__.items() if v])
+
+
+def convert_nql_to_tf(value, dtype=None, name=None, as_ref=False):
+  del name, as_ref
+  value_tf = value.tf
+  if dtype is None or dtype.is_compatible_with(value_tf.dtype):
+    return value_tf
+  raise TypeError
+
+
+tf.register_tensor_conversion_function(NeuralQueryExpression, convert_nql_to_tf)

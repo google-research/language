@@ -1,0 +1,19 @@
+syntax = "proto2";
+
+package language.google.fact_check;
+
+message Document {
+  optional string doc_id = 1;
+  optional string content = 2;
+  optional double ir_score = 3;
+}
+
+message GetDocumentsResponse {
+  repeated Document documents = 1;
+}
+
+message GetDocumentsRequest {
+  optional string query = 1;
+  optional int32 max_num_results = 2;
+}
+
