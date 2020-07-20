@@ -2,6 +2,8 @@
 
 Dan Iter (Stanford - Work done at Google), Kelvin Guu (Google), Larry Lansing (Google), Dan Jurafsky (Stanford)
 
+This work will appear at ACL 2020 (https://arxiv.org/abs/2005.10389)
+
 ## Abstract
 
 Conpono stands for "Contrastive Position and Ordering with Negatives Objective".
@@ -30,3 +32,18 @@ Conpono Model. See `cpc/preproc` for those scripts.
 
 `reconstruct/` - contains code for a predecessor to Conpono that reorders 5
 sentences into its original order.
+
+
+## Model weights
+
+For window size k=2
+https://storage.googleapis.com/conpono/conpono_k2/graph.pbtxt
+https://storage.googleapis.com/conpono/conpono_k2/model.ckpt.data-00000-of-00001
+https://storage.googleapis.com/conpono/conpono_k2/model.ckpt.index
+https://storage.googleapis.com/conpono/conpono_k2/model.ckpt.meta
+
+for window size k=4
+https://storage.googleapis.com/conpono/conpono_k4/graph.pbtxt
+https://storage.googleapis.com/conpono/conpono_k4/model.ckpt.data-00000-of-00001
+https://storage.googleapis.com/conpono/conpono_k4/model.ckpt.index
+https://storage.googleapis.com/conpono/conpono_k4/model.ckpt.meta

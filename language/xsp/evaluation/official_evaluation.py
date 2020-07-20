@@ -295,6 +295,7 @@ def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
       case sensitive with respect to strings.
     verbose: Whether to print detailed information about evaluation (e.g., for
       debugging).
+    update_cache: Whether to execute and cache gold queries.
   """
   # Keeps tracks of metrics throughout all of the evaluation.
   exec_results_same = list()
@@ -534,7 +535,8 @@ def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
               '\n')
 
 
-def main(predictions_filepath, output_filepath, cache_filepath, verbose):
+def main(predictions_filepath, output_filepath, cache_filepath, verbose,
+         update_cache):
   # Load the predictions filepath.
   with open(predictions_filepath) as infile:
     predictions = json.load(infile)
@@ -560,7 +562,7 @@ def main(predictions_filepath, output_filepath, cache_filepath, verbose):
   # Create the text file that results will be written to.
   with open(output_filepath, 'w') as ofile:
     execute_predictions(predictions, cache_dict, ofile,
-                        'scholar' not in basefilename, verbose)
+                        'scholar' not in basefilename, verbose, update_cache)
 
   if 'spider' not in basefilename:
     try:

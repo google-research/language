@@ -218,6 +218,23 @@ class AbstractSqlTest(absltest.TestCase):
                             "publication.pid")
     self.assertEqual(expected_from_clause, from_clause)
 
+  def test_order_by(self):
+    original = "SELECT title FROM course ORDER BY title ,  credits"
+    sql_spans = abstract_sql.sql_to_sql_spans(original)
+    replaced_spans = abstract_sql.replace_from_clause(sql_spans)
+    replaced = abstract_sql.sql_spans_to_string(replaced_spans, sep=" ")
+    expected = ("select course.title <from_clause_placeholder> order by "
+                "course.title , course.credits")
+    self.assertEqual(expected, replaced)
+
+  def test_inner_join(self):
+    original = "SELECT f.name FROM foo AS f INNER JOIN bar AS b"
+    sql_spans = abstract_sql.sql_to_sql_spans(original)
+    replaced_spans = abstract_sql.replace_from_clause(sql_spans)
+    replaced = abstract_sql.sql_spans_to_string(replaced_spans, sep=" ")
+    expected = ("select foo.name <from_clause_placeholder> bar")
+    self.assertEqual(expected, replaced)
+
 
 if __name__ == "__main__":
   absltest.main()

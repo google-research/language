@@ -28,6 +28,8 @@ from language.common.utils import tensor_utils
 from language.question_answering.decatt_docreader.datasets import nq_short_pipeline_dataset
 from language.question_answering.decatt_docreader.layers import document_reader
 from language.question_answering.decatt_docreader.utils import span_utils
+from six.moves import range
+from six.moves import zip
 import tensorflow.compat.v1 as tf
 from tensorflow.contrib import data as contrib_data
 
@@ -142,10 +144,10 @@ def model_function(features, labels, mode, params, embeddings):
 
   if mode == tf.estimator.ModeKeys.TRAIN:
     optimizer = tf.train.AdamOptimizer()
-    gradients, variables = zip(*optimizer.compute_gradients(loss))
+    gradients, variables = list(zip(*optimizer.compute_gradients(loss)))
     gradients, _ = tf.clip_by_global_norm(gradients, 5.0)
     train_op = optimizer.apply_gradients(
-        grads_and_vars=zip(gradients, variables),
+        grads_and_vars=list(zip(gradients, variables)),
         global_step=tf.train.get_global_step())
   else:
     # Don't build the train_op unnecessarily, since the ADAM variables can cause
@@ -261,7 +263,7 @@ def input_function(is_train, embeddings):
     # Compute the batch size of each bucket such that the total number of
     # context words in each batch is bounded by FLAGS.total_batch_size during
     # training.
-    bucket_boundaries = range(128, FLAGS.max_context_len, 128)
+    bucket_boundaries = list(range(128, FLAGS.max_context_len, 128))
     bucket_batch_sizes = [
         int(FLAGS.total_batch_size / b) for b in bucket_boundaries
     ]

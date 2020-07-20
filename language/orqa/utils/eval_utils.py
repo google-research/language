@@ -14,10 +14,13 @@
 # limitations under the License.
 # Lint as: python3
 """Evaluation utilities."""
+import json
 import re
 import string
 
 import unicodedata
+
+import tensorflow.compat.v1 as tf
 
 
 def normalize_answer(s):
@@ -59,3 +62,49 @@ def metric_max_over_ground_truths(metric_fn, prediction,
     score = metric_fn(prediction, ground_truth)
     scores_for_ground_truths.append(score)
   return max(scores_for_ground_truths)
+
+
+def is_correct(answers, prediction,
+               is_regex):
+  if is_regex:
+    metric_fn = regex_match_score
+  else:
+    metric_fn = exact_match_score
+  return metric_max_over_ground_truths(
+      metric_fn=metric_fn, prediction=prediction, ground_truths=answers)
+
+
+def evaluate_predictions(references_path, predictions_path,
+                         is_regex):
+  """Calculates and returns metrics."""
+  if is_regex != ("CuratedTrec" in references_path):
+    print("Warning: regex evaluation should (only) be applied to CuratedTrec.")
+
+  references = {}
+  with tf.io.gfile.GFile(references_path) as f:
+    for line in f:
+      example = json.loads(line)
+      references[example["question"]] = example["answer"]
+  print("Found {} references in {}".format(len(references), references_path))
+
+  predictions = {}
+  with tf.io.gfile.GFile(predictions_path) as f:
+    for line in f:
+      example = json.loads(line)
+      predictions[example["question"]] = example["prediction"]
+  print("Found {} predictions in {}".format(len(predictions), predictions_path))
+
+  missing_predictions = 0
+  correct = 0
+  for q, a in references.items():
+    if q in predictions:
+      correct += int(
+          is_correct(answers=a, prediction=predictions[q], is_regex=is_regex))
+    else:
+      missing_predictions += 1
+
+  return dict(
+      missing_predictions=missing_predictions,
+      num_correct=correct,
+      num_total=len(references),
+      accuracy=correct / float(len(references)))

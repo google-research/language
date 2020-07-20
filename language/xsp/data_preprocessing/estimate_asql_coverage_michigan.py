@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # Lint as: python3
-r"""Compute coverage for Abstract SQL for Michigan datasets.
+r"""Estimate coverage for Abstract SQL for Michigan datasets.
 
 Example usage:
 
@@ -24,9 +24,17 @@ ${PATH_TO_BINARY} \
   --splits=dev \
   --alsologtostderr
 
-Note that for atis, since the dataset does not use the JOIN ... ON notation,
-and instead uses commas to separate tables in the FROM clause, it is necessary
-to edit `abstract_sql` to consider from clauses with comma-separated tables.
+Note that these estimates can be inexact for the following reasons:
+- If a given pair of tables contains more than foreign key relations, the
+  conversion from abstract SQL will be ambiguous, and only an arbitrary
+  relation will be chosen given the current implementation. This will only be
+  correct some of the time, so the estimate by this script will be overly
+  optimistic (see associated TODO in `abstract_sql.py`).
+- There may be parsing errors that do not raise exceptions, but lead to
+  incorrect processing of the original SQL query. Alternatively, there may
+  be parsing errors that are due to the brittleness of the SQL parsing
+  library, rather than representing conceptual coverage gaps with abstract
+  SQL.
 """
 
 from __future__ import absolute_import
@@ -64,10 +72,11 @@ def _load_json(filename):
 def compute_michigan_coverage():
   """Prints out statistics for asql conversions."""
   # Read data files.
+  dataset_file_prefix = 'geography' if FLAGS.dataset_name == 'geoquery' else FLAGS.dataset_name
   schema_csv_path = os.path.join(FLAGS.michigan_data_dir,
-                                 '%s-schema.csv' % FLAGS.dataset_name)
+                                 '%s-schema.csv' % dataset_file_prefix)
   examples_json_path = os.path.join(FLAGS.michigan_data_dir,
-                                    '%s.json' % FLAGS.dataset_name)
+                                    '%s.json' % dataset_file_prefix)
   schema = michigan_preprocessing.read_schema(schema_csv_path)
   if FLAGS.use_oracle_foriegn_keys:
     foreign_keys = abstract_sql_converters.michigan_db_to_foreign_key_tuples_orcale(
@@ -112,6 +121,7 @@ def compute_michigan_coverage():
     print('Success:\n%s\n%s' %
           (gold_sql_query, abstract_sql.sql_spans_to_string(sql_spans)))
     num_successes += 1
+  print('Summary for %s.' % FLAGS.dataset_name)
   print('exception_counts: %s' % exception_counts)
   print('Examples: %s' % num_examples)
   print('Failed conversions: %s' % num_conversion_failures)
