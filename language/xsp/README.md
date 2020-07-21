@@ -65,6 +65,8 @@ sh ../data_download.sh train_only
 
 You must also download resources for training the models (e.g., a pre-trained BERT model). Clone the [official BERT repository](https://github.com/google-research/bert) and download the BERT-Large, uncased model. We didn't use the original BERT-Large model in our main experimental results, but performance using BERT-Large is slightly behind BERT-Large+ on the Spider development set (see Table 3 in the main paper). You can ignore the vocabulary file in the zipped directory.
 
+Finally, for the input training vocabulary, please download the text file from [this link](https://storage.googleapis.com/xsp-files/input_bert_vocabulary.txt) or `gs://xsp-files/input_bert_vocabulary.txt` via `gsutils`. We recommend to save it in the `assets` directory.
+
 ### For evaluation
 
 TODO
@@ -93,10 +95,10 @@ An example of running this for creating the Spider and WikiSQL training data is:
 
 ```
 # Spider
-python -m language.xsp.data_preprocessing.convert_to_examples --dataset_name=spider --input_filepath=language/xsp/data/spider/ --splits=train --output_filepath=language/xsp/examples/spider_train.json --generate_sql=True --tokenizer_vocabulary=language/xsp/data_preprocessing/input_bert_vocabulary.txt
+python -m language.xsp.data_preprocessing.convert_to_examples --dataset_name=spider --input_filepath=language/xsp/data/spider/ --splits=train --output_filepath=language/xsp/examples/spider_train.json --generate_sql=True --tokenizer_vocabulary=language/xsp/assets/input_bert_vocabulary.txt
 
 # WikiSQL
-python -m language.xsp.data_preprocessing.convert_to_examples --dataset_name=wikisql --input_filepath=language/xsp/data/wikisql/ --splits=train --output_filepath=language/xsp/examples/wikisql_train.json --generate_sql=True --tokenizer_vocabulary=language/xsp/data_preprocessing/input_bert_vocabulary.txt
+python -m language.xsp.data_preprocessing.convert_to_examples --dataset_name=wikisql --input_filepath=language/xsp/data/wikisql/ --splits=train --output_filepath=language/xsp/examples/wikisql_train.json --generate_sql=True --tokenizer_vocabulary=language/xsp/assets/input_bert_vocabulary.txt
 ```
 
 #### (b) Creating the output vocabulary
