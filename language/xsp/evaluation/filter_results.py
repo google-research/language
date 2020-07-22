@@ -98,7 +98,10 @@ for example in examples[:-1]:
       if char == ' ' and numerical_value:
         in_equality = False
 
-        if numerical_value not in utterance:
+        if numerical_value not in utterance and numerical_value not in {
+            '0', '1'
+        }:
+          # Allow generation of 0, 1 for compositionality purposes.
           copiable = False
         numerical_value = ''
 

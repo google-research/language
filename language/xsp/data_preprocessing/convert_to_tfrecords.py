@@ -90,14 +90,14 @@ def add_context(key):
   """Adds context features required by the model."""
   features = dict()
   features['language'] = tf.train.Feature(
-      bytes_list=tf.train.BytesList(value=['en']))
+      bytes_list=tf.train.BytesList(value=[b'en']))
   features['region'] = tf.train.Feature(
-      bytes_list=tf.train.BytesList(value=['US_eng']))
+      bytes_list=tf.train.BytesList(value=[b'US_eng']))
   features['type'] = tf.train.Feature(int64_list=tf.train.Int64List(value=[1]))
   features['weight'] = tf.train.Feature(
       float_list=tf.train.FloatList(value=[1.0]))
   features['tag'] = tf.train.Feature(
-      bytes_list=tf.train.BytesList(value=['all']))
+      bytes_list=tf.train.BytesList(value=[b'all']))
   features['key'] = tf.train.Feature(
       bytes_list=tf.train.BytesList(value=[key.encode('utf8')]))
   return features
