@@ -36,7 +36,7 @@ import timeout_decorator
 from tqdm import tqdm
 
 # Maximum allowable timeout for executing predicted and gold queries.
-TIMEOUT = 60
+TIMEOUT = 15
 
 # Maximum number of candidates we should consider
 MAX_CANDIDATE = 20
@@ -93,7 +93,6 @@ def try_executing_query(prediction, cursor, case_sensitive=True, verbose=False):
   prediction_str = prediction_str.replace(';', '').strip()
   print('Current prediction:' + prediction_str)
 
-  st = time.time()
   try:
     if not case_sensitive:
       new_prediction = ''
@@ -120,9 +119,8 @@ def try_executing_query(prediction, cursor, case_sensitive=True, verbose=False):
           sqlite3.OperationalError, sqlite3.NotSupportedError) as e:
     exception_str = str(e).lower()
     pred_results = []
-  execution_time = time.time() - st
 
-  return pred_results, exception_str, execution_time
+  return pred_results, exception_str
 
 
 @timeout_decorator.timeout(seconds=TIMEOUT, use_signals=False)
@@ -222,7 +220,6 @@ def execute_prediction(prediction, empty_table_cursor, cursor, case_sensitive,
   best_prediction = None
   pred_results = None
   exception_str = None
-  execution_time = 0
 
   if len(sorted_by_scores) > MAX_CANDIDATE:
     sorted_by_scores = sorted_by_scores[:MAX_CANDIDATE]
@@ -244,7 +241,7 @@ def execute_prediction(prediction, empty_table_cursor, cursor, case_sensitive,
         # Get the actual results
         if verbose:
           print('... on actual database')
-        pred_results, exception_str, execution_time = try_executing_query(
+        pred_results, exception_str = try_executing_query(
             pred, cursor, case_sensitive, verbose)
       if exception_str == 'timeout':
         # Technically, this query didn't have a syntax problem, so
@@ -253,7 +250,7 @@ def execute_prediction(prediction, empty_table_cursor, cursor, case_sensitive,
 
         if verbose:
           print('... on actual database')
-        pred_results, exception_str, execution_time = try_executing_query(
+        pred_results, exception_str = try_executing_query(
             pred, cursor, case_sensitive, verbose)
         break
     else:
@@ -262,11 +259,11 @@ def execute_prediction(prediction, empty_table_cursor, cursor, case_sensitive,
 
       if verbose:
         print('No exception... on actual database')
-      pred_results, _, execution_time = try_executing_query(pred, cursor, case_sensitive,
-                                         verbose)
+      pred_results = try_executing_query(pred, cursor, case_sensitive,
+                                         verbose)[0]
       break
 
-  return best_prediction, pred_results, exception_str, execution_time
+  return best_prediction, pred_results, exception_str
 
 
 def _convert_to_unicode_string(value):
@@ -280,8 +277,8 @@ def _convert_to_unicode_string(value):
     return str(value).decode('utf-8', 'ignore')
 
 
-def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
-                        verbose, update_cache):
+def execute_predictions(predictions, cache_dict, ofile, case_sensitive, verbose,
+                        update_cache):
   """Executes predicted/gold queries and computes performance.
 
   Writes results to ofile.
@@ -353,7 +350,7 @@ def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
       print('Finding the highest-rated prediction for utterance:\n\t' +
             printable_utterance)
 
-    best_prediction, pred_results, exception_str, execution_time = execute_prediction(
+    best_prediction, pred_results, exception_str = execute_prediction(
         prediction, empty_cursor, cursor, case_sensitive, verbose)
 
     ofile.write('Predicted query:\n')
@@ -362,7 +359,6 @@ def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
                   '\n')
     else:
       ofile.write('ERROR: Cannot write prediction %r\n' % best_prediction)
-    ofile.write('Took %s s to execute' % execution_time)
 
     # If it didn't execute correctly, check why.
     if exception_str:
@@ -406,16 +402,16 @@ def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
     if cache_dict is None or gold_query not in cache_dict:
       if printable_utterance not in cache_dict:
         if update_cache:
-            if verbose:
-              print('Trying to execute the gold query:\n\t' + gold_query)
-            gold_results, gold_exception_str = try_executing_query(
-                gold_query, cursor, case_sensitive, verbose)
-      
-            if gold_exception_str:
-              gold_error += 1
-              gold_results = []
-            elif cache_dict is not None:
-              cache_dict[u''.join(gold_query).decode('utf-8')] = gold_results
+          if verbose:
+            print('Trying to execute the gold query:\n\t' + gold_query)
+          gold_results, gold_exception_str = try_executing_query(
+              gold_query, cursor, case_sensitive, verbose)
+
+          if gold_exception_str:
+            gold_error += 1
+            gold_results = []
+          elif cache_dict is not None:
+            cache_dict[u''.join(gold_query).decode('utf-8')] = gold_results
         else:
           print(gold_query)
           print(printable_utterance)
