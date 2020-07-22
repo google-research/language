@@ -18,10 +18,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import os.path
+import os
+import re
 
 from language.common.utils import file_utils
+import six
 import tensorflow.compat.v1 as tf
+import tensorflow_hub as hub
 
 
 class BestSavedModelAndCheckpointExporter(tf.estimator.BestExporter):
@@ -109,3 +112,87 @@ class BestSavedModelAndCheckpointExporter(tf.estimator.BestExporter):
         path=os.path.join(export_path, "best_saved_model.txt"))
 
     return exported_dir
+
+
+class LatestExporterWithSteps(hub.LatestModuleExporter):
+  """Hub exporter that also writes a 'global_step.txt' file."""
+
+  _step_re = re.compile(r"ckpt-(?P<steps>\d+)(?:\.(?:meta|index|data.*))?$")
+
+  def export(self,
+             estimator,
+             export_path,
+             checkpoint_path=None,
+             eval_result=None,
+             is_the_final_export=None):
+    if checkpoint_path is None:
+      checkpoint_path = estimator.latest_checkpoint()
+    path = super(LatestExporterWithSteps, self).export(
+        estimator,
+        export_path,
+        checkpoint_path=checkpoint_path,
+        eval_result=eval_result,
+        is_the_final_export=is_the_final_export)
+    path = six.ensure_text(path)
+    checkpoint_path = six.ensure_text(checkpoint_path)
+    tf.logging.info("Path: %s, checkpoint path: %s", path, checkpoint_path)
+    if path:
+      match = self._step_re.search(checkpoint_path)
+      if match:
+        with tf.gfile.GFile(os.path.join(path, "global_step.txt"), "w") as f:
+          f.write(six.ensure_binary(match.groupdict()["steps"]))
+      else:
+        tf.logging.warning("Couldn't find step counter in %r", checkpoint_path)
+
+
+class BestModuleExporter(tf.estimator.Exporter):
+  """Export the registered modules with the best metric value."""
+
+  def __init__(self, name, serving_input_fn, compare_fn, exports_to_keep=5):
+    """Creates a BestModuleExporter to use with tf.estimator.EvalSpec.
+
+    Args:
+      name: unique name of this Exporter, which will be used in the export path.
+      serving_input_fn: A function with no arguments that returns a
+        ServingInputReceiver. LatestModuleExporter does not care about the
+        actual behavior of this function, so any return value that looks like a
+        ServingInputReceiver is fine.
+      compare_fn: A function that compares two evaluation results. It should
+        take two arguments, best_eval_result and current_eval_result, and return
+        True if the current result is better; False otherwise. See the
+        loss_smaller method for an example.
+      exports_to_keep: Number of exports to keep. Older exports will be garbage
+        collected. Set to None to disable.
+    """
+    self._compare_fn = compare_fn
+    self._best_eval_result = None
+    self._latest_module_exporter = hub.LatestModuleExporter(
+        name, serving_input_fn, exports_to_keep=exports_to_keep)
+
+  @property
+  def name(self):
+    return self._latest_module_exporter.name
+
+  def export(self,
+             estimator,
+             export_path,
+             checkpoint_path,
+             eval_result,
+             is_the_final_export=None):
+    """Actually performs the export of registered Modules."""
+    if self._best_eval_result is None or self._compare_fn(
+        best_eval_result=self._best_eval_result,
+        current_eval_result=eval_result):
+      tf.logging.info("Exporting the best modules.")
+      self._best_eval_result = eval_result
+      return self._latest_module_exporter.export(estimator, export_path)
+
+
+def metric_compare_fn(key, compare):
+
+  def _compare_fn(best_eval_result, current_eval_result):
+    tf.logging.info("Old %s: %s | New %s: %s", key, key, best_eval_result[key],
+                    current_eval_result[key])
+    return compare(best_eval_result[key], current_eval_result[key])
+
+  return _compare_fn

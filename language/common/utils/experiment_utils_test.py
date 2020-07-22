@@ -17,29 +17,40 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+from absl import flags
 from language.common.utils import experiment_utils
 import tensorflow.compat.v1 as tf
+
+FLAGS = flags.FLAGS
+
+FLAGS.set_default("num_train_steps", 2)
+FLAGS.set_default("num_eval_steps", 2)
 
 
 class ExperimentUtilsTest(tf.test.TestCase):
 
-  def _simple_model_fn(self, features, labels, mode):
+  def _simple_model_fn(self, features, labels, mode, params):
     logits = tf.squeeze(tf.layers.dense(features, 1))
     loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
         labels=tf.to_float(labels), logits=logits))
-    train_op = tf.train.GradientDescentOptimizer(0.1).minimize(loss)
-    return tf.estimator.EstimatorSpec(
-        mode=mode,
-        loss=loss,
-        train_op=train_op)
+    optimizer = tf.train.GradientDescentOptimizer(0.1)
+    if params["use_tpu"]:
+      optimizer = tf.tpu.CrossShardOptimizer(optimizer)
+    train_op = optimizer.minimize(
+        loss, global_step=tf.train.get_or_create_global_step())
+    if params["use_tpu"]:
+      return tf.estimator.tpu.TPUEstimatorSpec(
+          mode=mode, loss=loss, train_op=train_op)
+    else:
+      return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
 
-  def _simple_input_function(self):
+  def _simple_input_function(self, params):
     features = [[1.0, 0.0, -1.0, 2.5],
                 [0.5, 1.1, -0.8, 1.5]]
     labels = [0, 1]
     dataset = tf.data.Dataset.from_tensor_slices((features, labels))
-    dataset = dataset.repeat(2)
-    dataset = dataset.batch(2)
+    dataset = dataset.repeat()
+    dataset = dataset.batch(params["batch_size"], drop_remainder=True)
     return dataset
 
   def test_run_experiment(self):
@@ -47,6 +58,14 @@ class ExperimentUtilsTest(tf.test.TestCase):
         model_fn=self._simple_model_fn,
         train_input_fn=self._simple_input_function,
         eval_input_fn=self._simple_input_function)
+
+  def test_run_experiment_tpu(self):
+    params = dict(use_tpu=True)
+    experiment_utils.run_experiment(
+        model_fn=self._simple_model_fn,
+        train_input_fn=self._simple_input_function,
+        eval_input_fn=self._simple_input_function,
+        params=params)
 
 
 if __name__ == "__main__":
