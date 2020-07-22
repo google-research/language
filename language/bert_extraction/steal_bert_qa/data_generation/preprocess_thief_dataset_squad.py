@@ -22,7 +22,7 @@ import numpy as np
 import tensorflow.compat.v1 as tf
 import tqdm
 
-app = tf.compat.v1.app
+app = tf.app
 flags = tf.flags
 gfile = tf.gfile
 logging = tf.logging
@@ -40,6 +40,7 @@ flags.DEFINE_float("fraction", None,
                    "fraction of dataset, for partial data experiments")
 flags.DEFINE_integer("random_seed", 42, "")
 flags.DEFINE_string("output_path", None, "Output path for preprocessed data")
+flags.DEFINE_string("version", "1.1", "Version of Squad Data being processed")
 
 FLAGS = flags.FLAGS
 
