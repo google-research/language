@@ -1,6 +1,6 @@
 # Exploring Unexplored Generalization Challenges for Cross-Database Semantic Parsing
 
-This directory contains code necessary to replicate the training and evaluation for the ACL 2020 paper ["Exploring Unexplored Generalization Challenges for Cross-Database Semantic Parsing](https://www.aclweb.org/anthology/2020.acl-main.742/) (Alane Suhr, Ming-Wei Chang, Peter Shaw, and Kenton Lee).
+This directory contains code necessary to replicate the training and evaluation for the ACL 2020 paper ["Exploring Unexplored Generalization Challenges for Cross-Database Semantic Parsing"](https://www.aclweb.org/anthology/2020.acl-main.742/) (Alane Suhr, Ming-Wei Chang, Peter Shaw, and Kenton Lee).
 
 ## Directory Structure
 
@@ -146,7 +146,7 @@ python -m language.xsp.data_preprocessing.convert_to_tfrecords --examples_dir=la
 The steps to preprocess the evaluation data are similar to above, except for the following:
 
 * (a) Converting raw data to JSON
-    * The value of `split` is dependent on the data being evaluated. E.g, for ATIS, this would be `dev`; for Restaurants, this would be `0,1,2,3,4,5,6,7,8,9'.
+    * The value of `split` is dependent on the data being evaluated. E.g, for ATIS, this would be `dev`; for Restaurants, this would be `0,1,2,3,4,5,6,7,8,9`.
     * `generate_sql` should be set to `False`.
 * (b) Creating the output vocabulary: not necessary for evaluation data. Use the output vocabulary computed during training.
 * (c) Converting to TFRecords
