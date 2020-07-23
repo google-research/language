@@ -96,9 +96,8 @@ def get_wordpieces(sequence, tokenizer, schema_entities=None):
                        '\nSequence: ' + sequence)
 
     if sequence.lower()[span_start:span_end] != search_wordpiece:
-      raise ValueError('Found span did not match!\nWordpiece: ' +
-                       wordpiece + '\nSpan: ' +
-                       sequence.lower()[span_start:span_end])
+      raise ValueError('Found span did not match!\nWordpiece: ' + wordpiece +
+                       '\nSpan: ' + sequence.lower()[span_start:span_end])
 
     # See if the span start/end align at all with the aligned chars
     aligned = False

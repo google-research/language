@@ -103,7 +103,7 @@ python -m language.xsp.data_preprocessing.convert_to_examples --dataset_name=wik
 
 #### (b) Creating the output vocabulary
 
-`data_preprocessing/create_vocabularies.py` will create output vocabulary (as a `.txt` file with a single word type per line) for the provided training data JSON(s). 
+`data_preprocessing/create_vocabularies.py` will create output vocabulary (as a `.txt` file with a single word type per line) for the provided training data JSON(s).
 
 This target takes several arguments:
 
@@ -123,9 +123,9 @@ python -m language.xsp.data_preprocessing.create_vocabularies --data_dir=languag
 
 This target takes several arguments:
 
-* `examples_dir`: A directory containing the the JSON files to process (e.g., in the example above, `language/xsp/examples/`). 
+* `examples_dir`: A directory containing the the JSON files to process (e.g., in the example above, `language/xsp/examples/`).
 * `filenames`: The name(s) of the file(s) that should be converted to TFRecords. Example files are `spider_examples.json` and `wikisql_examples.json` as above.
-* `output_vocab`: A file containing the output vocabulary comptued by `create_vocabularies`; one line per output token. 
+* `output_vocab`: A file containing the output vocabulary comptued by `create_vocabularies`; one line per output token.
 * `tf_examples_dir`: The location to save the TFRecords. This directory will be created if it doesn't exist.
 * `generate_output`: Whether to process the gold SQL queries and include them in the output TFRecords.
 * `permute`: Whether to permute the training schemas (table and column name serialization) for Spider data only.
@@ -151,5 +151,5 @@ The steps to preprocess the evaluation data are similar to above, except for the
 * (b) Creating the output vocabulary: not necessary for evaluation data. Use the output vocabulary computed during training.
 * (c) Converting to TFRecords
     * `output_vocab` should be the file computed before training from the training data.
-    * `generate_output` should be set to `False`. 
+    * `generate_output` should be set to `False`.
     * `permute` should be set to `False`.

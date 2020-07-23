@@ -1,3 +1,17 @@
+# coding=utf-8
+# Copyright 2018 The Google AI Language Team Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #~/usr/bin/env bash
 
 TRAIN_ONLY_ARG="train_only"
@@ -9,7 +23,7 @@ TRAIN_ONLY_ARG="train_only"
 
 if ! ( test -d spider )
 then
-    echo "Download the Spider dataset before proceeding (URL: https://drive.google.com/uc?export=download&id=1_AckYkinAnhqmRQtGsQgUKAnTHxxX5J0). After downloading, the current working directory should contain a subdirectory called spider." 
+    echo "Download the Spider dataset before proceeding (URL: https://drive.google.com/uc?export=download&id=1_AckYkinAnhqmRQtGsQgUKAnTHxxX5J0). After downloading, the current working directory should contain a subdirectory called spider."
     exit
 else
     echo "Spider is already downloaded."
@@ -20,8 +34,8 @@ then
     cp spider/train_spider.json spider/train.json
 fi
 
-# 2. Download the Michigan annotations. Each should be stored in a directory 
-# called dataset_name/, with two files inside: dataset.json and 
+# 2. Download the Michigan annotations. Each should be stored in a directory
+# called dataset_name/, with two files inside: dataset.json and
 # dataset_schema.csv.
 
 # WikiSQL
@@ -32,7 +46,7 @@ then
     wget https://github.com/jkkummerfeld/text2sql-data/blob/master/data/wikisql.json.bz2?raw=true
     mv wikisql.json.bz2?raw=true wikisql/wikisql.json.bz2
 
-    bzip2 -d wikisql/wikisql.json.bz2 
+    bzip2 -d wikisql/wikisql.json.bz2
 
     # TODO: Get the schemas
     wget https://github.com/salesforce/WikiSQL/blob/master/data.tar.bz2?raw=true

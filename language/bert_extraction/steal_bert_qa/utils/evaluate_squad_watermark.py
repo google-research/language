@@ -21,7 +21,7 @@ from bert_extraction.steal_bert_qa.utils import evaluate_squad
 
 import tensorflow.compat.v1 as tf
 
-app = tf.compat.v1.app
+app = tf.app
 flags = tf.flags
 gfile = tf.gfile
 logging = tf.logging

@@ -17,18 +17,19 @@
 export BERT_DIR=/path/to/bert/uncased_L-24_H-1024_A-16
 export SQUAD_DIR=/path/to/store/SQUAD/data
 
-export WIKI103_DIR=/directory/to/store/wikitext103/
+export WIKI103_DIR=/directory/to/store/wikitext-103-raw/
 export EXTRACTION_DATA=/path/to/extraction/dataset/
 export VICTIM_MODEL=/path/to/victim/model/checkpoint
 export OUTPUT_DIR=/path/to/output/extracted/model/checkpoints
+
 # Can be set to wiki or random
-export $DATA_SCHEME="WIKI"
+export DATA_SCHEME="WIKI"
 
 # Task-specific variables
-
-if ["$DATA_SCHEME" = "WIKI"]; then
+export PARA_DATA_SCHEME=""
+if [ "$DATA_SCHEME" = "WIKI" ]; then
   PARA_DATA_SCHEME="thief_para"
-else:
+else
   PARA_DATA_SCHEME="frequency_sampling_sample_length"
 fi
 
@@ -64,8 +65,8 @@ python -m language.bert_extraction.steal_bert_qa.data_generation.preprocess_thie
   --para_scheme=$PARA_DATA_SCHEME \
   --question_sampling_scheme="random_postprocess_uniform" \
   --thief_dataset=$WIKI103_DIR/wikitext103-paragraphs.txt \
-  --output_path=$EXTRACTION_DATA/new_train.json
-
+  --output_path=$EXTRACTION_DATA/new_train.json \
+  --version="1.1"
 
 # STEP 4
 # Run the victim model classifier in inference mode to get outputs for the queries
@@ -124,7 +125,7 @@ python -m language.bert_extraction.steal_bert_qa.models.run_squad \
   --do_train=false \
   --do_predict=true \
   --do_lower_case=true \
-  --predict_input_file=$SQUAD_DIR/dev-1.1.json \
+  --predict_input_file=$SQUAD_DIR/dev-v1.1.json \
   --predict_output_dir=$VICTIM_MODEL \
   --vocab_file=$BERT_DIR/vocab.txt \
   --bert_config_file=$BERT_DIR/bert_config.json \
@@ -137,11 +138,11 @@ python -m language.bert_extraction.steal_bert_qa.models.run_squad \
 # For SQuAD 2.0, use the script language.bert_extraction.steal_bert_qa.utils.evaluate_squad_2
 python -m language.bert_extraction.steal_bert_qa.utils.evaluate_squad \
   --dataset_file=$SQUAD_DIR/dev-v1.1.json \
-  --predictions_file=$OUTPUT_DIR/predictions.json
+  --prediction_file=$OUTPUT_DIR/predictions.json
 
 # STEP 8.2
 # Evaluate the agreement of the extracted model (vs the victim model's accuracy)
 # For SQuAD 2.0, use the script language.bert_extraction.steal_bert_qa.utils.evaluate_squad_2
 python -m language.bert_extraction.steal_bert_qa.utils.evaluate_squad \
-  --predictions_file=$VICTIM_MODEL/predictions.json \
-  --predictions_file2=$OUTPUT_DIR/predictions.json
+  --prediction_file=$VICTIM_MODEL/predictions.json \
+  --prediction_file2=$OUTPUT_DIR/predictions.json

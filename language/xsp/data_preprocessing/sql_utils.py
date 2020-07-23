@@ -49,7 +49,8 @@ def anonymize_aliases(sql):
   # First, split all TABLE.COLUMN examples into three tokens.
   for token in tokens:
     token = token.replace('"', '\'')
-    if token != '.' and token.count('.') == 1 and not token.replace('.', '', 1).isnumeric():
+    if token != '.' and token.count('.') == 1 and not token.replace(
+        '.', '', 1).isnumeric():
       table, column = token.split('.')
       sql_tokens.extend([table, '.', column])
     else:
