@@ -18,7 +18,7 @@ from language.xsp.model import beam_search
 from language.xsp.model import common_layers
 from language.xsp.model import constants
 from language.xsp.model import decode_utils
-import tensorflow.compat.v1 as tf
+import tensorflow as tf
 
 # TODO(alanesuhr): Bias beam search based on sequence length.
 ALPHA = 0.0
@@ -119,7 +119,7 @@ def _build_transformer_decoder(encoder_output,
 
   # Stack of decoder layers.
   with tf.variable_scope("decoder"):
-    for layer in xrange(model_config.model_parameters.num_decoder_layers):
+    for layer in range(model_config.model_parameters.num_decoder_layers):
       with tf.variable_scope("layer_%d" % layer):
         with tf.variable_scope("self_attention"):
           y = common_layers.graph_attention(

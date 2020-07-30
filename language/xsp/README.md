@@ -181,6 +181,8 @@ After creating TFRecord files for the Spider and WikiSQL training data, and a TF
 * `steps_between_saves` is the number of model steps between saving checkpoints.
 * `max_eval_steps` is the number of evaluation steps to train on before terminating evaluation. When not set, all of the evaluation data is used for evaluating.
 
+Make sure to edit your local model config to point to the correct path for the pretrained BERT (`pretrained_bert_dir`).
+
 For example:
 
 ```

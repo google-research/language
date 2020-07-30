@@ -24,7 +24,7 @@ from language.xsp.model import input_utils
 from language.xsp.model import sequence_example_decoder
 
 from six.moves import zip
-import tensorflow.compat.v1 as tf
+import tensorflow as tf
 
 # Keys used for the feature and label output dicts.
 FEATURE_KEYS = [

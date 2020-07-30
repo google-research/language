@@ -22,7 +22,8 @@ import os
 import re
 
 from absl import app
-from absl import flags
+#from absl import flags
+from language.xsp.training.tpu_flags import flags
 import language.xsp.model.input_pipeline as input_pipeline
 import language.xsp.model.model_builder as model_builder
 import language.xsp.model.model_config as model_config
@@ -109,7 +110,7 @@ def main(unused_argv):
   training_options = config.training_options
   use_tpu = FLAGS.use_tpu
   run_config = tf.contrib.tpu.RunConfig(
-      master=FLAGS.master,
+      master=FLAGS.primary,
       model_dir=FLAGS.model_dir,
       save_summary_steps=1,
       save_checkpoints_steps=FLAGS.steps_between_saves,
