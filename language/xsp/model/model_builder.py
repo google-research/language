@@ -100,7 +100,7 @@ def build_model_fn(model_config,
           beam_size=beam_size)
 
       if use_tpu:
-        return tf.contrib.tpu.TPUEstimatorSpec(
+        return tf.estimator.tpu.TPUEstimatorSpec(
             mode=mode, predictions=predictions, scaffold_fn=scaffold_fn)
       else:
         return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
@@ -142,7 +142,7 @@ def build_model_fn(model_config,
             batch_loss, model_config, pretrained_variable_names, use_tpu)
 
         if use_tpu:
-          return tf.contrib.tpu.TPUEstimatorSpec(
+          return tf.estimator.tpu.TPUEstimatorSpec(
               mode=mode,
               loss=batch_loss,
               train_op=train_op,

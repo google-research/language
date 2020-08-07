@@ -232,7 +232,7 @@ def create_optimizer(loss,
       freeze_pretrained_steps=freeze_pretrained_steps)
 
   if use_tpu:
-    optimizer = tf.contrib.tpu.CrossShardOptimizer(optimizer)
+    optimizer = tf.estimator.tpu.CrossShardOptimizer(optimizer)
 
   tvars = tf.trainable_variables()
   grads = tf.gradients(loss, tvars)
