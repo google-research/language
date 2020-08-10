@@ -12,12 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 # coding=utf-8
 """Run BERT on SQuAD under Phrase-Indexed QA setting."""
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import collections
 import copy
@@ -34,7 +31,6 @@ from bert import optimization
 from bert import tokenization
 from language.labs.drkit import evaluate
 import numpy as np
-import six
 import tensorflow.compat.v1 as tf
 from tqdm import tqdm
 from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver
@@ -377,7 +373,7 @@ class BertModel(modeling.BertModel):
                 config.initializer_range))
 
 
-class SquadExample(object):
+class SquadExample:
   """A single training/test example for simple sequence classification.
 
      For examples without an answer, the start and end position are -1.
@@ -423,15 +419,15 @@ class SquadExample(object):
         tokenization.printable_text(self.question_text))
     s += ", doc_tokens: [%s]" % (" ".join(self.doc_tokens))
     if self.start_position:
-      s += ", start_position: %d" % (self.start_position)
+      s += ", start_position: %d" % (self.start_position,)
     if self.start_position:
-      s += ", end_position: %d" % (self.end_position)
+      s += ", end_position: %d" % (self.end_position,)
     if self.start_position:
-      s += ", is_impossible: %r" % (self.is_impossible)
+      s += ", is_impossible: %r" % (self.is_impossible,)
     return s
 
 
-class InputFeatures(object):
+class InputFeatures:
   """A single set of features of data."""
 
   def __init__(self,
@@ -487,7 +483,7 @@ class InputFeatures(object):
     self.has_relation = has_relation
 
 
-class QAConfig(object):
+class QAConfig:
   """Hyperparameters for the QA model."""
 
   def __init__(self, doc_layers_to_use, doc_aggregation_fn, qry_layers_to_use,
@@ -929,14 +925,11 @@ def convert_examples_to_features(examples,
             "ent_tokens: %s",
             " ".join([tokenization.printable_text(x) for x in entity_tokens]))
         tf.logging.info(
-            "doc_token_to_orig_map: %s", " ".join([
-                "%d:%d" % (x, y)
-                for (x, y) in six.iteritems(doc_token_to_orig_map)
-            ]))
+            "doc_token_to_orig_map: %s", " ".join(
+                ["%d:%d" % (x, y) for (x, y) in doc_token_to_orig_map.items()]))
         tf.logging.info(
             "doc_token_is_max_context: %s", " ".join([
-                "%d:%s" % (x, y)
-                for (x, y) in six.iteritems(doc_token_is_max_context)
+                "%d:%s" % (x, y) for (x, y) in doc_token_is_max_context.items()
             ]))
         tf.logging.info("doc_input_ids: %s",
                         " ".join([str(x) for x in doc_input_ids]))
@@ -1960,7 +1953,7 @@ def get_final_text(pred_text, orig_text, do_lower_case):
   # We then project the characters in `pred_text` back to `orig_text` using
   # the character-to-character alignment.
   tok_s_to_ns_map = {}
-  for (i, tok_index) in six.iteritems(tok_ns_to_s_map):
+  for (i, tok_index) in tok_ns_to_s_map.items():
     tok_s_to_ns_map[tok_index] = i
 
   orig_start_position = None
@@ -2024,7 +2017,7 @@ def _compute_softmax(scores):
   return probs
 
 
-class FeatureWriter(object):
+class FeatureWriter:
   """Writes InputFeature to TF example file."""
 
   def __init__(self, filename, is_training):

@@ -12,12 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 """Utility functions for GLUE classification tasks."""
-
-from __future__ import absolute_import
-from __future__ import division
-
-from __future__ import print_function
 
 import collections
 import csv
@@ -31,7 +27,7 @@ from tensorflow.contrib import data as contrib_data
 from tensorflow.contrib import tpu as contrib_tpu
 
 
-class InputExample(object):
+class InputExample:
   """A single training/test example for simple sequence classification."""
 
   def __init__(self, guid, text_a, text_b=None, label=None):
@@ -52,7 +48,7 @@ class InputExample(object):
     self.label = label
 
 
-class PaddingInputExample(object):
+class PaddingInputExample:
   """Fake example so the num input examples is a multiple of the batch size.
 
   When running eval/predict on the TPU, we need to pad the number of examples
@@ -65,7 +61,7 @@ class PaddingInputExample(object):
   """
 
 
-class InputFeatures(object):
+class InputFeatures:
   """A single set of features of data."""
 
   def __init__(self,
@@ -85,11 +81,11 @@ class InputFeatures(object):
     self.is_real_example = is_real_example
 
 
-class DataProcessor(object):
+class DataProcessor:
   """Base class for data converters for sequence classification data sets."""
 
   def __init__(self, use_spm, do_lower_case):
-    super(DataProcessor, self).__init__()
+    super().__init__()
     self.use_spm = use_spm
     self.do_lower_case = do_lower_case
 
@@ -686,7 +682,7 @@ def convert_single_example(ex_index, example, label_list, max_seq_length,
 
   if ex_index < 5:
     tf.logging.info("*** Example ***")
-    tf.logging.info("guid: %s" % (example.guid))
+    tf.logging.info("guid: %s" % (example.guid,))
     tf.logging.info("tokens: %s" %
                     " ".join([tokenization.printable_text(x) for x in tokens]))
     tf.logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))

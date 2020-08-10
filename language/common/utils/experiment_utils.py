@@ -25,6 +25,9 @@ import tensorflow.compat.v1 as tf
 
 flags.DEFINE_integer("batch_size", 16, "Batch size.")
 
+flags.DEFINE_integer("eval_batch_size", 16,
+                     "Batch size for evaluation. Only used on TPU.")
+
 flags.DEFINE_string("model_dir", None, "Model directory")
 
 flags.DEFINE_integer("tf_random_seed", None,
@@ -129,8 +132,8 @@ def run_experiment(model_fn,
         params=params,
         config=run_config,
         train_batch_size=FLAGS.batch_size,
-        eval_batch_size=FLAGS.batch_size,
-        predict_batch_size=FLAGS.batch_size)
+        eval_batch_size=FLAGS.eval_batch_size,
+        predict_batch_size=FLAGS.eval_batch_size)
   else:
     run_config = tf.estimator.RunConfig(
         model_dir=FLAGS.model_dir,

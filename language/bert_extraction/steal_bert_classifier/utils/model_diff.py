@@ -12,11 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 """This file compares the difference between parameters of two models."""
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 from bert import modeling
 from bert import tokenization
@@ -74,7 +71,7 @@ def main(_):
   task_name = FLAGS.task_name.lower()
 
   if task_name not in processors:
-    raise ValueError("Task not found: %s" % (task_name))
+    raise ValueError("Task not found: %s" % (task_name,))
 
   processor = processors[task_name]()
 

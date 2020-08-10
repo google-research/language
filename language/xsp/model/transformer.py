@@ -119,7 +119,7 @@ def _build_transformer_decoder(encoder_output,
 
   # Stack of decoder layers.
   with tf.variable_scope("decoder"):
-    for layer in xrange(model_config.model_parameters.num_decoder_layers):
+    for layer in range(model_config.model_parameters.num_decoder_layers):
       with tf.variable_scope("layer_%d" % layer):
         with tf.variable_scope("self_attention"):
           y = common_layers.graph_attention(

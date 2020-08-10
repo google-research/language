@@ -58,6 +58,13 @@ flags.DEFINE_integer("steps_between_saves", 1000,
 
 flags.DEFINE_integer("max_eval_steps", None, "Number of evaluation steps.")
 
+flags.DEFINE_bool("use_tpu", False, "Whether to use a TPU for training.")
+
+flags.DEFINE_string("primary", "",
+                    "The primary machine to use for TPU training.")
+
+flags.DEFINE_integer("num_tpu_shards", 1,
+                     "The number of shards to use during TPU training.")
 
 KEEP_CHECKPOINTS_MAX = 5
 
@@ -96,7 +103,6 @@ def evaluate(estimator, eval_input_fn, checkpoint):
 def main(unused_argv):
   tf.logging.info("Saving model saves and results to " + FLAGS.model_dir)
 
-
   if not FLAGS.do_train and not FLAGS.do_eval:
     raise ValueError("At least one of `do_train`, `do_eval` must be True.")
 
@@ -108,13 +114,13 @@ def main(unused_argv):
 
   training_options = config.training_options
   use_tpu = FLAGS.use_tpu
-  run_config = tf.contrib.tpu.RunConfig(
-      master=FLAGS.master,
+  run_config = tf.estimator.tpu.RunConfig(
+      master=FLAGS.primary,
       model_dir=FLAGS.model_dir,
       save_summary_steps=1,
       save_checkpoints_steps=FLAGS.steps_between_saves,
       keep_checkpoint_max=KEEP_CHECKPOINTS_MAX,
-      tpu_config=tf.contrib.tpu.TPUConfig(
+      tpu_config=tf.estimator.tpu.TPUConfig(
           iterations_per_loop=training_options.tpu_iterations_per_loop,
           num_shards=FLAGS.num_tpu_shards))
 
@@ -123,7 +129,7 @@ def main(unused_argv):
   model_fn = model_builder.build_model_fn(
       config, FLAGS.output_vocab, clean_output_vocab_path="", use_tpu=use_tpu)
 
-  estimator = tf.contrib.tpu.TPUEstimator(
+  estimator = tf.estimator.tpu.TPUEstimator(
       model_fn=model_fn,
       use_tpu=use_tpu,
       config=run_config,
@@ -150,7 +156,7 @@ def main(unused_argv):
     # When FLAGS.init_checkpoint = None, the latest checkpoint will be evaluated
     num_train_steps = int(config.training_options.training_steps)
 
-    for ckpt in tf.contrib.training.checkpoints_iterator(FLAGS.model_dir):
+    for ckpt in tf.estimator.training.checkpoints_iterator(FLAGS.model_dir):
       acc = evaluate(estimator, eval_input_fn, ckpt)
       if acc > max_acc:
         copy_checkpoint(

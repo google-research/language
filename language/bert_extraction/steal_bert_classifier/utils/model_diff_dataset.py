@@ -12,11 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 """Compare the difference between two models using a reference file."""
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import os
 
@@ -100,7 +97,7 @@ def main(_):
   task_name = FLAGS.task_name.lower()
 
   if task_name not in processors:
-    raise ValueError("Task not found: %s" % (task_name))
+    raise ValueError("Task not found: %s" % (task_name,))
 
   processor = processors[task_name]()
 
@@ -183,7 +180,7 @@ def main(_):
         is_training=False,
         drop_remainder=predict_drop_remainder)
 
-    result = [x for x in estimator.predict(input_fn=predict_input_fn)]
+    result = list(estimator.predict(input_fn=predict_input_fn))
     all_results.append(result)
 
   all_results[0] = all_results[0][:num_actual_predict_examples]

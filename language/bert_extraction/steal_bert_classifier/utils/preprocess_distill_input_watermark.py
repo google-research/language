@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 """Combine victim model's outputs (adding watermarks at random) with queries to form a new training dataset for extraction.
 
 This script also outputs the watermark details for subsequent verification.
@@ -67,7 +68,7 @@ def main(_):
     probs_data = f.read().strip().split("\n")
 
   number_watermarks = int(FLAGS.watermark_fraction * len(sents_data))
-  watermark_ids = [i for i in range(len(sents_data))]
+  watermark_ids = list(range(len(sents_data)))
   random.shuffle(watermark_ids)
   watermark_ids = {x: 1 for x in watermark_ids[:number_watermarks]}
 

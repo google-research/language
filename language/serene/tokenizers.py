@@ -211,7 +211,7 @@ class BertTokenizer(Tokenizer):
 
 tokenizer_registry = {
     BertTokenizer.__name__: BertTokenizer,
-    tfds.features.text.Tokenizer.__name__: tfds.features.text.Tokenizer,
+    tfds.deprecated.text.Tokenizer.__name__: tfds.deprecated.text.Tokenizer,
     ReservedTokenizer.__name__: ReservedTokenizer,
     SpaceTokenizer.__name__: SpaceTokenizer,
     PassthroughTokenizer.__name__: PassthroughTokenizer

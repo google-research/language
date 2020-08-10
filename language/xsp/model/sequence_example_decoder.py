@@ -15,9 +15,10 @@
 """A decoder for tf.SequenceExample."""
 
 import tensorflow.compat.v1 as tf
+import tf_slim as slim
 
 
-class TFSequenceExampleDecoder(tf.contrib.slim.data_decoder.DataDecoder):
+class TFSequenceExampleDecoder(slim.data_decoder.DataDecoder):
   """A decoder for TensorFlow Examples.
 
   Decoding Example proto buffers is comprised of two stages: (1) Example parsing

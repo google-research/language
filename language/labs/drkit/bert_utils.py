@@ -12,12 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 """Utilities to encode text given BERT model."""
-
-from __future__ import absolute_import
-from __future__ import division
-
-from __future__ import print_function
 
 from absl import flags
 
@@ -85,7 +81,7 @@ def preprocess_text(text, tokenizer):
   return tokens, char_to_token_map
 
 
-class FastPredict(object):
+class FastPredict:
   """Class to prevent re-initialization of Estimator when predicting."""
 
   def __init__(self, estimator, input_fn):
@@ -130,7 +126,7 @@ class FastPredict(object):
     return results
 
 
-class BERTPredictor(object):
+class BERTPredictor:
   """Wrapper around a BERT model to encode text."""
 
   def __init__(self, tokenizer, init_checkpoint, estimator=None):

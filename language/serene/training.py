@@ -301,7 +301,7 @@ class Trainer:
       Tokenizer for model
     """
     if self._model_config.tokenizer == 'basic':
-      base_tokenizer = tfds.features.text.Tokenizer()
+      base_tokenizer = tfds.deprecated.text.Tokenizer()
       return tokenizers.ReservedTokenizer(
           tokenizer=base_tokenizer, reserved_re=preprocessing.SEPARATOR_RE)
     elif self._model_config.tokenizer == 'bert':

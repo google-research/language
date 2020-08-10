@@ -12,11 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 """BERT next sentence prediction / binary coherence finetuning runner."""
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import collections
 import os
@@ -143,7 +140,7 @@ flags.DEFINE_integer(
 _SEP_TOKEN = "[SEP]"
 
 
-class InputFeatures(object):
+class InputFeatures:
   """A single set of features of data."""
 
   def __init__(self,

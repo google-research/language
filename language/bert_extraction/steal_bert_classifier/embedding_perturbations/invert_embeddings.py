@@ -12,16 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 """Perform a continuous-embedding-space model inversion using a fixed BERT checkpoint and objective.
 
 Since text is discrete, model inversion is performed on the embedding space and
 nearest neighbours are taken after inversion. For more details on model
 inversion attacks, see https://www.cs.cmu.edu/~mfredrik/papers/fjr2015ccs.pdf.
 """
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import functools
 

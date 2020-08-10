@@ -104,7 +104,7 @@ def filter_evidence_fn(
     return False
 
 
-class FeverTextEncoder(abc.ABC, tfds.features.text.TextEncoder):
+class FeverTextEncoder(abc.ABC, tfds.deprecated.text.TextEncoder):
   """TextEncoder with fever specific additional methods."""
 
   def encode_from_json(self, example):
@@ -175,7 +175,7 @@ class FeverTextEncoder(abc.ABC, tfds.features.text.TextEncoder):
     raise NotImplementedError()
 
 
-# Copy/Paste from tfds.features.text.TokenTextEncoder since their method for
+# Copy/Paste from tfds.deprecated.text.TokenTextEncoder since their method for
 # loading/saving is difficult to customize to add additional parameters.
 class BasicTextEncoder(FeverTextEncoder):
   r"""TextEncoder backed by a list of tokens.
@@ -256,13 +256,13 @@ class BasicTextEncoder(FeverTextEncoder):
 
     # This increments the ids of all words in ids by one, to ensure that 0
     # is preserved as the padding token
-    return tfds.features.text.text_encoder.pad_incr(ids)
+    return tfds.deprecated.text.text_encoder.pad_incr(ids)
 
   def decode(self, ids):
     # This decrements the ids of all words in ids by one, to ensure that 0
     # is preserved as the padding token
     # *Also*, this strips padding tokens
-    ids = tfds.features.text.text_encoder.pad_decr(ids)
+    ids = tfds.deprecated.text.text_encoder.pad_decr(ids)
 
     tokens = []
     for int_id in ids:
@@ -323,7 +323,7 @@ class BasicTextEncoder(FeverTextEncoder):
   def load_from_file(cls, filename_prefix):
     filename = cls._filename(filename_prefix)
     vocab_lines, kwargs = cls._read_lines_from_file(filename)
-    tokenizer = tfds.features.text.Tokenizer.load_from_file(filename)
+    tokenizer = tfds.deprecated.text.Tokenizer.load_from_file(filename)
     return cls(vocab_list=vocab_lines, tokenizer=tokenizer, **kwargs)
 
   def encode_example(self, *, claim, evidence, claim_label, evidence_label,

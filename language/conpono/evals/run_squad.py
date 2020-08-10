@@ -12,11 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 """Run BERT on SQuAD 1.1 and SQuAD 2.0."""
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import collections
 import json
@@ -27,7 +24,6 @@ from absl import flags
 from bert import modeling
 from bert import optimization
 from bert import tokenization
-import six
 import tensorflow.compat.v1 as tf
 
 
@@ -157,7 +153,7 @@ flags.DEFINE_float(
     "If null_score - best_non_null is greater than the threshold predict null.")
 
 
-class SquadExample(object):
+class SquadExample:
   """A single training/test example for simple sequence classification.
 
      For examples without an answer, the start and end position are -1.
@@ -189,15 +185,15 @@ class SquadExample(object):
         tokenization.printable_text(self.question_text))
     s += ", doc_tokens: [%s]" % (" ".join(self.doc_tokens))
     if self.start_position:
-      s += ", start_position: %d" % (self.start_position)
+      s += ", start_position: %d" % (self.start_position,)
     if self.start_position:
-      s += ", end_position: %d" % (self.end_position)
+      s += ", end_position: %d" % (self.end_position,)
     if self.start_position:
-      s += ", is_impossible: %r" % (self.is_impossible)
+      s += ", is_impossible: %r" % (self.is_impossible,)
     return s
 
 
-class InputFeatures(object):
+class InputFeatures:
   """A single set of features of data."""
 
   def __init__(self,
@@ -432,17 +428,16 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
 
       if example_index < 20:
         tf.logging.info("*** Example ***")
-        tf.logging.info("unique_id: %s" % (unique_id))
-        tf.logging.info("example_index: %s" % (example_index))
-        tf.logging.info("doc_span_index: %s" % (doc_span_index))
+        tf.logging.info("unique_id: %s" % (unique_id,))
+        tf.logging.info("example_index: %s" % (example_index,))
+        tf.logging.info("doc_span_index: %s" % (doc_span_index,))
         tf.logging.info(
             "tokens: %s" %
             " ".join([tokenization.printable_text(x) for x in tokens]))
         tf.logging.info("token_to_orig_map: %s" % " ".join(
-            ["%d:%d" % (x, y) for (x, y) in six.iteritems(token_to_orig_map)]))
-        tf.logging.info("token_is_max_context: %s" % " ".join([
-            "%d:%s" % (x, y) for (x, y) in six.iteritems(token_is_max_context)
-        ]))
+            ["%d:%d" % (x, y) for (x, y) in token_to_orig_map.items()]))
+        tf.logging.info("token_is_max_context: %s" % " ".join(
+            ["%d:%s" % (x, y) for (x, y) in token_is_max_context.items()]))
         tf.logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
         tf.logging.info("input_mask: %s" %
                         " ".join([str(x) for x in input_mask]))
@@ -452,8 +447,8 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
           tf.logging.info("impossible example")
         if is_training and not example.is_impossible:
           answer_text = " ".join(tokens[start_position:(end_position + 1)])
-          tf.logging.info("start_position: %d" % (start_position))
-          tf.logging.info("end_position: %d" % (end_position))
+          tf.logging.info("start_position: %d" % (start_position,))
+          tf.logging.info("end_position: %d" % (end_position,))
           tf.logging.info("answer: %s" %
                           (tokenization.printable_text(answer_text)))
 
@@ -747,8 +742,8 @@ def write_predictions(all_examples, all_features, all_results, n_best_size,
                       max_answer_length, do_lower_case, output_prediction_file,
                       output_nbest_file, output_null_log_odds_file):
   """Write final predictions to the json file and log-odds of null if needed."""
-  tf.logging.info("Writing predictions to: %s" % (output_prediction_file))
-  tf.logging.info("Writing nbest to: %s" % (output_nbest_file))
+  tf.logging.info("Writing predictions to: %s" % (output_prediction_file,))
+  tf.logging.info("Writing nbest to: %s" % (output_nbest_file,))
 
   example_index_to_features = collections.defaultdict(list)
   for feature in all_features:
@@ -996,7 +991,7 @@ def get_final_text(pred_text, orig_text, do_lower_case):
   # We then project the characters in `pred_text` back to `orig_text` using
   # the character-to-character alignment.
   tok_s_to_ns_map = {}
-  for (i, tok_index) in six.iteritems(tok_ns_to_s_map):
+  for (i, tok_index) in tok_ns_to_s_map.items():
     tok_s_to_ns_map[tok_index] = i
 
   orig_start_position = None
@@ -1060,7 +1055,7 @@ def _compute_softmax(scores):
   return probs
 
 
-class FeatureWriter(object):
+class FeatureWriter:
   """Writes InputFeature to TF example file."""
 
   def __init__(self, filename, is_training):

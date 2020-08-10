@@ -12,10 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 """Evaluate coherent permutation discrimination model on baseline."""
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 from collections import namedtuple  # pylint: disable=g-importing-member
 import csv
@@ -82,9 +80,9 @@ def read_data(data_file):
   examples = []
   for perm in perms:
     target = perm[1].split("<PUNC>")
-    distractors = [[sent
-                    for sent in para.split("<PUNC>")]
-                   for para in perm[2].split("<BREAK>")]
+    distractors = [
+        list(para.split("<PUNC>")) for para in perm[2].split("<BREAK>")
+    ]
     examples.append([target] + distractors)
 
   return examples
