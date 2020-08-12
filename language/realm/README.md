@@ -1,5 +1,10 @@
 # REALM: Retrieval-Augmented Language Model Pre-Training
 
+- [Introduction](#introduction)
+- [What's in this release](#whats-in-this-release)
+- [Pre-training on a single machine](#pre-training-on-a-single-machine)
+- [Fine-tuning on open domain question answering](#fine-tuning-on-open-domain-question-answering)
+
 ## Introduction
 
 REALM is a method for augmenting neural networks with a **knowledge retrieval
@@ -40,21 +45,30 @@ If you find the paper or code useful, please consider citing:
 
 ## What's in this release
 
-#### Code
+### Code
 This directory includes all code needed to perform the pre-training step of REALM.
-Code for fine-tuning REALM to be an open-domain QA system resides in the [ORQA]
-(https://github.com/google-research/language/tree/master/language/orqa)
-codebase. See instructions below for passing the output of REALM as input to ORQA.
+Code for fine-tuning REALM to be an open-domain QA system resides in the
+[ORQA](https://github.com/google-research/language/tree/master/language/orqa)
+codebase. See [instructions below](#fine-tuning-on-open-domain-question-answering)
+for passing the output of REALM as input to ORQA.
 
 We have also designed the code to be readily modified/extended for other
 applications that require:
 
-- **Large-scale retrieval on every training step, using Maximum Inner Product Search (MIPS)[^MIPS]**
-- **A MIPS index that is continuously updated over the course of training.**
+- Large-scale retrieval on every training step, using Maximum Inner Product Search (MIPS)<sup>[1](#MIPS_footnote)</sup>.
+- A MIPS index that is continuously updated over the course of training.
 
-[^MIPS]: Our original experiments used the [ScaNN](https://github.com/google-research/google-research/tree/master/scann) library for MIPS. However, as that was not open-sourced until recently, we switched to using brute-force matrix multiplication in this release and found that this was also sufficiently fast to reproduce our original results. In this setting, the MIPS index simply amounts to a matrix of all document embeddings. Note that refreshing this index is still a key part of the REALM recipe, as document embeddings must still be re-computed after gradient steps have been taken on the document embedder.
+<sub><a name="MIPS_footnote">1</a>: Our original experiments used the
+[ScaNN](https://github.com/google-research/google-research/tree/master/scann)
+library for MIPS. However, as that was not open-sourced until recently, we
+switched to using brute-force matrix multiplication in this release and found
+that it was also sufficiently fast to reproduce our original results. In
+this setting, the MIPS index simply amounts to a matrix of all document
+embeddings. Note that refreshing this index is still a key part of the REALM
+recipe, as document embeddings must still be re-computed after gradient steps
+have been taken on the document embedder.</sub>
 
-#### Pre-trained model checkpoints
+### Pre-trained model checkpoints
 
 - REALM pre-trained on CC-News is here: `gs://realm-data/cc_news_pretrained`
 - REALM fine-tuned to perform open-domain QA: to be released soon.
@@ -64,13 +78,13 @@ from links with the `gs://` prefix. You can also browse such links by replacing
 `gs://` with `https://console.cloud.google.com/storage/browser/` (requires
 signing in with any Google account).
 
-#### Data
+### Data
 We are in the process of releasing the full pre-training corpus and retrieval
 corpus (Wikipedia) needed for pre-training REALM. At this time, we provide a
 small subset of the full data that can just be used to verify that the code
-runs (see below for details).
+runs (see [below](#pre-training-on-a-single-machine) for details).
 
-#### Compute
+### Compute
 We've provided instructions for pre-training REALM on a single machine. However,
 in practice a single machine typically lacks the necessary computational
 resources (80 TPUs and numerous CPUs), so we are now working on instructions
@@ -78,38 +92,39 @@ for distributing REALM pre-training across multiple machines.
 
 ## Pre-training on a single machine
 
-For the purpose of understanding the code and debugging, we provide instructions
-for pre-training REALM on a single machine using a scaled down model
-architecture and a smaller dataset.
+For the sole purpose of understanding the code and debugging, we provide
+instructions for pre-training REALM on a single machine using a scaled down model
+architecture and a smaller dataset. Please note that good performance cannot be
+expected from this setup (the dataset is far too small).
 
-#### Setup
+### Setup
 
 1. **Set up the environment.** We recommend creating a conda environment:
 
-  ```sh
-  # Note that we use TF 1.15. This is because we use the tf.contrib package,
-  # which was removed from TF 2.0.
-  conda create --name realm python=3.7 tensorflow=1.15
-  conda activate realm
-  # We use TensorFlow Hub to download BERT, which is used to initialize REALM.
-  pip install tensorflow-hub bert-tensorflow
-  ```
+    ```sh
+    # Note that we use TF 1.15. This is because we use the tf.contrib package,
+    # which was removed from TF 2.0.
+    conda create --name realm python=3.7 tensorflow=1.15
+    conda activate realm
+    # We use TensorFlow Hub to download BERT, which is used to initialize REALM.
+    pip install tensorflow-hub bert-tensorflow
+    ```
 
 2. **Make sure the "language" package is in PYTHONPATH.** Either run the code while at the root of this repository, or set the following environment variable:
 
-  ```sh
-  # Note that it is the root of the `language` repository, not the `realm` subdirectory.
-  export PYTHONPATH="/absolute/path/to/language/:${PYTHONPATH}"
-  ```
+    ```sh
+    # Note that it is the root of the `language` repository, not the `realm` subdirectory.
+    export PYTHONPATH="/absolute/path/to/language/:${PYTHONPATH}"
+    ```
 
 3. (Optional) **Change the directories in the launch script.**
 
-  The default data directory (`DATA_DIR`) is `gs://realm-data/realm-data-small`
-  (loads a small subset of the REALM pre-training data from Google Cloud Storage)
-  and the default output directory (`MODEL_DIR`) is `./out`. These directories
-  can be changed in `language/realm/local_launcher.sh`.
+    The default data directory (`DATA_DIR`) is `gs://realm-data/realm-data-small`
+    (loads a small subset of the REALM pre-training data from Google Cloud Storage)
+    and the default output directory (`MODEL_DIR`) is `./out`. These directories
+    can be changed in `language/realm/local_launcher.sh`.
 
-#### Running the code
+### Running the code
 
 The pre-training process involves 3 systems that work together:
 
@@ -121,42 +136,42 @@ Launch these systems in the following order (in separate terminal windows):
 
 1. The **document index refresher** embeds all documents in the retrieval corpus and constructs the retrieval index.
 
-  It reads the document corpus from `DATA_DIR`, and starts
-  embedding them as soon as a new model is available in `$MODEL_DIR/export/tf_hub_best`.
-  The model and the document embeddings are then moved into `$MODEL_DIR/export/encoded`.
-  Launch the index refresher like so:
+    It reads the document corpus from `DATA_DIR`, and starts
+    embedding them as soon as a new model is available in `$MODEL_DIR/export/tf_hub_best`.
+    The model and the document embeddings are then moved into `$MODEL_DIR/export/encoded`.
+    Launch the index refresher like so:
 
-  ```sh
-  sh language/realm/local_launcher.sh refresh
-  ```
+    ```sh
+    sh language/realm/local_launcher.sh refresh
+    ```
 
 2. The **example generators** are RPC servers that generate examples for the main trainer.
 
-  To generate an example, we read an input sentence from the pre-training corpus
-  (`$DATA_DIR/pretrain_corpus_small`), blank out a few words, embed it as a query
-  vector, retrieve relevant documents from the retrieval corpus, and then
-  package everything into a TensorFlow Example. Retrieval is done using Maximum
-  Inner Product Search against the document embeddings produced by the index
-  refresher.
+    To generate an example, we read an input sentence from the pre-training corpus
+    (`$DATA_DIR/pretrain_corpus_small`), blank out a few words, embed it as a query
+    vector, retrieve relevant documents from the retrieval corpus, and then
+    package everything into a TensorFlow Example. Retrieval is done using Maximum
+    Inner Product Search against the document embeddings produced by the index
+    refresher.
 
-  Launch example generators for training and evaluation data as follows:
+    Launch example generators for training and evaluation data as follows:
 
-  ```sh
-  sh language/realm/local_launcher.sh gen-train
-  sh language/realm/local_launcher.sh gen-eval
-  ```
+    ```sh
+    sh language/realm/local_launcher.sh gen-train
+    sh language/realm/local_launcher.sh gen-eval
+    ```
 
 3. The main **trainer** should be run last.
 
-  It fetches TensorFlow Examples from the example generators via RPC calls,
-  and performs gradient descent on these examples. Best performing models are
-  periodically exported as TensorFlow Hub modules to `$MODEL_DIR/export/tf_hub_best`,
-  which are then picked up by the **document index refresher** and **example
-  generators**. Launch the trainer like so:
+    It fetches TensorFlow Examples from the example generators via RPC calls,
+    and performs gradient descent on these examples. Best performing models are
+    periodically exported as TensorFlow Hub modules to `$MODEL_DIR/export/tf_hub_best`,
+    which are then picked up by the **document index refresher** and **example
+    generators**. Launch the trainer like so:
 
-  ```sh
-  sh language/realm/local_launcher.sh train
-  ```
+    ```sh
+    sh language/realm/local_launcher.sh train
+    ```
 
 Instead of running in separate windows, one can also launch all jobs in parallel using a single command:
 
@@ -172,7 +187,7 @@ tensorboard --logdir=$MODEL_DIR/
 
 ## Fine-tuning on open domain question answering
 
-See the [ORQA] (https://github.com/google-research/language/tree/master/language/orqa) codebase for details.
+See the [ORQA](https://github.com/google-research/language/tree/master/language/orqa) codebase for details.
 To fine-tune the ORQA model with REALM pre-training, set the flags for
 `language/orqa/experiments/orqa_experiment.py` to the following values:
 
