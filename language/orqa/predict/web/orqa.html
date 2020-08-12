@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>ORQA Demo</title>
+    <link rel="icon" href="https://ai.google/static/images/favicon.ico" type="image/x-icon"/>
+    <link rel="stylesheet" href="https://www.gstatic.com/external_hosted/material_design_lite/mdl_css-blue-pink-bundle.css"/>
+    <script defer src="https://www.gstatic.com/external_hosted/material_design_lite/mdl_all_js_compiled.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Google+Sans:+400,500,700"/>
+  </head>
+  <body style="color: #5f6368;font-family: 'Google Sans'";>
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+      <header class="mdl-layout__header">
+        <div class="mdl-layout__header-row">
+          <span class="mdl-layout-title">
+            Open Retrieval Question Answering Demo
+          </span>
+        </div>
+      </header>
+      <main class="mdl-layout__content" style="padding: 20px;">
+        <div class="mdl-card mdl-shadow--2dp" style="width: 840px; padding: 20px; margin-bottom: 50px;">
+          <form>
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="width: 650px;">
+              <input class="mdl-textfield__input" type="text" name="question" value="{{ question }}"/>
+              <label class="mdl-textfield__label" for="input_text">Question</label>
+            </div>
+            <input type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored" value="Submit"/>
+          </form>
+          <span>{{ answer_left_context }} <i><b> {{ answer_text }} </b></i> {{answer_right_context}}</span>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

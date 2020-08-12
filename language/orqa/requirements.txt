@@ -1,0 +1,8 @@
+tensorflow~=2.1.0
+tensorflow-text~=2.1.0
+bert-tensorflow==1.0.4
+tf-hub-nightly
+Jinja2~=2.11.2
+tornado~=4.5.1
+wikiextractor==0.1
+https://storage.googleapis.com/scann/releases/1.0.0/scann-1.0.0-cp37-cp37m-linux_x86_64.whl

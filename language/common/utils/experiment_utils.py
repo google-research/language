@@ -107,7 +107,8 @@ def run_experiment(model_fn,
   params = params if params is not None else {}
   params.setdefault("use_tpu", FLAGS.use_tpu)
 
-  if params_fname:
+  if FLAGS.model_dir and params_fname:
+    tf.io.gfile.makedirs(FLAGS.model_dir)
     params_path = os.path.join(FLAGS.model_dir, params_fname)
     with tf.io.gfile.GFile(params_path, "w") as params_file:
       json.dump(params, params_file, indent=2, sort_keys=True)
@@ -126,6 +127,9 @@ def run_experiment(model_fn,
         save_checkpoints_steps=FLAGS.save_checkpoints_steps,
         tpu_config=tf.estimator.tpu.TPUConfig(
             iterations_per_loop=FLAGS.save_checkpoints_steps))
+    if "batch_size" in params:
+      # Let the TPUEstimator fill in the batch size.
+      params.pop("batch_size")
     estimator = tf.estimator.tpu.TPUEstimator(
         use_tpu=True,
         model_fn=model_fn,
