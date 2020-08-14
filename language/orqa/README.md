@@ -268,7 +268,7 @@ python -m language.orqa.experiments.orqa_experiment \
 
 ```bash
 MODEL_DIR=<LOCAL_OR_GS_MODEL_DIR>
-python -m language.orqa.experiments.orqa_eval \
+python -m language.orqa.predict.orqa_eval \
   --dataset_path=gs://orqa-data/resplit/WebQuestions.resplit.test.jsonl \
   --model_dir=$MODEL_DIR
 ```

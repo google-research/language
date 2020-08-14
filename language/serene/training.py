@@ -34,7 +34,7 @@ import tensorflow.compat.v2 as tf
 import tensorflow_datasets as tfds
 import tqdm
 
-from tensorflow_models.official.utils.misc import tpu_lib
+from official.utils.misc import tpu_lib
 
 
 @dataclasses.dataclass

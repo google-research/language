@@ -18,7 +18,7 @@ import re
 
 from language.serene import util
 import tensorflow_datasets as tfds
-from tensorflow_models.official.nlp.bert import tokenization
+from official.nlp.bert import tokenization
 
 
 class Tokenizer:

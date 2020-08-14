@@ -42,7 +42,7 @@ def load_scann_searcher(var_name,
                         dimensions_per_block=2,
                         num_leaves=1000,
                         num_leaves_to_search=100,
-                        training_sample_size=10000):
+                        training_sample_size=100000):
   """Load scann searcher from checkpoint."""
   with tf.device("/cpu:0"):
     np_db = tf.train.load_checkpoint(checkpoint_path).get_tensor(var_name)

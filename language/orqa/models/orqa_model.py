@@ -29,13 +29,14 @@ from language.orqa.utils import scann_utils
 import six
 import tensorflow.compat.v1 as tf
 import tensorflow_hub as hub
+from official.nlp.data import squad_lib
 
 RetrieverOutputs = collections.namedtuple("RetrieverOutputs",
                                           ["logits", "blocks"])
 ReaderOutputs = collections.namedtuple("ReaderOutputs", [
-    "logits", "candidate_starts", "candidate_ends", "candidate_orig_start",
-    "candidate_orig_end", "blocks", "orig_blocks", "orig_tokens", "gold_starts",
-    "gold_ends"
+    "logits", "candidate_starts", "candidate_ends", "candidate_orig_starts",
+    "candidate_orig_ends", "blocks", "orig_blocks", "orig_tokens", "token_ids",
+    "gold_starts", "gold_ends"
 ])
 
 
@@ -239,26 +240,32 @@ def read(features, retriever_logits, blocks, mode, params, labels):
   reader_logits += tf.expand_dims(retriever_logits, -1)
 
   # [reader_beam_size, num_candidates]
-  candidate_orig_start = tf.gather(
+  candidate_orig_starts = tf.gather(
       params=concat_inputs.token_map, indices=candidate_starts, axis=-1)
-  candidate_orig_end = tf.gather(
+  candidate_orig_ends = tf.gather(
       params=concat_inputs.token_map, indices=candidate_ends, axis=-1)
 
   return ReaderOutputs(
       logits=reader_logits,
       candidate_starts=candidate_starts,
       candidate_ends=candidate_ends,
-      candidate_orig_start=candidate_orig_start,
-      candidate_orig_end=candidate_orig_end,
+      candidate_orig_starts=candidate_orig_starts,
+      candidate_orig_ends=candidate_orig_ends,
       blocks=blocks,
       orig_blocks=orig_blocks,
       orig_tokens=orig_tokens,
+      token_ids=concat_inputs.token_ids,
       gold_starts=concat_inputs.gold_starts,
       gold_ends=concat_inputs.gold_ends)
 
 
-def get_predictions(reader_outputs):
+def get_predictions(reader_outputs, params):
   """Get predictions."""
+  tokenization_info = bert_utils.get_tokenization_info(
+      params["reader_module_path"])
+  with tf.io.gfile.GFile(tokenization_info["vocab_file"]) as vocab_file:
+    vocab = tf.constant([l.strip() for l in vocab_file.readlines()])
+
   # []
   predicted_block_index = tf.argmax(tf.reduce_max(reader_outputs.logits, 1))
   predicted_candidate = tf.argmax(tf.reduce_max(reader_outputs.logits, 0))
@@ -269,14 +276,36 @@ def get_predictions(reader_outputs):
   predicted_orig_tokens = tf.gather(reader_outputs.orig_tokens,
                                     predicted_block_index)
   predicted_orig_start = tf.gather(
-      tf.gather(reader_outputs.candidate_orig_start, predicted_block_index),
+      tf.gather(reader_outputs.candidate_orig_starts, predicted_block_index),
       predicted_candidate)
   predicted_orig_end = tf.gather(
-      tf.gather(reader_outputs.candidate_orig_end, predicted_block_index),
+      tf.gather(reader_outputs.candidate_orig_ends, predicted_block_index),
       predicted_candidate)
-  predicted_answer = tf.reduce_join(
+  predicted_orig_answer = tf.reduce_join(
       predicted_orig_tokens[predicted_orig_start:predicted_orig_end + 1],
       separator=" ")
+
+  predicted_token_ids = tf.gather(reader_outputs.token_ids,
+                                  predicted_block_index)
+  predicted_tokens = tf.gather(vocab, predicted_token_ids)
+  predicted_start = tf.gather(reader_outputs.candidate_starts,
+                              predicted_candidate)
+  predicted_end = tf.gather(reader_outputs.candidate_ends, predicted_candidate)
+  predicted_normalized_answer = tf.reduce_join(
+      predicted_tokens[predicted_start:predicted_end + 1], separator=" ")
+
+  def _get_final_text(pred_text, orig_text):
+    pred_text = six.ensure_text(pred_text, errors="ignore")
+    orig_text = six.ensure_text(orig_text, errors="ignore")
+    return squad_lib.get_final_text(
+        pred_text=pred_text,
+        orig_text=orig_text,
+        do_lower_case=tokenization_info["do_lower_case"])
+
+  predicted_answer = tf.py_func(
+      func=_get_final_text,
+      inp=[predicted_normalized_answer, predicted_orig_answer],
+      Tout=tf.string)
 
   return dict(
       block_index=predicted_block_index,
@@ -352,7 +381,7 @@ def compute_eval_metrics(labels, predictions, retriever_correct,
   official_exact_match = tf.py_func(
       func=_official_exact_match,
       inp=[predictions["answer"], labels],
-      Tout=[tf.bool])
+      Tout=tf.bool)
 
   eval_metric_ops = dict(
       exact_match=tf.metrics.mean(exact_match),
@@ -392,7 +421,7 @@ def model_fn(features, labels, mode, params):
         params=params,
         labels=labels)
 
-  predictions = get_predictions(reader_outputs)
+  predictions = get_predictions(reader_outputs, params)
 
   if mode == tf.estimator.ModeKeys.PREDICT:
     loss = None
@@ -476,9 +505,8 @@ def get_predictor(model_dir):
     params = json.load(f)
 
 
-  best_checkpoint_pattern = os.path.join(model_dir, "export",
-                                         "best_exact_match", "checkpoint",
-                                         "*.index")
+  best_checkpoint_pattern = os.path.join(model_dir, "export", "best_default",
+                                         "checkpoint", "*.index")
   best_checkpoint = tf.io.gfile.glob(
       best_checkpoint_pattern)[0][:-len(".index")]
   serving_input_receiver = serving_fn()
