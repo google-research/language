@@ -288,3 +288,15 @@ python -m language.orqa.predict.orqa_demo \
   --model_dir=gs://orqa-data/orqa_nq_model \
   --port=8080
 ```
+
+#### Writing predictions to file:
+
+To write predictions in a format that is usable by the official eval script you
+can run the batch prediction script, e.g.:
+
+```bash
+python -m language.orqa.predict.orqa_predict \
+  --dataset_path=gs://orqa-data/resplit/WebQuestions.resplit.test.jsonl \
+  --prediction_path=<PATH_TO_PREDICTIONS_DIR>/predictions.jsonl \
+  --model_dir=gs://orqa-data/orqa_nq_model
+```
