@@ -1,0 +1,2 @@
+create database atis;
+use atis;

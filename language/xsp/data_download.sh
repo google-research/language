@@ -171,12 +171,13 @@ then
 fi
 
 # Download the database utils.
-if ! (test -d utils)
+if ! (test -f data_utils/mysql2sqlite.sh)
 then
-    echo "Downloading the mysql2sqlite.sh conversion script."
-    mkdir utils
-    wget https://gist.githubusercontent.com/esperlu/943776/raw/be469f0a0ab8962350f3c5ebe8459218b915f817/mysql2sqlite.sh
-    mv mysql2sqlite.sh utils/
+    echo "Download the mysql2sqlite.sh script here:"
+    echo "https://gist.githubusercontent.com/esperlu/943776/raw/be469f0a0ab8962350f3c5ebe8459218b915f817/mysql2sqlite.sh"
+    echo "Make sure the md5 hash of the script is 0029197bbaf57c8d60300c2e0896d137."
+    echo "Then move the downloaded script to the directory `data_utils` and rerun this script."
+    exit
 fi
 
 # You also need to download and install a mysql server.
@@ -196,13 +197,13 @@ fi
 database_installation() {
     # [1] Name of downloaded database
     # [2] Desired database name (e.g., geoquery)
-    cat $2-prefix.txt $1 > $2-modified.sql
+    cat data_utils/$2-prefix.txt $1 > $2-modified.sql
 
     echo "Installing "$2
     mysql -u root -p < $2-modified.sql
 
     echo "Converting to sqlite3"
-    sh utils/mysql2sqlite.sh -u root -p $2 | sqlite3 databases/$2.db
+    sh data_utils/mysql2sqlite.sh -u root -p $2 | sqlite3 databases/$2.db
 
     rm *.sql
 }
@@ -306,7 +307,7 @@ empty_database() {
     if ! (test -f empty_databases/$1.db)
     then
         cp databases/$1.db empty_databases
-        python empty_database.py empty_databases/$1.db
+        python data_utils/empty_database.py --db_to_empty=empty_databases/$1.db
     fi
 }
 
@@ -322,14 +323,14 @@ empty_database advising
 if ! (test -d empty_databases/spider_databases)
 then
     cp -r databases/spider_databases empty_databases
-    python empty_database.py empty_databases/spider_databases
+    python empty_database.py --db_to_empty=empty_databases/spider_databases
 fi
 
 # 5. Add indices to the databases that need them.
 
-python add_indices.py academic
-python add_indices.py imdb
-python add_indices.py scholar
+python data_utils/add_indices.py --database_name=academic
+python data_utils/add_indices.py --database_name=imdb
+python data_utils/add_indices.py --database_name=scholar
 
 # 6. Compute caches of execution.
 # TODO
