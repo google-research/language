@@ -190,16 +190,14 @@ After creating TFRecord files for the Spider and WikiSQL training data, and a TF
 
 * `do_train` and `do_eval` specify the mode of the model. Exactly one must be set.
 * `tf_examples_dir` is the directory containing the TFRecords which should be used for training (generated in step 2c above)
-* `config` is a filepath specifying the model config as a `json` file (e.g., `model/model_config.json` or `model/local_model_config.json`). 
+* `config` is a filepath specifying the model config as a `json` file (e.g., `model/model_config.json` or `model/local_model_config.json`).
 * `output_vocab` is a filepath pointing to the output vocabulary (generated in step 2b above).
 * `training_filename` is a list of filenames containing TFRecords to use for training (generated in step 2c above)
-* `eval_filename` is the filename containing TFRecords used for evaluation during training (usually the Spider development set). 
+* `eval_filename` is the filename containing TFRecords used for evaluation during training (usually the Spider development set).
 * `model_dir` is the directory to save the model in. It will save the model checkpoints and evaluation results.
 * `eval_batch_size` is the batch size to use during evaluation.
 * `steps_between_saves` is the number of model steps between saving checkpoints.
 * `max_eval_steps` is the number of evaluation steps to train on before terminating evaluation. When not set, all of the evaluation data is used for evaluating.
-
-There are also some flags if you are training on TPU: `use_tpu` (whether to use the TPU), `primary` (the name of the primary machine), `num_tpu_shards` (the number of TPU shards to use).
 
 Make sure to edit your local model config to point to the correct path for the pretrained BERT (`pretrained_bert_dir`).
 
@@ -208,7 +206,6 @@ For example:
 ```
 python -m language.xsp.training.train_model --do_train --tf_examples_dir=tf_records/ --config=language/xsp/model/local_model_config.json --output_vocab=assets/output_vocab.txt --training_filename=spider_train.tfrecords,wikisql_train.tfrecords --eval_filename=spider_dev.tfrecords --model_dir=language/xsp/experiment_trial_0
 ```
-
 ## (4) Model inference and evaluation
 
 Once you have a model checkpoint that you would like to run inference on, you need to make sure you have evaluation data prepared to evaluate. This means you need to:

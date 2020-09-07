@@ -12,12 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 # coding=utf-8
 """Run relation following over pre-trained corpus index."""
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import collections
 import functools
@@ -244,7 +241,7 @@ flags.DEFINE_bool(
     "A number of warnings are expected for a normal SQuAD evaluation.")
 
 
-class QAConfig(object):
+class QAConfig:
   """Hyperparameters for the QA model."""
 
   def __init__(self, qry_layers_to_use, qry_aggregation_fn, dropout,
@@ -281,7 +278,7 @@ class QAConfig(object):
     self.sparse_strategy = sparse_strategy
 
 
-class MIPSConfig(object):
+class MIPSConfig:
   """Hyperparameters for the QA model."""
 
   def __init__(self, ckpt_path, ckpt_var_name, num_mentions, emb_size,

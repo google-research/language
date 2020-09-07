@@ -25,6 +25,9 @@ import tensorflow.compat.v1 as tf
 
 flags.DEFINE_integer("batch_size", 16, "Batch size.")
 
+flags.DEFINE_integer("eval_batch_size", 16,
+                     "Batch size for evaluation. Only used on TPU.")
+
 flags.DEFINE_string("model_dir", None, "Model directory")
 
 flags.DEFINE_integer("tf_random_seed", None,
@@ -104,7 +107,8 @@ def run_experiment(model_fn,
   params = params if params is not None else {}
   params.setdefault("use_tpu", FLAGS.use_tpu)
 
-  if params_fname:
+  if FLAGS.model_dir and params_fname:
+    tf.io.gfile.makedirs(FLAGS.model_dir)
     params_path = os.path.join(FLAGS.model_dir, params_fname)
     with tf.io.gfile.GFile(params_path, "w") as params_file:
       json.dump(params, params_file, indent=2, sort_keys=True)
@@ -123,14 +127,17 @@ def run_experiment(model_fn,
         save_checkpoints_steps=FLAGS.save_checkpoints_steps,
         tpu_config=tf.estimator.tpu.TPUConfig(
             iterations_per_loop=FLAGS.save_checkpoints_steps))
+    if "batch_size" in params:
+      # Let the TPUEstimator fill in the batch size.
+      params.pop("batch_size")
     estimator = tf.estimator.tpu.TPUEstimator(
         use_tpu=True,
         model_fn=model_fn,
         params=params,
         config=run_config,
         train_batch_size=FLAGS.batch_size,
-        eval_batch_size=FLAGS.batch_size,
-        predict_batch_size=FLAGS.batch_size)
+        eval_batch_size=FLAGS.eval_batch_size,
+        predict_batch_size=FLAGS.eval_batch_size)
   else:
     run_config = tf.estimator.RunConfig(
         model_dir=FLAGS.model_dir,

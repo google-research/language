@@ -12,14 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 """Calculate data impressions via discrete-level operations on some objective.
 
 Using the idea mentioned in HotFlip (https://arxiv.org/pdf/1712.06751.pdf).
 """
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import functools
 
@@ -135,7 +132,7 @@ def greedy_updates(old_elements, grad_difference, biggest_indices,
     if old_elem["stopped"]:
       new_elements.append(old_elem)
     else:
-      new_input_ids = [x for x in old_elem["input_ids"]]
+      new_input_ids = list(old_elem["input_ids"])
       new_input_ids[seq_num] = biggest_indices[elem_num, seq_num, 0]
       new_elem = {
           "input_ids": np.array(new_input_ids),
@@ -180,7 +177,7 @@ def beam_search(old_beams, grad_difference, biggest_indices, beam_size,
     if old_beam["stopped"]:
       new_beams.append(old_beam)
     else:
-      new_input_ids = [x for x in old_beam["input_ids"]]
+      new_input_ids = list(old_beam["input_ids"])
       new_input_ids[seq_num] = biggest_indices[beam_num, seq_num, topk_num]
       new_beam = {
           "input_ids": np.array(new_input_ids),
@@ -362,7 +359,7 @@ def main(_):
 
     all_elements.append({
         "input_ids": input_ids,
-        "original_input_ids": [ii for ii in input_ids],
+        "original_input_ids": list(input_ids),
         "ip_num": start_index + ip_num,
         "score": 0.0,
         "bert_input_mask": bert_input_mask,
@@ -446,7 +443,7 @@ def main(_):
 
         if np.all([elem["stopped"] for elem in batch_elements]):
           steps_taken.extend([elem["steps_taken"] for elem in batch_elements])
-          output_sequences.extend([elem for elem in batch_elements])
+          output_sequences.extend(list(batch_elements))
           batch_elements = []
           break
 
@@ -629,7 +626,7 @@ def main(_):
     # Getting ready for next iteration of processing
     if iteration_number < 10:
       for elem in failures:
-        elem["input_ids"] = [x for x in elem["original_input_ids"]]
+        elem["input_ids"] = list(elem["original_input_ids"])
         elem["stopped"] = False
         elem["steps_taken"] = 0
         elem["score"] = 0.0

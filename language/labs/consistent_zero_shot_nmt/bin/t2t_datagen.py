@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 """Produces the training and dev data for --problem into --data_dir.
 
 Produces sharded and shuffled TFRecord files of tensorflow.Example protocol
@@ -24,10 +25,6 @@ arguments - input_directory and mode (one of "train" or "dev") - and yields for
 each training example a dictionary mapping string feature names to lists of
 {string, int, float}. The generator will be run once for each mode.
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import multiprocessing
 import os
 import random

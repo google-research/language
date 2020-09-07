@@ -12,11 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 """BERT next sentence prediction / binary coherence finetuning runner."""
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 from bert import modeling
 from bert import optimization
@@ -127,7 +124,7 @@ flags.DEFINE_integer(
     "Only used if `use_tpu` is True. Total number of TPU cores to use.")
 
 
-class InputFeatures(object):
+class InputFeatures:
   """A single set of features of data."""
 
   def __init__(self,

@@ -12,11 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 """ALBERT finetuning runner with sentence piece tokenization."""
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import os
 import time
@@ -183,7 +180,7 @@ def main(_):
   task_name = FLAGS.task_name.lower()
 
   if task_name not in processors:
-    raise ValueError("Task not found: %s" % (task_name))
+    raise ValueError("Task not found: %s" % (task_name,))
 
   processor = processors[task_name](
       use_spm=True if FLAGS.spm_model_file else False,

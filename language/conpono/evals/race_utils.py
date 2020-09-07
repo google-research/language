@@ -12,12 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 """Utility functions for RACE dataset."""
-
-from __future__ import absolute_import
-from __future__ import division
-
-from __future__ import print_function
 
 import collections
 import json
@@ -32,7 +28,7 @@ import tensorflow.compat.v1 as tf
 from tensorflow.contrib import tpu as contrib_tpu
 
 
-class InputExample(object):
+class InputExample:
   """A single training/test example for the RACE dataset."""
 
   def __init__(self,
@@ -67,11 +63,11 @@ class InputExample(object):
     return ", ".join(l)
 
 
-class RaceProcessor(object):
+class RaceProcessor:
   """Processor for the RACE data set."""
 
   def __init__(self, use_spm, do_lower_case, high_only, middle_only):
-    super(RaceProcessor, self).__init__()
+    super().__init__()
     self.use_spm = use_spm
     self.do_lower_case = do_lower_case
     self.high_only = high_only

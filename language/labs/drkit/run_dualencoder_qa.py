@@ -12,12 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 # coding=utf-8
 """Run BERT on SQuAD under Phrase-Indexed QA setting."""
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import collections
 import copy
@@ -31,7 +28,6 @@ from bert import modeling
 from bert import optimization
 from bert import tokenization
 from language.labs.drkit import evaluate
-import six
 import tensorflow.compat.v1 as tf
 from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver
 from tensorflow.contrib import data as contrib_data
@@ -323,7 +319,7 @@ class BertModel(modeling.BertModel):
                 config.initializer_range))
 
 
-class QAConfig(object):
+class QAConfig:
   """Hyperparameters for the QA model."""
 
   def __init__(self, doc_layers_to_use, doc_aggregation_fn, qry_layers_to_use,
@@ -492,9 +488,8 @@ def create_optimizer(loss, init_lr, num_train_steps, num_warmup_steps, use_tpu,
   exclude_vars = []
   if exclude_scopes:
     for sc in exclude_scopes:
-      exclude_vars += [
-          vv for vv in tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, sc)
-      ]
+      exclude_vars += list(
+          tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, sc))
     # bert_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "bert")
     tvars = [vv for vv in tvars if vv not in exclude_vars]
 
@@ -1026,7 +1021,7 @@ def get_final_text(pred_text, orig_text, do_lower_case):
   # We then project the characters in `pred_text` back to `orig_text` using
   # the character-to-character alignment.
   tok_s_to_ns_map = {}
-  for (i, tok_index) in six.iteritems(tok_ns_to_s_map):
+  for (i, tok_index) in tok_ns_to_s_map.items():
     tok_s_to_ns_map[tok_index] = i
 
   orig_start_position = None
@@ -1152,7 +1147,7 @@ def _copy_model(in_path, out_path):
   tf.gfile.Copy(in_path + ".meta", out_path + ".meta", overwrite=True)
 
 
-class Example(object):
+class Example:
   """A single training/test example for simple sequence classification.
 
      For examples without an answer, the start and end position are -1.
@@ -1184,15 +1179,15 @@ class Example(object):
         tokenization.printable_text(self.question_text))
     s += ", doc_tokens: [%s]" % (" ".join(self.doc_tokens))
     if self.start_position:
-      s += ", start_position: %d" % (self.start_position)
+      s += ", start_position: %d" % (self.start_position,)
     if self.start_position:
-      s += ", end_position: %d" % (self.end_position)
+      s += ", end_position: %d" % (self.end_position,)
     if self.start_position:
-      s += ", is_impossible: %r" % (self.is_impossible)
+      s += ", is_impossible: %r" % (self.is_impossible,)
     return s
 
 
-class InputFeatures(object):
+class InputFeatures:
   """A single set of features of data."""
 
   def __init__(self,

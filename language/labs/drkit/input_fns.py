@@ -12,12 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 """Classes for processing different datasets into a common format."""
-
-from __future__ import absolute_import
-from __future__ import division
-
-from __future__ import print_function
 
 import collections
 import json
@@ -30,7 +26,7 @@ from tqdm import tqdm
 from tensorflow.contrib import data as contrib_data
 
 
-class Example(object):
+class Example:
   """A single training/test example for QA."""
 
   def __init__(self,
@@ -66,7 +62,7 @@ class Example(object):
     return s
 
 
-class InputFeatures(object):
+class InputFeatures:
   """A single set of features of data."""
 
   def __init__(self,
@@ -94,7 +90,7 @@ class InputFeatures(object):
     self.bridge_entity = bridge_entity
 
 
-class FeatureWriter(object):
+class FeatureWriter:
   """Writes InputFeature to TF example file."""
 
   def __init__(self, filename, is_training, has_bridge):
@@ -267,7 +263,7 @@ def input_fn_builder(input_file, is_training, drop_remainder,
   return input_fn
 
 
-class OneHopDataset(object):
+class OneHopDataset:
   """Reads a dataset of one-hop queries and converts to TFRecords."""
 
   def __init__(self, in_file, tokenizer, subject_mention_probability,
@@ -346,7 +342,7 @@ class OneHopDataset(object):
     return examples
 
 
-class TwoHopDataset(object):
+class TwoHopDataset:
   """Reads a dataset of one-hop queries and converts to TFRecords."""
 
   def __init__(self, in_file, tokenizer, subject_mention_probability,
@@ -437,7 +433,7 @@ class TwoHopDataset(object):
     return examples
 
 
-class ThreeHopDataset(object):
+class ThreeHopDataset:
   """Reads a dataset of three-hop queries and converts to TFRecords."""
 
   def __init__(self, in_file, tokenizer, subject_mention_probability,
@@ -531,7 +527,7 @@ class ThreeHopDataset(object):
     return examples
 
 
-class WikiMovieDataset(object):
+class WikiMovieDataset:
   """Reads the wikimovie dataset and converts to TFRecords."""
 
   def __init__(self, in_file, tokenizer, subject_mention_probability,
@@ -636,7 +632,7 @@ class WikiMovieDataset(object):
     return examples
 
 
-class HotpotQADataset(object):
+class HotpotQADataset:
   """Reads the hotpotqa dataset and converts to TFRecords."""
 
   def __init__(self, in_file, tokenizer, subject_mention_probability,

@@ -12,11 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 """Utility funcs to operate on BERT's first layer non-contextual embeddings."""
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import copy
 import random
@@ -27,7 +24,7 @@ import numpy as np
 import tensorflow.compat.v1 as tf
 
 
-class BertFlexEmbeddingModel(object):
+class BertFlexEmbeddingModel:
   """BERT model which allows arbitrary continuous inputs instead of embeddings."""
 
   def __init__(self, config, is_training, input_tensor, input_mask,
@@ -440,7 +437,7 @@ def template_to_input_tensor(template, flex_input, config, tokenizer,
       flex_input_mask.extend([1 for _ in range(shard_quantity)])
       # [EMPTY] shard tokens indicate using the flex_input matrix
       index_array.extend(
-          [x for x in range(current_index, current_index + shard_quantity)])
+          list(range(current_index, current_index + shard_quantity)))
       # Move the index forward by the number of tokens done
       current_index += shard_quantity
     else:

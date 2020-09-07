@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 """Preprocess the input to include sentences with edit distance one."""
 import collections
 import random
@@ -80,7 +81,7 @@ def main(_):
 
     # For each pertubation, construct a new sentence and randomly replace a word
     for _ in range(FLAGS.num_pertubations):
-      pertubed = [x for x in original_sent]
+      pertubed = list(original_sent)
       pertubed[random.randint(0, len(original_sent) - 1)] = random.choice(vocab)
       output_data.append(" ".join(pertubed) + " \t" +
                          "\t".join(data_point_parts[1:]))

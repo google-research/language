@@ -12,12 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 """Collection of model functions implementing different multihop variants."""
-
-from __future__ import absolute_import
-from __future__ import division
-
-from __future__ import print_function
 
 from bert import modeling
 from language.labs.drkit import search_utils

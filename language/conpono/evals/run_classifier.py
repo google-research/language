@@ -12,11 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 """BERT finetuning runner."""
-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import collections
 import csv
@@ -135,7 +132,7 @@ flags.DEFINE_string("tpu_job_name", None,
                     "Name of TPU worker, if anything other than 'tpu_worker'")
 
 
-class InputExample(object):
+class InputExample:
   """A single training/test example for simple sequence classification."""
 
   def __init__(self, guid, text_a, text_b=None, label=None):
@@ -156,7 +153,7 @@ class InputExample(object):
     self.label = label
 
 
-class PaddingInputExample(object):
+class PaddingInputExample:
   """Fake example so the num input examples is a multiple of the batch size.
 
   When running eval/predict on the TPU, we need to pad the number of examples
@@ -169,7 +166,7 @@ class PaddingInputExample(object):
   """
 
 
-class InputFeatures(object):
+class InputFeatures:
   """A single set of features of data."""
 
   def __init__(self,
@@ -185,7 +182,7 @@ class InputFeatures(object):
     self.is_real_example = is_real_example
 
 
-class DataProcessor(object):
+class DataProcessor:
   """Base class for data converters for sequence classification data sets."""
 
   def get_train_examples(self, data_dir):
@@ -230,7 +227,7 @@ class XnliProcessor(DataProcessor):
     for (i, line) in enumerate(lines):
       if i == 0:
         continue
-      guid = "train-%d" % (i)
+      guid = "train-%d" % (i,)
       text_a = tokenization.convert_to_unicode(line[0])
       text_b = tokenization.convert_to_unicode(line[1])
       label = tokenization.convert_to_unicode(line[2])
@@ -247,7 +244,7 @@ class XnliProcessor(DataProcessor):
     for (i, line) in enumerate(lines):
       if i == 0:
         continue
-      guid = "dev-%d" % (i)
+      guid = "dev-%d" % (i,)
       language = tokenization.convert_to_unicode(line[0])
       if language != tokenization.convert_to_unicode(self.language):
         continue
@@ -563,7 +560,7 @@ def convert_single_example(ex_index, example, label_list, max_seq_length,
   label_id = label_map[example.label]
   if ex_index < 5:
     tf.logging.info("*** Example ***")
-    tf.logging.info("guid: %s" % (example.guid))
+    tf.logging.info("guid: %s" % (example.guid,))
     tf.logging.info("tokens: %s" %
                     " ".join([tokenization.printable_text(x) for x in tokens]))
     tf.logging.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
@@ -921,7 +918,7 @@ def main(_):
   task_name = FLAGS.task_name.lower()
 
   if task_name not in processors:
-    raise ValueError("Task not found: %s" % (task_name))
+    raise ValueError("Task not found: %s" % (task_name,))
 
   processor = processors[task_name]()
 

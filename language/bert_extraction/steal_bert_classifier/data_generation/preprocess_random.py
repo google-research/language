@@ -12,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# Lint as: python3
 """Preprocess script to write random sequence training data."""
 import random
 
@@ -83,9 +84,9 @@ def main(_):
     points_remaining = FLAGS.dataset_size
     new_sents_data = []
     while points_remaining > len(sents_data):
-      new_sents_data.extend([x for x in sents_data])
+      new_sents_data.extend(list(sents_data))
       points_remaining = points_remaining - len(sents_data)
-    new_sents_data.extend([x for x in sents_data[:points_remaining]])
+    new_sents_data.extend(list(sents_data[:points_remaining]))
     sents_data = new_sents_data
 
   for _ in range(FLAGS.augmentations):
