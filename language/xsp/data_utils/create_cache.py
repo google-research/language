@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import argparse
 import json
 import os
 import sqlite3
@@ -130,7 +131,7 @@ def main(dataset_name, cache_path, errors_filepath, splits):
 
   print('Writing cache')
   with open(cache_path + '.tmp', "w") as ofile:
-  json.dump(cache, ofile)
+    json.dump(cache, ofile)
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
