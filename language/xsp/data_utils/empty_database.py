@@ -41,3 +41,5 @@ if __name__ == '__main__':
   parser.add_argument('--db_to_empty', 
                       type=str, 
                       help='The name of the database which should be emptied.')
+  args = parser.parse_args()
+  main(args.db_to_empty) 

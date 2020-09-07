@@ -30,5 +30,6 @@ if __name__ == '__main__':
   parser.add_argument('--database_name', 
                       type=str, 
                       help='The database to add indices to.'))
+  args = parser.parse_args()
   main(args.database_name)
 

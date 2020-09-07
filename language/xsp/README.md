@@ -33,7 +33,7 @@ The rest of the README will refer to these directories, referenced as being in t
 * `experiment_trial_*` contain saves for one or more trials of the experiment.
 * `tf_examples` contains the TFRecords files for the input examples.
 
-## (1) Environment setup and running python scripts
+## (0) Environment setup and running python scripts
 
 We suggest creating a conda environment for installation of dependencies.
 
@@ -69,7 +69,25 @@ Finally, for the input training vocabulary, please download the text file from [
 
 ### For evaluation
 
-TODO
+Before downloading the evaluation data, you need to prepare your environment for both MySQL and SQLite:
+
+* You will need to download, install, and initialize a MySQL server. Details on how to do this are available on [the offical MySQL website](https://dev.mysql.com/doc/refman/5.7/en/installing.html). You need to set up a server because the databases that will be downloaded run on MySQL and will be added to your MySQL server.
+* You will also need to install `sqlite3`, e.g., from [the official repo](https://www.sqlite.org/download.html). SQLite does not require running a server. We run inference on the sqlite3 databases, and only use the MySQL server in order to convert from the original database files to sqlite3 files.
+
+To download the evaluation data (the eight additional datasets), run the `data_download.sh` script. Again, we suggest storing this data in the `data/` directory and running the script inside the directory. To download the evaluation data, leave out the `train_only` argument.
+
+For evaluation, the script is a bit more complex than just downloading annotations. It does the following:
+1. Downloads the annotations from [Finegan-Dollak & Kummerfeld's repository associated with the 2018 ACL paper](https://github.com/jkkummerfeld/text2sql-data). 
+1. Downloads and installs the actual databases into a separate directory, `databases`. *NOTES and WARNINGS*:
+    * This may take a while to download, and may require you to manually download some databases yourself. 
+    * Some of these databases are quite large (several GB of storage). 
+    * The database installation function (`database_installation`) in `database_download.sh` assumes that the MySQL server you are running uses the username `root` and no password. You may need to modify this function if you used a different username and/or added a password.
+1. Each database also must be converted from MySQL to SQLite3 format. We use the conversion tool provided by [Jean-Luc Lacroix](https://gist.github.com/esperlu/943776). 
+1. An empty copy of each database is created. We perform beam search re-ranking by throwing items out of the beam that are not executable on the database. To test this, we use empty databases to ensure that no database contents are used during inference time. 
+1. (TODO) Indices are added to some of the larger databases to make execution faster in these databases. 
+1. (TODO) Caches of gold query executions are created for each dataset. This makes evaluation faster if evaluating multiple model checkpoints. *NOTE*: On some datasets and databases, this process can take a very long time to complete. 
+
+After installation is complete, you don't need the MySQL databases anymore. We recommend dropping these databases from the server, because they take up a lot of disk space.
 
 ## (2) Data preprocessing
 
@@ -181,6 +199,8 @@ After creating TFRecord files for the Spider and WikiSQL training data, and a TF
 * `steps_between_saves` is the number of model steps between saving checkpoints.
 * `max_eval_steps` is the number of evaluation steps to train on before terminating evaluation. When not set, all of the evaluation data is used for evaluating.
 
+There are also some flags if you are training on TPU: `use_tpu` (whether to use the TPU), `primary` (the name of the primary machine), `num_tpu_shards` (the number of TPU shards to use).
+
 Make sure to edit your local model config to point to the correct path for the pretrained BERT (`pretrained_bert_dir`).
 
 For example:
@@ -188,3 +208,12 @@ For example:
 ```
 python -m language.xsp.training.train_model --do_train --tf_examples_dir=tf_records/ --config=language/xsp/model/local_model_config.json --output_vocab=assets/output_vocab.txt --training_filename=spider_train.tfrecords,wikisql_train.tfrecords --eval_filename=spider_dev.tfrecords --model_dir=language/xsp/experiment_trial_0
 ```
+
+## (4) Model inference and evaluation
+
+Once you have a model checkpoint that you would like to run inference on, you need to make sure you have evaluation data prepared to evaluate. This means you need to:
+
+* Download the relevant evaluation data (see #1 above)
+* Preprocess the relevant evaluation data inputs (see #2 above)
+
+### (a) Running inference

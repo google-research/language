@@ -276,8 +276,17 @@ if ! (test -f databases/restaurants.db)
 then
     wget https://raw.githubusercontent.com/jkkummerfeld/text2sql-data/master/data/restaurants-db.txt
 
+    if ! (test -f data_utils/create_restaurant_database.py)
+    then
+        echo "You need to download the create_restaurant_database.py file into data_utils/:"
+        echo "https://github.com/jkkummerfeld/text2sql-data/blob/master/tools/create_restaurant_database.py"
+        echo "We used commit #ab96e30. The md5 hash is a90157e9eab77706fbd95bf99ff65736."
+        echo "You also need to modify this script slightly. On lines 23, 82, and 93, you need to change RESTAURANT_ID to ID."
+        exit
+    fi
+
     # Convert the restaurants database to a sqlite3 database.
-    python3 create_restaurant_database.py restaurants-db.txt databases/restaurants.db
+    python3 data_utils/create_restaurant_database.py restaurants-db.txt databases/restaurants.db
 
     rm restaurants-db.txt
 fi
@@ -323,7 +332,7 @@ empty_database advising
 if ! (test -d empty_databases/spider_databases)
 then
     cp -r databases/spider_databases empty_databases
-    python empty_database.py --db_to_empty=empty_databases/spider_databases
+    python data_utils/empty_database.py --db_to_empty=empty_databases/spider_databases
 fi
 
 # 5. Add indices to the databases that need them.
@@ -333,4 +342,6 @@ python data_utils/add_indices.py --database_name=imdb
 python data_utils/add_indices.py --database_name=scholar
 
 # 6. Compute caches of execution.
-# TODO
+echo "If you want to create caches ahead of time for your evaluation, run data_utils/create_cache.py."
+echo "See this file for a description of the necessary arguments."
+echo "Creating a cache can take a long time (up to several hours) even with indices added to the databases."
