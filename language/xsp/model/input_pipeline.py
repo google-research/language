@@ -25,6 +25,7 @@ from language.xsp.model import sequence_example_decoder
 
 from six.moves import zip
 import tensorflow.compat.v1 as tf
+import tf_slim as slim
 
 # Keys used for the feature and label output dicts.
 FEATURE_KEYS = [
@@ -120,67 +121,57 @@ def _get_sequence_decoder(use_segment_ids, use_foreign_key_features,
   items_to_handlers = {}
 
   # Context features.
-  items_to_handlers[
-      constants.OUTPUT_TYPE_KEY] = tf.contrib.slim.tfexample_decoder.Tensor(
-          constants.OUTPUT_TYPE_KEY)
-  items_to_handlers[
-      constants.WEIGHT_KEY] = tf.contrib.slim.tfexample_decoder.Tensor(
-          constants.WEIGHT_KEY)
-  items_to_handlers[
-      constants.LANGUAGE_KEY] = tf.contrib.slim.tfexample_decoder.Tensor(
-          constants.LANGUAGE_KEY)
-  items_to_handlers[
-      constants.REGION_KEY] = tf.contrib.slim.tfexample_decoder.Tensor(
-          constants.REGION_KEY)
-  items_to_handlers[
-      constants.TAG_KEY] = tf.contrib.slim.tfexample_decoder.Tensor(
-          constants.TAG_KEY, default_value='')
+  items_to_handlers[constants.OUTPUT_TYPE_KEY] = slim.tfexample_decoder.Tensor(
+      constants.OUTPUT_TYPE_KEY)
+  items_to_handlers[constants.WEIGHT_KEY] = slim.tfexample_decoder.Tensor(
+      constants.WEIGHT_KEY)
+  items_to_handlers[constants.LANGUAGE_KEY] = slim.tfexample_decoder.Tensor(
+      constants.LANGUAGE_KEY)
+  items_to_handlers[constants.REGION_KEY] = slim.tfexample_decoder.Tensor(
+      constants.REGION_KEY)
+  items_to_handlers[constants.TAG_KEY] = slim.tfexample_decoder.Tensor(
+      constants.TAG_KEY, default_value='')
 
   # Sequence features.
   items_to_handlers[
-      constants
-      .SOURCE_WORDPIECES_KEY] = tf.contrib.slim.tfexample_decoder.Tensor(
+      constants.SOURCE_WORDPIECES_KEY] = slim.tfexample_decoder.Tensor(
           constants.SOURCE_WORDPIECES_KEY)
   items_to_handlers[
-      constants.COPIABLE_INPUT_KEY] = tf.contrib.slim.tfexample_decoder.Tensor(
+      constants.COPIABLE_INPUT_KEY] = slim.tfexample_decoder.Tensor(
           constants.COPIABLE_INPUT_KEY)
 
   items_to_handlers[
-      constants.
-      TARGET_ACTION_TYPES_KEY] = tf.contrib.slim.tfexample_decoder.ItemHandlerCallback(
+      constants
+      .TARGET_ACTION_TYPES_KEY] = slim.tfexample_decoder.ItemHandlerCallback(
           keys=[constants.TARGET_ACTION_TYPES_KEY],
           func=_get_target_action_types)
   items_to_handlers[
-      constants.
-      TARGET_ACTION_IDS_KEY] = tf.contrib.slim.tfexample_decoder.ItemHandlerCallback(
+      constants
+      .TARGET_ACTION_IDS_KEY] = slim.tfexample_decoder.ItemHandlerCallback(
           keys=[constants.TARGET_ACTION_IDS_KEY], func=_get_target_action_ids)
 
   # Get lengths of sequences. Easiest to do this now prior to padding.
   items_to_handlers[
-      constants
-      .SOURCE_LEN_KEY] = tf.contrib.slim.tfexample_decoder.ItemHandlerCallback(
+      constants.SOURCE_LEN_KEY] = slim.tfexample_decoder.ItemHandlerCallback(
           keys=[constants.SOURCE_WORDPIECES_KEY],
           func=input_utils.get_source_len_fn(constants.SOURCE_WORDPIECES_KEY))
   items_to_handlers[
-      constants
-      .TARGET_LEN_KEY] = tf.contrib.slim.tfexample_decoder.ItemHandlerCallback(
+      constants.TARGET_LEN_KEY] = slim.tfexample_decoder.ItemHandlerCallback(
           keys=[constants.TARGET_ACTION_TYPES_KEY], func=_get_target_len)
 
   # Extra features.
   if use_segment_ids:
-    items_to_handlers[
-        constants.SEGMENT_ID_KEY] = tf.contrib.slim.tfexample_decoder.Tensor(
-            constants.SEGMENT_ID_KEY)
+    items_to_handlers[constants.SEGMENT_ID_KEY] = slim.tfexample_decoder.Tensor(
+        constants.SEGMENT_ID_KEY)
 
   if use_foreign_key_features:
     items_to_handlers[
-        constants.FOREIGN_KEY_KEY] = tf.contrib.slim.tfexample_decoder.Tensor(
+        constants.FOREIGN_KEY_KEY] = slim.tfexample_decoder.Tensor(
             constants.FOREIGN_KEY_KEY)
 
   if string_alignment_features:
-    items_to_handlers[
-        constants.ALIGNED_KEY] = tf.contrib.slim.tfexample_decoder.Tensor(
-            constants.ALIGNED_KEY)
+    items_to_handlers[constants.ALIGNED_KEY] = slim.tfexample_decoder.Tensor(
+        constants.ALIGNED_KEY)
 
   decoder = sequence_example_decoder.TFSequenceExampleDecoder(
       keys_to_context_features, keys_to_sequence_features, items_to_handlers)

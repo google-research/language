@@ -73,7 +73,7 @@ def create_block_info(input_path, preprocessor):
 def main(_):
   pool = multiprocessing.Pool(FLAGS.num_threads)
   tf.logging.info("Using hub module %s", FLAGS.bert_hub_module_path)
-  tokenizer = bert_utils.get_tokenizer(FLAGS.bert_hub_module_handle)
+  tokenizer = bert_utils.get_tokenizer(FLAGS.bert_hub_module_path)
   preprocessor = wiki_preprocessor.Preprocessor(get_sentence_splitter(),
                                                 FLAGS.max_block_length,
                                                 tokenizer)

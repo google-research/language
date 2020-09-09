@@ -193,6 +193,8 @@ def aggregate_sparse_indices(indices, values, shape, agg_fn="sum"):
     values = tf.unsorted_segment_sum(values, idx, tf.shape(y)[0])
   elif agg_fn == "max":
     values = tf.unsorted_segment_max(values, idx, tf.shape(y)[0])
+  elif agg_fn == "mean":
+    values = tf.unsorted_segment_mean(values, idx, tf.shape(y)[0])
   # Go back to ND indices
   y = tf.expand_dims(y, 1)
   indices = tf.floormod(
@@ -598,7 +600,7 @@ def answer_in_retrieval(retrieved_entities, answer_index):
   return tf.cast(tf.greater(retrieved_scores, 0.), tf.float32)
 
 
-def _get_bert_embeddings(model, layers_to_use, aggregation_fn, name="bert"):
+def get_bert_embeddings(model, layers_to_use, aggregation_fn, name="bert"):
   """Extract embeddings from BERT model."""
   all_hidden = model.get_all_encoder_layers()
   layers_hidden = [all_hidden[i] for i in layers_to_use]
@@ -641,7 +643,7 @@ def shared_qry_encoder_v2(qry_input_ids, qry_input_mask, is_training,
       input_mask=qry_input_mask,
       use_one_hot_embeddings=use_one_hot_embeddings,
       scope="bert")
-  qry_seq_emb, _ = _get_bert_embeddings(
+  qry_seq_emb, _ = get_bert_embeddings(
       qry_model, [qa_config.qry_num_layers - 2], "concat", name="qry")
   word_emb_table = qry_model.get_embedding_table()
 
