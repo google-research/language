@@ -108,6 +108,7 @@ def _get_restored_predictions(predictions_dict,
           prediction, table_schemas, foreign_keys)
     except abstract_sql.UnsupportedSqlError as e:
       # Remove predictions that fail conversion.
+      print('For query %s' % prediction)
       print('Unsupport Error: ' + str(e))
     except abstract_sql.ParseError as e:
       print('Parse Error!!!')
