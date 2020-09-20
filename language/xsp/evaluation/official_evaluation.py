@@ -349,7 +349,6 @@ def execute_predictions(predictions, cache_dict, ofile, case_sensitive,
                   '\n')
     else:
       ofile.write('ERROR: Cannot write prediction %r\n' % best_prediction)
-    ofile.write('Took %s s to execute' % execution_time)
 
     # If it didn't execute correctly, check why.
     if exception_str:

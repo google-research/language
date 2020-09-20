@@ -259,3 +259,18 @@ An example of running this:
 ```
 python -m language.xsp.evaluation.official_evaluation --predictions_filepath=final_dataset_predictions.json --output_filepath=dataset_predictions.txt --cache_filepath=dataset_cache.json --verbose=False --update_cache=True
 ```
+
+The resulting file will give you the evaluation results on the full set of data that inference was ran on.
+
+### (c) (Optional) Filtering results 
+
+If you want to compute your model's performance on the filtered subset of the evaluation datasets, run your predictions text file (in the example above, `dataset_predictions.txt`) through `language/xsp/evaluation/filter_results.py`. This will report performance averaged over all examples where the gold query meets certain conditions, e.g., not resulting in an empty table. 
+
+This target takes only one argument -- the predictions file it should process -- and prints the results to the console.
+
+An example of running this:
+
+```
+python -m language.xsp.evaluation.filter_results dataset_predictions.txt
+```
+
