@@ -230,6 +230,8 @@ Once you have TFRecords corresponding to your evaluation data, you need to run t
 * `restore_preds_from_asql`: Whether to restore SQL queries from AbSQL predictions. This should only be set True if the model was trained to predict AbSQL queries. 
 * `restored_predictions_path`: The path to a file where the restored predictions will be saved. Only relevant if `restore_preds_from_asql` is True.
 
+This target will generate a few JSON files containing the predictions of the model. It contains all items in the beam for each example (including the scores for each item) and also automatically convert from SQL^UF to fully specified SQL.
+
 An example of running this on the `dev` split of an evaluation dataset called `dataset` with a beam size of 1:
 
 ```
@@ -242,3 +244,18 @@ Note that when running inference, these parameters should be the same as when yo
 * `config_filepath`
 * `restore_preds_from_asql`
 
+### (b) Running evaluation against databases
+
+Given predictions from running inference (above, it will be `dataset_predictions/final_dataset_predictions.json`), run `language/xsp/evaluation/official_evaluation.py`. It takes the following arguments:
+
+* `predictions_filepath`: The location where the predictions were written from inference.
+* `output_filepath`: A path where the final predictions and metric evaluations will be written (if the beam size is greater than one, it will save the highest-scoring item in the beam that executes against the empty database). 
+* `cache_filepath`: The path to a cache file.
+* `verbose`: Evaluation will print debugging and more specific information if this is set to True.
+* `update_cache`: If this is set to True, it will execute and cache the gold queries. If False, gold queries will not executed and instead read from the provided cache. This can be set to False if caches were precomputed using `data_download.sh`.
+
+An example of running this:
+
+```
+python -m language.xsp.evaluation.official_evaluation --predictions_filepath=final_dataset_predictions.json --output_filepath=dataset_predictions.txt --cache_filepath=dataset_cache.json --verbose=False --update_cache=True
+```
