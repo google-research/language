@@ -78,7 +78,7 @@ flags.DEFINE_integer("shards_to_combine", None,
                      "Max number of shards to combine.")
 
 
-def _get_sub_paras(para, tokenizer, max_seq_length, doc_stride, total):
+def get_sub_paras(para, tokenizer, max_seq_length, doc_stride, total):
   """Split paragraph object into sub-paragraphs with maximum length."""
   if not para["context"]:
     return []
@@ -193,9 +193,9 @@ def main(_):
           tf.logging.warn("%s not in entities. Skipping %s para",
                           orig_para["kb_id"], orig_para["title"])
           continue
-        sub_para_objs = _get_sub_paras(orig_para, tokenizer,
-                                       FLAGS.max_seq_length, FLAGS.doc_stride,
-                                       total_sub_paras)
+        sub_para_objs = get_sub_paras(orig_para, tokenizer,
+                                      FLAGS.max_seq_length, FLAGS.doc_stride,
+                                      total_sub_paras)
         for para_obj in sub_para_objs:
           # Add mentions from this paragraph.
           local2global = {}

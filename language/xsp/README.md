@@ -77,15 +77,15 @@ Before downloading the evaluation data, you need to prepare your environment for
 To download the evaluation data (the eight additional datasets), run the `data_download.sh` script. Again, we suggest storing this data in the `data/` directory and running the script inside the directory. To download the evaluation data, leave out the `train_only` argument.
 
 For evaluation, the script is a bit more complex than just downloading annotations. It does the following:
-1. Downloads the annotations from [Finegan-Dollak & Kummerfeld's repository associated with the 2018 ACL paper](https://github.com/jkkummerfeld/text2sql-data). 
+1. Downloads the annotations from [Finegan-Dollak & Kummerfeld's repository associated with the 2018 ACL paper](https://github.com/jkkummerfeld/text2sql-data).
 1. Downloads and installs the actual databases into a separate directory, `databases`. *NOTES and WARNINGS*:
-    * This may take a while to download, and may require you to manually download some databases yourself. 
-    * Some of these databases are quite large (several GB of storage). 
+    * This may take a while to download, and may require you to manually download some databases yourself.
+    * Some of these databases are quite large (several GB of storage).
     * The database installation function (`database_installation`) in `database_download.sh` assumes that the MySQL server you are running uses the username `root` and no password. You may need to modify this function if you used a different username and/or added a password.
-1. Each database also must be converted from MySQL to SQLite3 format. We use the conversion tool provided by [Jean-Luc Lacroix](https://gist.github.com/esperlu/943776). 
-1. An empty copy of each database is created. We perform beam search re-ranking by throwing items out of the beam that are not executable on the database. To test this, we use empty databases to ensure that no database contents are used during inference time. 
-1. (TODO) Indices are added to some of the larger databases to make execution faster in these databases. 
-1. (TODO) Caches of gold query executions are created for each dataset. This makes evaluation faster if evaluating multiple model checkpoints. *NOTE*: On some datasets and databases, this process can take a very long time to complete. 
+1. Each database also must be converted from MySQL to SQLite3 format. We use the conversion tool provided by [Jean-Luc Lacroix](https://gist.github.com/esperlu/943776).
+1. An empty copy of each database is created. We perform beam search re-ranking by throwing items out of the beam that are not executable on the database. To test this, we use empty databases to ensure that no database contents are used during inference time.
+1. (TODO) Indices are added to some of the larger databases to make execution faster in these databases.
+1. (TODO) Caches of gold query executions are created for each dataset. This makes evaluation faster if evaluating multiple model checkpoints. *NOTE*: On some datasets and databases, this process can take a very long time to complete.
 
 After installation is complete, you don't need the MySQL databases anymore. We recommend dropping these databases from the server, because they take up a lot of disk space.
 

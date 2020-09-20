@@ -256,7 +256,10 @@ def load_database(var_name, shape, checkpoint_path, dtype=tf.float32):
   return tf_db
 
 
-def create_mips_searcher(var_name, checkpoint_path, num_neighbors):
+def create_mips_searcher(var_name,
+                         checkpoint_path,
+                         num_neighbors,
+                         local_var_name="mips_init_barrier"):
   """Create searcher for returning top-k closest elements."""
   tf_db = load_database(var_name, None, checkpoint_path)
 
@@ -264,7 +267,7 @@ def create_mips_searcher(var_name, checkpoint_path, num_neighbors):
     mips_init_barrier = tf.constant(True)
 
   # Make sure DB is initialized.
-  tf.get_local_variable("mips_init_barrier", initializer=mips_init_barrier)
+  tf.get_local_variable(local_var_name, initializer=mips_init_barrier)
 
   def _search(query):
     with tf.device("/cpu:0"):
