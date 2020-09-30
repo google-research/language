@@ -66,11 +66,21 @@ def model_fn(features, labels, mode, params):
       trainable=True)
   hub.register_module_for_export(embedder_module, "embedder")
 
+  if params["share_embedders"]:
+    query_embedder_module = embedder_module
+  else:
+    query_embedder_module = hub.Module(
+        spec=params["embedder_hub_module_handle"],
+        name="embedder",
+        tags={"train"} if mode == tf.estimator.ModeKeys.TRAIN else {},
+        trainable=True)
+    hub.register_module_for_export(embedder_module, "query_embedder")
+
   # ==============================
   # Retrieve.
   # ==============================
   # [batch_size, projected_size]
-  query_emb = embedder_module(
+  query_emb = query_embedder_module(
       inputs=dict(
           input_ids=query_inputs.token_ids,
           input_mask=query_inputs.mask,
@@ -251,7 +261,8 @@ def load_featurizer(params):
       candidate_seq_len=params["candidate_seq_len"],
       num_candidates=params["num_candidates"],
       max_masks=params["max_masks"],
-      tokenizer=tokenizer)
+      tokenizer=tokenizer,
+      separate_candidate_segments=params["separate_candidate_segments"])
 
 
 def input_fn(params, is_train):

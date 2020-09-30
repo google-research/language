@@ -105,6 +105,7 @@ def tuple_generator_builder(
         yield tuple(buf)
       except (nql.EntityNameError, nql.TypeNameError) as ex:
         logging.warn('Problem %r on line (%d): %r', ex, line_number, line)
+        raise
 
   return tuple_generator
 
@@ -181,23 +182,36 @@ def spec_as_shape(spec, context):
 # GOOGLE_INTERNAL: TODO(b/124102056) Consider moving into nql.
 def k_hot_array_from_string_list(context,
                                  typename,
-                                 entity_names):
+                                 entity_names,
+                                 ignore_unknowns = False):
   """Create a numpy array encoding a k-hot set.
 
   Args:
     context: a NeuralExpressionContext
     typename: type of entity_names
     entity_names: list of names of type typename
+    ignore_unknowns: whether or not to ignore unknown entity names
 
   Returns:
     A k-hot-array representation of the set of entity_names. For frozen
     dictionaries, unknown entity names are mapped to the unknown_id of their
-    type or discarded if the unknown_value of the type is None. Unknown entity
-    names will throw an nql.EntityNameException for non-frozen dictionaries.
+    type or discarded if the unknown_value of the type is None and
+    ignore_unknowns is set.
+    Unknown entity names will throw an nql.EntityNameException for non-frozen
+    dictionaries and frozen dictionary where the unknown_value is None and
+    ignore_unknowns is not set.
     It is possible for this method to return an all-zeros array.
   """
   # Empty string is not a valid entity_name.
-  ids = [context.get_id(e, typename) for e in entity_names if e]
+  ids = []
+  for entity_name in entity_names:
+    if not entity_name:
+      continue  # Ignore empty names
+    entity_id = context.get_id(entity_name, typename)
+    if not ignore_unknowns and id is None:
+      raise nql.EntityNameError(entity_name, typename,
+                                'Cannot make k-hot vector')
+    ids.append(entity_id)
   # None is not a valid id.
   valid_ids = [x for x in ids if x is not None]
   max_id = context.get_max_id(typename)

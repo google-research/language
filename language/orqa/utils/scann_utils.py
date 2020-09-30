@@ -59,5 +59,6 @@ def load_scann_searcher(var_name,
         num_leaves_to_search=num_leaves_to_search,
         training_sample_size=training_sample_size)
     builder = builder.score_ah(dimensions_per_block=dimensions_per_block)
+
     searcher = builder.create_tf()
   return tf_db, searcher

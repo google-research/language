@@ -81,7 +81,8 @@ def load_featurizer():
       candidate_seq_len=params["candidate_seq_len"],
       num_candidates=params["num_candidates"],
       max_masks=params["max_masks"],
-      tokenizer=tokenizer)
+      tokenizer=tokenizer,
+      separate_candidate_segments=params["separate_candidate_segments"])
 
   logging.info("Loaded featurizer.")
   return featurizer

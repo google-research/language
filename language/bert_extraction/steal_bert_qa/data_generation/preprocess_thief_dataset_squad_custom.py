@@ -13,12 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Build SQuAD RANDOM / WIKI splits with custom number of paragraphs per instance and questions per paragraph."""
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import json
 import random
 
 from bert_extraction.steal_bert_qa.data_generation import preprocess_util as pp_util
 import numpy as np
 
+from six.moves import range
 import tensorflow.compat.v1 as tf
 
 app = tf.app

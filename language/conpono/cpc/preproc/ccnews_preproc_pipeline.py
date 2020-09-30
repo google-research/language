@@ -25,6 +25,7 @@ from absl import flags
 import apache_beam as beam
 from bert import tokenization
 import numpy as np
+from six.moves import range
 import tensorflow.compat.v1 as tf
 import unidecode
 

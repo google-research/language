@@ -333,12 +333,20 @@ class DocumentEmbedder(object):
 
     # These hyperparams are passed to Estimator.
     params = {
-        'vocab_path': self._featurizer.tokenizer.vocab_path,
-        'do_lower_case': self._featurizer.tokenizer.do_lower_case,
-        'query_seq_len': self._featurizer.query_seq_len,
-        'candidate_seq_len': self._featurizer.candidate_seq_len,
-        'num_candidates': self._featurizer.num_candidates,
-        'max_masks': self._featurizer.max_masks,
+        'vocab_path':
+            self._featurizer.tokenizer.vocab_path,
+        'do_lower_case':
+            self._featurizer.tokenizer.do_lower_case,
+        'query_seq_len':
+            self._featurizer.query_seq_len,
+        'candidate_seq_len':
+            self._featurizer.candidate_seq_len,
+        'num_candidates':
+            self._featurizer.num_candidates,
+        'max_masks':
+            self._featurizer.max_masks,
+        'separate_candidate_segments':
+            self._featurizer.separate_candidate_segments,
     }
 
     def input_fn(params):
@@ -356,7 +364,8 @@ class DocumentEmbedder(object):
           candidate_seq_len=params['candidate_seq_len'],
           num_candidates=params['num_candidates'],
           max_masks=params['max_masks'],
-          tokenizer=tokenizer)
+          tokenizer=tokenizer,
+          separate_candidate_segments=params['separate_candidate_segments'])
 
       dataset = get_documents_dataset()
 

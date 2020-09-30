@@ -25,6 +25,7 @@ from bert import modeling
 from bert import optimization
 from bert import tokenization
 from language.conpono.cpc import model_builder
+from six.moves import range
 import tensorflow.compat.v1 as tf
 
 

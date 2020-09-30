@@ -84,12 +84,13 @@ class Featurizer(object):
   """Featurizes queries and documents."""
 
   def __init__(self, query_seq_len, candidate_seq_len, num_candidates,
-               max_masks, tokenizer):
+               max_masks, tokenizer, separate_candidate_segments):
     self.query_seq_len = query_seq_len
     self.candidate_seq_len = candidate_seq_len
     self.num_candidates = num_candidates
     self.max_masks = max_masks
     self.tokenizer = tokenizer
+    self.separate_candidate_segments = separate_candidate_segments
 
   @profile.profiled_function
   def mask_query(self, query):
@@ -251,15 +252,16 @@ class Featurizer(object):
         padding], 0)
 
     # input_mask indicates non-pad tokens.
-    input_mask = tf.concat([
-        tf.ones([pair_len + 3], tf.int32),
-        padding], 0)
+    input_mask = tf.concat([tf.ones([pair_len + 3], tf.int32), padding], 0)
 
-    # segment_ids distinguish title from body.
-    segment_ids = tf.concat([
-        tf.zeros([title_len + 2], tf.int32),
-        tf.ones([body_len + 1], tf.int32),
-        padding], 0)
+    # segment_ids optionally distinguish title from body.
+    if self.separate_candidate_segments:
+      segment_ids = tf.concat([
+          tf.zeros([title_len + 2], tf.int32),
+          tf.ones([body_len + 1], tf.int32), padding
+      ], 0)
+    else:
+      segment_ids = tf.concat([tf.zeros([pair_len + 3], tf.int32), padding], 0)
 
     # Add static shape annotations.
     input_ids.set_shape([sequence_len])

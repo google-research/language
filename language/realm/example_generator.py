@@ -70,6 +70,12 @@ flags.DEFINE_boolean('do_lower_case', True, 'Whether to lowercase text.')
 flags.DEFINE_integer('retrieval_batch_size', 64,
                      'Retrieval is performed in batches of this size.')
 
+flags.DEFINE_boolean('share_embedders', True,
+                     'Whether we use the same embedders for queries and docs')
+
+flags.DEFINE_boolean('separate_candidate_segments', True,
+                     'Whether titles and bodies have separate segment IDs.')
+
 # ==============================================================================
 # Data configuration
 # ==============================================================================
@@ -360,23 +366,26 @@ def load_featurizer():
       candidate_seq_len=FLAGS.candidate_seq_len,
       num_candidates=FLAGS.num_candidates,
       max_masks=FLAGS.max_masks,
-      tokenizer=tokenizer)
+      tokenizer=tokenizer,
+      separate_candidate_segments=FLAGS.separate_candidate_segments)
 
   logging.info('Loaded featurizer.')
   return featurizer
 
 
 @profile.profiled_function
-def load_retriever(embedder_path, docs, doc_embeds_path, featurizer):
+def load_retriever(query_embedder_path, docs, doc_embeds_path, featurizer):
   """Constructs a Retriever based on the specified embedder."""
   query_embedder = retrieval.QueryEmbedder(
-      embedder_model_or_path=embedder_path, featurizer=featurizer)
+      embedder_model_or_path=query_embedder_path, featurizer=featurizer)
   retriever = retrieval.BruteForceRetriever(
       query_embedder=query_embedder,
       documents=docs,
       doc_embeds_or_path=doc_embeds_path,
       num_neighbors=FLAGS.num_candidates)
-  logging.info('Loaded retriever from %s', embedder_path)
+  logging.info(
+      'Loaded retriever with query embedder from %s and doc '
+      'embeddings from %s', query_embedder_path, doc_embeds_path)
   return retriever
 
 
@@ -386,10 +395,18 @@ def load_latest_retriever(docs, featurizer):
       model_dir=experiment_utils.FLAGS.model_dir,
       hub_prefix='encoded',
       module_prefix='embedder')
+  if FLAGS.share_embedders:
+    latest_query_embedder_path = latest_embedder_path
+  else:
+    latest_query_embedder_path = export_utils.tfhub_export_path(
+        model_dir=experiment_utils.FLAGS.model_dir,
+        hub_prefix='encoded',
+        module_prefix='query_embedder')
 
   if latest_embedder_path is None:
     # The initial embedder module comes from the ICT codebase
     latest_embedder_path = FLAGS.initial_embedder_module
+    latest_query_embedder_path = FLAGS.initial_embedder_module
     model_timestamp = 0
   else:
     model_timestamp_match = re.match('.+/export/.+/([0-9]+)/.+',
@@ -400,7 +417,7 @@ def load_latest_retriever(docs, featurizer):
   doc_embeds_path = os.path.join(latest_embedder_path, 'encoded/encoded.ckpt')
 
   retriever = load_retriever(
-      embedder_path=latest_embedder_path,
+      query_embedder_path=latest_query_embedder_path,
       docs=docs,
       doc_embeds_path=doc_embeds_path,
       featurizer=featurizer)

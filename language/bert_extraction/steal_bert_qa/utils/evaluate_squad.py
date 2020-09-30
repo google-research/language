@@ -14,12 +14,15 @@
 # limitations under the License.
 """Official evaluation script for version 1.1 of the SQuAD dataset."""
 
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
 
 import collections as cll
 import json
 import re
 import string
+from six.moves import zip
 import tensorflow.compat.v1 as tf
 
 app = tf.app

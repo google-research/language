@@ -1,3 +1,5 @@
 apache-beam==2.22.0
 sqlparse==0.3.1
 tf-slim==1.1.0
+timeout-decorator==0.4.1
+tqdm==4.49.0

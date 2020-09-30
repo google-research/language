@@ -14,12 +14,17 @@
 # limitations under the License.
 """Build BoolQ RANDOM / WIKI splits leveraging a thief dataset (wikitext103)."""
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import json
 import random
 
 from bert_extraction.steal_bert_qa.data_generation import preprocess_util as pp_util
 import numpy as np
 
+from six.moves import range
 import tensorflow.compat.v1 as tf
 import tqdm
 

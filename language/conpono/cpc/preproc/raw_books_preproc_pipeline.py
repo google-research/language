@@ -29,6 +29,7 @@ from bert import tokenization
 import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
+from six.moves import range
 import tensorflow.compat.v1 as tf
 
 flags.DEFINE_string(

@@ -1121,6 +1121,12 @@ class ScoreSummary(object):
     self.cls_token_score = None
     self.answer_type_logits = None
 
+  def __lt__(self, other):
+    return ((self.predicted_label, self.short_span_score, self.cls_token_score,
+             self.answer_type_logits) <
+            (other.predicted_label, other.short_span_score,
+             other.cls_token_score, other.answer_type_logits))
+
 
 def read_candidates_from_one_split(input_path):
   """Read candidates from a single jsonl file."""

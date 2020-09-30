@@ -34,7 +34,7 @@ import tensorflow.compat.v2 as tf
 import tensorflow_datasets as tfds
 import tqdm
 
-from official.utils.misc import tpu_lib
+from official.common import distribute_utils
 
 
 @dataclasses.dataclass
@@ -281,7 +281,7 @@ class Trainer:
     """Initialize the distribution strategy (e.g. TPU/GPU/Mirrored)."""
     if self._strategy is None:
       if self._tpu is not None:
-        resolver = tpu_lib.tpu_initialize(self._tpu)
+        resolver = distribute_utils.tpu_initialize(self._tpu)
         self._strategy = tf.distribute.experimental.TPUStrategy(resolver)
       elif self._distribution_strategy is None or self._distribution_strategy == 'default':
         self._strategy = tf.distribute.get_strategy()

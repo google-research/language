@@ -56,6 +56,12 @@ flags.DEFINE_list("train_preprocessing_servers", None,
 flags.DEFINE_list("eval_preprocessing_servers", None,
                   "Evaluation data generation servers.")
 
+flags.DEFINE_boolean("share_embedders", True,
+                     "Whether we use the same embedders for queries and docs")
+
+flags.DEFINE_boolean("separate_candidate_segments", True,
+                     "Whether titles and bodies have separate segment IDs.")
+
 FLAGS = flags.FLAGS
 
 
@@ -75,7 +81,9 @@ def main(_):
       num_candidates=FLAGS.num_candidates,
       num_train_steps=FLAGS.num_train_steps,
       train_preprocessing_servers=FLAGS.train_preprocessing_servers,
-      eval_preprocessing_servers=FLAGS.eval_preprocessing_servers)
+      eval_preprocessing_servers=FLAGS.eval_preprocessing_servers,
+      share_embedders=FLAGS.share_embedders,
+      separate_candidate_segments=FLAGS.separate_candidate_segments)
 
   experiment_utils.run_experiment(
       model_fn=model.model_fn,

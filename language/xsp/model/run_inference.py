@@ -116,6 +116,7 @@ def clean_predicted_sequence(action_ids,
                              restore_preds_from_asql,
                              clean_vocab=None):
   """Cleans a set of predicted SQL queries."""
+  copy_strings = [tok.decode('utf-8') for tok in copy_strings]
   action_id_to_table_name_map = None
   if restore_preds_from_asql:
     action_id_to_table_name_map = _action_id_to_table_name_map(
@@ -194,6 +195,7 @@ def setup_graph():
       beam_size=FLAGS.beam_size)
   mode = tf.estimator.ModeKeys.PREDICT
   predictions = model_fn(features, labels, mode).predictions
+
   saver = tf.train.Saver()
 
   return saver, placeholder, predictions
@@ -268,8 +270,8 @@ class RunInferenceDoFn(beam.DoFn):
       self.saver = saver
       self.outputs = outputs
 
-      self.saver.restore(self.sess, checkpoint)
       print('Restoring checkpoint: {}'.format(checkpoint))
+      self.saver.restore(self.sess, checkpoint)
 
   def __init__(self, checkpoint, *unused_args, **unused_kwargs):
     with tf.gfile.Open(FLAGS.output_vocab_filepath) as infile:
@@ -295,9 +297,13 @@ class RunInferenceDoFn(beam.DoFn):
         FLAGS.restore_preds_from_asql, self._clean_vocab)
 
     return {
-        'utterance': dict(example.context.feature)['key'].bytes_list.value[0],
-        'predictions': predicted_sequences,
-        'scores': scores
+        'utterance':
+            dict(example.context.feature)
+            ['key'].bytes_list.value[0].decode('utf-8'),
+        'predictions':
+            predicted_sequences,
+        'scores':
+            scores
     }
 
   def process(self, example):
@@ -310,6 +316,9 @@ def inference_wrapper(inference_fn, sharded=False):
   """Wrapper for running inference."""
   dataset_name = FLAGS.dataset_name
 
+  if not FLAGS.predictions_path:
+    raise ValueError('Predictions path must be set.')
+
   predictions = FLAGS.predictions_path + '*'
   # Don't run inference if predictions have already been generated.
   if not tf.gfile.Glob(FLAGS.predictions_path + '*'):
@@ -320,6 +329,10 @@ def inference_wrapper(inference_fn, sharded=False):
   # output above.
   if FLAGS.restore_preds_from_asql:
     spider = dataset_name.lower() == 'spider'
+
+    if not FLAGS.restored_predictions_path:
+      raise ValueError('Restored predictions path must be set '
+                       'if restoring predictions from AbSQL.')
 
     if not tf.io.gfile.exists(FLAGS.restored_predictions_path):
       restore_from_asql.restore_from_clauses(
@@ -418,10 +431,11 @@ def match_and_save(predictions_path, output_path, dataset_name, splits,
       # Returns a dictionary containing relevant prediction information.
       database_filepath = dataset_name + '.db'
 
-      prediction = prediction_dict[key]
+      prediction = prediction_dict[key.decode('utf-8')]
+
       matched_examples.append({
           'utterance':
-              key,
+              key.decode('utf-8'),
           'predictions':
               prediction['predictions'],
           'scores':
