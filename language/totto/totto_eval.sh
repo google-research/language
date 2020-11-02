@@ -17,6 +17,7 @@
 # Prepare the needed variables.
 PREDICTION_PATH=unset
 TARGET_PATH=unset
+BLEURT_CKPT=unset
 OUTPUT_DIR="temp/"
 MODE="test"
 
@@ -25,13 +26,14 @@ usage()
 {
   echo "Usage: totto_eval.sh [ -p | --prediction_path PREDICTION/PATH.txt ]
                      [ -t | --target_path TARGET/PATH.jsonl ]
+                     [ -b | --bleurt_ckpt BLEURT_CHECKPOINT/PATH ]
                      [ -o | --output_dir ./dev/ ]
                      [ -m | --mode   dev/test   ]"
   exit 2
 }
 
 # Parse the arguments and check for validity.
-PARSED_ARGUMENTS=$(getopt -a -n totto_eval -o p:t:o:m: --long prediction_path:,target_path:,output_dir:,mode: -- "$@")
+PARSED_ARGUMENTS=$(getopt -a -n totto_eval -o p:t:b:o:m: --long prediction_path:,target_path:,bleurt_ckpt:,output_dir:,mode: -- "$@")
 VALID_ARGUMENTS=$?
 if [ "$VALID_ARGUMENTS" != "0" ]; then
   usage
@@ -44,6 +46,7 @@ do
   case "$1" in
     -p | --prediction_path) PREDICTION_PATH="$2"  ; shift 2  ;;
     -t | --target_path)     TARGET_PATH="$2"      ; shift 2  ;;
+    -b | --bleurt_ckpt)     BLEURT_CKPT="$2"      ; shift 2  ;;
     -o | --output_dir)      OUTPUT_DIR="$2"       ; shift 2 ;;
     -m | --mode)            MODE="$2"             ; shift 2 ;;
     # -- denotes the end of arguments; break out of the while loop
@@ -82,6 +85,7 @@ OUTPUT_DIR=$(echo $OUTPUT_DIR | sed 's:/*$::')
 echo "Running with the following variables:"
 echo "PREDICTION_PATH   : $PREDICTION_PATH"
 echo "TARGET_PATH       : $TARGET_PATH "
+echo "BLEURT_CKPT       : $BLEURT_CKPT "
 echo "OUTPUT_DIR        : $OUTPUT_DIR"
 echo "MODE              : $MODE"
 
@@ -157,6 +161,14 @@ python3 -m language.totto.totto_parent_eval \
   --precision_table_path="${OUTPUT_DIR}/detok_tables_parent_precision_format" \
   --recall_table_path="${OUTPUT_DIR}/detok_tables_parent_recall_format"
 
+if [[ !(${BLEURT_CKPT} == unset) ]]; then
+  echo "Computing BLEURT score"
+  python3 -m language.totto.totto_bleurt_eval \
+  --reference_path="${OUTPUT_DIR}/detok_references-multi" \
+  --generation_path="${OUTPUT_DIR}/detok_predictions" \
+  --bleurt_checkpoint="${BLEURT_CKPT}"
+fi
+
 echo "======== EVALUATE OVERLAP SUBSET ========"
 
 echo "Computing BLEU (overlap subset)"
@@ -169,6 +181,14 @@ python3 -m language.totto.totto_parent_eval \
   --precision_table_path="${OUTPUT_DIR}/detok_overlap_tables_parent_precision_format" \
   --recall_table_path="${OUTPUT_DIR}/detok_overlap_tables_parent_recall_format"
 
+if [[ !(${BLEURT_CKPT} == unset) ]]; then
+  echo "Computing BLEURT score"
+  python3 -m language.totto.totto_bleurt_eval \
+  --reference_path="${OUTPUT_DIR}/detok_overlap_references-multi" \
+  --generation_path="${OUTPUT_DIR}/detok_overlap_predictions" \
+  --bleurt_checkpoint="${BLEURT_CKPT}"
+fi
+
 echo "======== EVALUATE NON-OVERLAP SUBSET ========"
 
 echo "Computing BLEU (non-overlap subset)"
@@ -180,3 +200,11 @@ python3 -m language.totto.totto_parent_eval \
   --generation_path="${OUTPUT_DIR}/detok_nonoverlap_predictions" \
   --precision_table_path="${OUTPUT_DIR}/detok_nonoverlap_tables_parent_precision_format" \
   --recall_table_path="${OUTPUT_DIR}/detok_nonoverlap_tables_parent_recall_format"
+
+if [[ !(${BLEURT_CKPT} == unset) ]]; then
+  echo "Computing BLEURT score"
+  python3 -m language.totto.totto_bleurt_eval \
+  --reference_path="${OUTPUT_DIR}/detok_nonoverlap_references-multi" \
+  --generation_path="${OUTPUT_DIR}/detok_nonoverlap_predictions" \
+  --bleurt_checkpoint="${BLEURT_CKPT}"
+fi

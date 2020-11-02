@@ -70,7 +70,7 @@ flags.DEFINE_float("lambda_weight", None,
 
 def _normalize_text(s):
   # pylint: disable=unnecessary-lambda
-  tokenize_fn = lambda x: sacrebleu.tokenizer.tokenize_13a(x)
+  tokenize_fn = lambda x: sacrebleu.tokenizers.Tokenizer13a()(x)
   return tokenize_fn(s.strip().lower())
 
 

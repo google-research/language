@@ -74,7 +74,7 @@ have been taken on the document embedder.</sub>
   knowledge corpus is available at `gs://realm-data/cc_news_pretrained`
 - REALM fine-tuned to perform open-domain QA:
   - on WebQuestions: `gs://realm-data/orqa_wq_model_from_realm`
-  - on NaturalQuestionst: `gs://realm-data/orqa_nq_model_from_realm`
+  - on NaturalQuestions: `gs://realm-data/orqa_nq_model_from_realm`
 
 You can use [gsutil](https://cloud.google.com/storage/docs/gsutil) to download
 from links with the `gs://` prefix. You can also browse such links by replacing

@@ -89,11 +89,24 @@ Precision = 0.8317 Recall = 0.6256 F-score = 0.7135
 
 ## Testing the evaluation result
 
-If you want to ensure that the results from totto_eval.sh are as expected, please run:
+If you want to ensure that the results from `totto_eval.sh` are as expected, please run:
 
 ```
 python3 -m language.totto.eval_pipeline_test
 ```
+
+## Computing the BLEURT score.
+
+First install BLEURT from [here](https://github.com/google-research/bleurt). For the leaderboard we used the BLEURT-base 128 checkpoint.
+
+To run the BLEURT as part of the evaluation script add an additional argument for the BLEURT checkpoint path:
+
+```
+bash language/totto/totto_eval.sh --prediction_path language/totto/sample/output_sample.txt --target_path language/totto/sample/dev_sample.jsonl --bleurt_ckpt <BLEURT checkpoint path>
+```
+
+Note that running BLEURT is considerably slower than the other metrics, and is faster on GPU.
+
 
 ## Baseline preprocessing
 For reproducibility, we supply our basic table linearization code used for the baselines in the paper. The code takes as input a jsonl file and will augment each json example with additional fields: `full_table_str`, `subtable_str`, `full_table_metadata_str`, and `subtable_metadata_str` for each of the table linearizations described in the paper.

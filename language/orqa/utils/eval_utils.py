@@ -74,6 +74,26 @@ def is_correct(answers, prediction,
       metric_fn=metric_fn, prediction=prediction, ground_truths=answers)
 
 
+def evaluate_predictions_impl(references,
+                              predictions,
+                              is_regex):
+  """Calculates and returns metrics."""
+  missing_predictions = 0
+  correct = 0
+  for q, a in references.items():
+    if q in predictions:
+      correct += int(
+          is_correct(answers=a, prediction=predictions[q], is_regex=is_regex))
+    else:
+      missing_predictions += 1
+
+  return dict(
+      missing_predictions=missing_predictions,
+      num_correct=correct,
+      num_total=len(references),
+      accuracy=correct / float(len(references)))
+
+
 def evaluate_predictions(references_path, predictions_path,
                          is_regex):
   """Calculates and returns metrics."""
@@ -94,17 +114,5 @@ def evaluate_predictions(references_path, predictions_path,
       predictions[example["question"]] = example["prediction"]
   print("Found {} predictions in {}".format(len(predictions), predictions_path))
 
-  missing_predictions = 0
-  correct = 0
-  for q, a in references.items():
-    if q in predictions:
-      correct += int(
-          is_correct(answers=a, prediction=predictions[q], is_regex=is_regex))
-    else:
-      missing_predictions += 1
-
-  return dict(
-      missing_predictions=missing_predictions,
-      num_correct=correct,
-      num_total=len(references),
-      accuracy=correct / float(len(references)))
+  return evaluate_predictions_impl(
+      references=references, predictions=predictions, is_regex=is_regex)
