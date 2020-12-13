@@ -34,11 +34,13 @@ flags.DEFINE_string("output_path", None, "Output directory.")
 
 flags.DEFINE_integer("examples_to_visualize", 100,
                      "Number of examples to visualize.")
+flags.DEFINE_integer("max_lines", -1,
+                     "Maximum number of lines to preprocess.")
 
 FLAGS = flags.FLAGS
 
 
-def _generate_processed_examples(input_path):
+def _generate_processed_examples(input_path, max_lines):
   """Generate TF examples."""
   processed_json_examples = []
   with open(input_path, "r", encoding="utf-8") as input_file:
@@ -46,6 +48,9 @@ def _generate_processed_examples(input_path):
       if len(processed_json_examples) % 100 == 0:
         print("Num examples processed: %d" % len(processed_json_examples))
 
+      if max_lines > 0 and len(processed_json_examples) >= max_lines:
+        break
+        
       line = six.ensure_text(line, "utf-8")
       json_example = json.loads(line)
       table = json_example["table"]
@@ -100,7 +105,8 @@ def _generate_processed_examples(input_path):
 def main(_):
   input_path = FLAGS.input_path
   output_path = FLAGS.output_path
-  processed_json_examples = _generate_processed_examples(input_path)
+  max_lines = FLAGS.max_lines
+  processed_json_examples = _generate_processed_examples(input_path, max_lines)
   with open(output_path, "w", encoding="utf-8") as f:
     for json_example in processed_json_examples:
       f.write(json.dumps(json_example) + "\n")
