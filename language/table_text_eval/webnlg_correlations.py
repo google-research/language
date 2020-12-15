@@ -31,6 +31,8 @@ from language.table_text_eval import table_text_eval
 import nltk
 import numpy as np
 from scipy.stats import pearsonr
+import six
+from six.moves import range
 import tensorflow.compat.v1 as tf
 from tqdm import tqdm
 
@@ -113,10 +115,10 @@ def main(_):
   for m in metrics:
     metric_to_correlations[m]["average"] = []
 
-  for _ in tqdm(range(FLAGS.num_bootstrap)):
+  for _ in tqdm(list(range(FLAGS.num_bootstrap))):
 
     # Get the bootstrap sample based on the eval_subset.
-    all_keys = range(len(eval_data))
+    all_keys = list(range(len(eval_data)))
     bootstrap_sample = [
         random.choice(all_keys) for _ in range(len(eval_data))]
 
@@ -188,8 +190,8 @@ def main(_):
   # Save correlations to JSON.
   json.dump(
       {
-          m: {m_: str(v_) for m_, v_ in v.iteritems()
-             } for m, v in metric_to_correlations.iteritems()
+          m: {m_: str(v_) for m_, v_ in six.iteritems(v)
+             } for m, v in six.iteritems(metric_to_correlations)
       }, tf.gfile.Open(FLAGS.save_output + ".correlations.json", "w"))
 
 

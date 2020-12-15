@@ -20,13 +20,14 @@ from __future__ import division
 
 from __future__ import print_function
 
+
+
 from absl import logging
 from nql import io
 from nql import symbol
 import numpy as np
 import scipy.sparse
 import tensorflow.compat.v2 as tf
-
 
 
 
@@ -160,7 +161,7 @@ class NeuralQueryExpression(object):
     Returns:
       A Tensorflow expression that computes this NeuralQueryExpression's value.
     """
-    if isinstance(self._tf, tf.Tensor) or isinstance(self._tf, tf.Variable):
+    if tf.is_tensor(self._tf) or isinstance(self._tf, tf.Variable):
       return self._tf  # pytype: disable=bad-return-type
     else:
       return tf.constant(self._tf)
