@@ -218,7 +218,7 @@ def transpose_batch_time(tensor):
     raise ValueError("Tensor with unknown rank")
   if rank < 2:
     return tensor
-  return tf.transpose(tensor, perm=[1, 0] + range(2, rank))
+  return tf.transpose(tensor, perm=[1, 0] + list(range(2, rank)))
 
 
 def sequence_mask(lengths, maxlen=None, dtype=tf.bool, transpose=False):

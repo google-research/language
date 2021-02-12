@@ -1,8 +1,7 @@
 ## Decontextualization
 
 This repository contains a data description, evaluation code, and utilities for
-*Making Sentences Stand-Alone: A Task Definition, an Annotated Corpus,
-and an Empirical Evaluation*.
+[*Decontextualization: Making Sentences Stand-Alone*](https://arxiv.org/abs/2102.05169).
 
 The training and evaluation data can be downloaded from the following links:
 
@@ -11,7 +10,6 @@ The training and evaluation data can be downloaded from the following links:
 * [test.jsonl](https://storage.cloud.google.com/decontext_dataset/decontext_test.jsonl):  1945 labeled test examples.
 
 The data format and instructions for use are described below.
-
 
 ### Dataset
 
@@ -106,3 +104,14 @@ python3 -m language.decontext.eval \
 
 ### License
 This dataset is released under the Creative Commons Share-Alike 3.0 license.
+
+### Citation
+Please cite as:
+```
+@article{choi2021making,
+  title = {Decontextualization: Making Sentences Stand-Alone},
+  author = {Eunsol Choi and Jennimaria Palomaki and Matthew Lamm and Tom Kwiatkowski and Dipanjan Das and Michael Collins},
+  year = {2021},
+  journal = {Transactions of the Association of Computational Linguistics},
+}
+```
