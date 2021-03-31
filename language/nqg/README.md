@@ -5,9 +5,7 @@ and Natural Language Variation: Can a Semantic Parsing Approach Handle Both?"
 (Peter Shaw, Ming-Wei Chang, Panupong Pasupat, Kristina Toutanova).
 
 The current version of this library contains code for reproducing the dataset
-splits used in the paper.
-
-[TOC]
+splits used in the paper, and generating new splits.
 
 ## Datasets
 
@@ -53,7 +51,7 @@ You can then generate the dataset in TSV format using the
 
 Example usage:
 
-```
+```shell
 nqg/tasks/geoquery/write_dataset.py \
 --corpus=/path/to/.../geoquery.xml \
 --geobase=/path/to/.../geobase \
@@ -107,6 +105,59 @@ txt file of generated predictions.
 Note that for T5, you will need to run `tasks/spider/restore_oov.py` to
 post-process generated predictions.
 
+### Generating New Dataset Splits
+
+For generating new random and length splits, the `tasks/gen_length_split.py`
+and `tasks/gen_random_split.py` tools can be applied to any dataset in the TSV
+format described above. We describe how to generate new template and TMCD
+splits below.
+
+#### Template Splits
+
+For generating new template splits for GeoQuery using the same template
+definition used in the paper, you can use the
+`tasks/geoquery/gen_template_split.py` tool, with the output of
+`tasks/geoquery/write_dataset.py` as `--input`.
+
+Similarly, for Spider, you can use the `tasks/spider/gen_template_split.py`
+tool, with the output of `tasks/spider/write_dataset.py` or
+`tasks/spider/append_schema.py` as `--input`.
+
+For generating template splits for new datasets, or for generating template
+splits for the datasets studied in this work using a different procedure to
+determine target templates, you can use the utilities in
+`tasks/template_utils.py`.
+
+#### TMCD Splits
+
+To apply the TMCD methodology to new datasets, or to change the definition
+of atoms and compounds for the dataset studied in this paper, you may find
+the utilities in `tasks/mcd_utils.py` useful. The functions in this module
+require you to define functions to map examples to atoms and compounds,
+but you can then generate new TMCD splits and compute various metrics.
+
+You can find several scripts related to TMCD and the corresponding notions
+of compound divergence in both the `tasks/geoquery` and
+`tasks/spider` sub-directories:
+
+* `gen_tmcd_split.py` - Tool to generate a new TMCD split, given a dataset in TSV format.
+* `measure_compound_divergence.py` - Tool to measure compound divergence for any split.
+* `measure_unseen_atoms.py` - Tool to measure the number of examples containing unseen atoms for any split.
+
+Note that there may also be interest in applying a different atom constraint,
+e.g. a constraint based on atom divergence (similarly to Keysers et al. 2020)
+as opposed to the constraint used in the paper, depending on the focus of
+a given evaluation and the size of the datasets being considered.
+Unfortunately, the code does not currently support
+this functionality, but ideally the utilities in `tasks/mcd_utils.py` can
+provide a helpful starting point.
+
+Also note that definition of compounds for Spider released in this library uses
+a slightly simplified and significantly more readable CFG for parsing SQL than
+the grammar used to define compounds for the original paper, which we therefore
+believe to be more useful for future work. Please contact the authors if you
+have a specific need for the original compound definition.
+
 ## Approaches
 
 ### T5
@@ -125,5 +176,3 @@ file, you can use the `tasks/strip_targets.py` script. For datasets using
 simple exact match (GeoQuery and SCAN), you can then compare these predictions
 with the targets provided by a TSV file for a given test split using the script
 `tasks/compare_predictions.py`.
-
-

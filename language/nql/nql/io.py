@@ -129,7 +129,7 @@ def write_sparse_tensor_dict(
 
 
 def read_symbol_table_dict(input_file,
-                           restrict_to = ()):
+                           restrict_to = ()):  # pytype: disable=annotation-type-mismatch
   """Read a dictionary of SymbolTable values from a file.
 
   Args:
@@ -151,7 +151,7 @@ def write_symbol_table_dict(
     output_file,
     symbol_table_dict,
     restrict_to = ()
-):
+):  # pytype: disable=annotation-type-mismatch
   """Write a dictionary of SymbolTable values to a file.
 
   Args:
