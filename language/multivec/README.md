@@ -263,7 +263,7 @@ Repeat the whole training process from STEP-1 to STEP-7 to get the final results
 To run inference only, set $BEST_CKPT to the following and run Step 3-7.
 
 ```bash
-BEST_CKPT=gs://multivec/msmarco/ckpts/q1d3/best_checkpoint
+BEST_CKPT=gs://gresearch/multivec/q1d3_pretrained/best_checkpoint
 ```
 
 ## Citation
