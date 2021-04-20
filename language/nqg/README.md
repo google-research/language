@@ -80,7 +80,8 @@ at least 50 examples. This set of databases can be determined using the
 
 You can generate the Spider-SSP dataset in TSV format using the
 `tasks/spider/write_dataset.py` script with
-`--examples=${SPIDER_DIR}/data/train_spider.json`.
+`--examples=${SPIDER_DIR}/data/train_spider.json`. For Spider-XSP, you should
+set `--filter_by_database=False`.
 
 
 When using T5, we append a serialized database schema to the input string.
@@ -176,3 +177,35 @@ file, you can use the `tasks/strip_targets.py` script. For datasets using
 simple exact match (GeoQuery and SCAN), you can then compare these predictions
 with the targets provided by a TSV file for a given test split using the script
 `tasks/compare_predictions.py`.
+
+#### T5 Hyperparameters
+
+The default hyperparameters were used for T5, with the exception of learning
+rate, which was set to `0.0001` for all experiments. Here are some of the
+relevant hyperparameter used:
+
+```
+constant_learning_rate.learning_rate = 0.0001
+tokens_per_batch = 1048576
+AdafactorOptimizer.beta1 = 0.0
+AdafactorOptimizer.clipping_threshold = 1.0
+AdafactorOptimizer.decay_rate = None
+AdafactorOptimizer.epsilon1 = 1e-30
+AdafactorOptimizer.epsilon2 = 0.001
+```
+
+For training, we used maximum sequence lengths up to:
+
+```
+run.sequence_length = {'inputs': 512, 'targets': 256}
+```
+
+For inference, we used `sample_decode` with `temperature=0` and a
+`max_decode_length` up to 256.
+
+We used the prefix `semanticparse: ` for all T5 experiments.
+
+Note: the appendix of the preprint states the batch size used for T5 was
+128, which we recently discovered is incorrect (see `tokens_per_batch` above).
+We are working to release a new version of the paper with this corrected.
+

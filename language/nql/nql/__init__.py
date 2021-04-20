@@ -1327,7 +1327,7 @@ class NeuralQueryContext(object):
 
     Each line in the file is tab-separated with fields
 
-      binary_np_initval arg1 arg2 [confidence]
+      rel_name head tail [confidence]
 
     Confidence defaults to 1.0.
 
@@ -1379,11 +1379,11 @@ class NeuralQueryContext(object):
                                   'Unknown relation in line: %r' % line.strip())
       rel_domain = self.get_domain(rel_name)
       rel_range = self.get_range(rel_name)
-      i = self._get_insert_id_if_unfrozen(parts[1], rel_domain)
-      j = self._get_insert_id_if_unfrozen(parts[2], rel_range)
-      if i is not None and j is not None:
-        domain_buf[rel_name].append(i)
-        range_buf[rel_name].append(j)
+      head = self._get_insert_id_if_unfrozen(parts[1], rel_domain)
+      tail = self._get_insert_id_if_unfrozen(parts[2], rel_range)
+      if head is not None and tail is not None:
+        domain_buf[rel_name].append(head)
+        range_buf[rel_name].append(tail)
         data_buf[rel_name].append(weight)
       if lid > 0 and lid % 1000000 == 0:
         logging.info('%d facts loaded', lid)

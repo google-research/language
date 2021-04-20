@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Write Spider-SSP dataset in TSV format."""
+"""Write Spider dataset in TSV format."""
 
 import json
 
@@ -29,6 +29,12 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string("examples", "", "Path to Spider json examples.")
 
 flags.DEFINE_string("output", "", "Output tsv file.")
+
+flags.DEFINE_bool(
+    "filter_by_database", True,
+    "Whether to only select examples for databases used for the Spider-SSP"
+    "setting proposed in the paper. Should be False to follow the standard"
+    "Spider-XSP setting.")
 
 
 def normalize_whitespace(source):
@@ -50,8 +56,9 @@ def main(unused_argv):
     source = example_json["question"]
     target = example_json["query"]
 
-    # Skip if database not in set of databases with >= 50 examples.
-    if database not in database_constants.DATABASES:
+    # Optionally skip if database not in set of databases with >= 50 examples.
+    if (FLAGS.filter_by_database and
+        database not in database_constants.DATABASES):
       continue
 
     # Prepend database.
