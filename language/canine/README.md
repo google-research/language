@@ -18,7 +18,7 @@ the [paper](https://arxiv.org/abs/2103.06874) for details.
 
 ## Core Model
 
-The core of the CANINE model implementation is in `modeling.py`.
+The core of the CANINE model implementation is in [`modeling.py`](modeling.py).
 
 Typical usage is similar to BERT:
 
@@ -37,15 +37,15 @@ Input processing is trivial and can typically be accomplished as: `input_ids =
 We've prioritized releasing the pre-trained checkpoints, modeling code, and TyDi
 QA evaluation code since we hope this will cover the most common use cases. The
 implementation of pre-training will be released in this repo in the future. If
-this is blocking you, feel free to send us a friendly ping to know this is
-important to you.
+this is blocking you, feel free to send us a friendly ping to let us know that
+this is important to you.
 
 ## Checkpoints
 
-*   **[CANINE-S](https://storage.googleapis.com/caninemodels/canine-s.zip)**:
+*   **[CANINE-S (~500 MB)](https://storage.googleapis.com/caninemodels/canine-s.zip)**:
     Pre-trained with autoregressive character loss, 12-layer, 768-hidden,
     12-heads, 121M parameters.
-*   **[CANINE-C](https://storage.googleapis.com/caninemodels/canine-c.zip)**:
+*   **[CANINE-C (~500 MB)](https://storage.googleapis.com/caninemodels/canine-c.zip)**:
     Pre-trained with subword loss, 12-layer, 768-hidden, 12-heads, 121M
     parameters.
 
@@ -59,25 +59,27 @@ parameters in the counts above.
 
 We evaluate on the TyDi QA Primary Tasks (TyDiQA-SelectP and TyDiQA-MinSpan).
 Note that these tasks are different than the GoldP task, often seen in the
-XTREME meta-benchmark.
+XTREME meta-benchmark. See the TyDi QA
+[website](https://ai.google.com/research/tydiqa) and
+[paper](https://www.aclweb.org/anthology/2020.tacl-1.30/) for more information.
 
-For details on running the TyDi QA systems, see the [README](tydiqa/README.md)
-in the `tydiqa` subdirectory.
+For details on running the TyDi QA systems, see [`tydiqa/README.md`](tydiqa).
 
 ## Tips and Tricks
 
-When adopting your existing code from BERT-like models to a tokenization-free
-CANINE model, there are a few pitfalls to be aware of:
+When adapting your existing code from BERT-like models to a tokenization-free
+CANINE model, there are a few potential pitfalls to be aware of:
 
-*   Carefully inspect your sequence length hyperparameters. For example, 512
-    must often be changed to 2048. `grep` works well for this.
+*   Carefully inspect your sequence length hyperparameters. For example, BERT
+    models often use a maximum sequence length of 512 subwords, which would
+    typically become 2048 in CANINE. `grep` works well for this.
 *   Carefully inspect hyperparameters *derived* from length. For example, in
     TyDi QA, this includes parameters such as question length, answer length,
     document stride, etc.
 *   Check that you've disabled your legacy tokenizers in all parts of your input
     preparation pipeline. Converting already-tokenized strings to codepoints
     will probably still work fine, but you will get the best performance by
-    feeding natural text -- without any punctuation splitting, etc. -- to
+    feeding natural text---without any punctuation splitting, etc.---to
     CANINE.
 *   Check your datasets to see if they have fossilized tokenization artifacts
     inside them. This is especially common for tagging tasks where punctuation
@@ -89,9 +91,9 @@ CANINE model, there are a few pitfalls to be aware of:
 
 Please cite the [CANINE ArXiV Paper](https://arxiv.org/abs/2103.06874) as:
 
-```
+```tex
 @misc{canine,
-  title={CANINE: Pre-training an Efficient Tokenization-Free Encoder for Language Representation},
+  title={{CANINE}: Pre-training an Efficient Tokenization-Free Encoder for Language Representation},
   author={Jonathan H. Clark and Dan Garrette and Iulia Turc and John Wieting},
   year={2021},
   eprint={2103.06874},
@@ -102,5 +104,5 @@ Please cite the [CANINE ArXiV Paper](https://arxiv.org/abs/2103.06874) as:
 
 ## Contact us
 
-If you have a technical question regarding the dataset, code or publication,
+If you have a technical question regarding the dataset, code, or publication,
 please send us email (see paper).
