@@ -58,14 +58,21 @@ def _split_punc(source):
 
 
 def process_source(source):
-  return _split_punc(source)
+  source = _split_punc(source)
+  # Remove extra whitespace.
+  source = " ".join(source.split())
+  return source
 
 
 def process_target(target):
+  """Preprocess target for space-separated tokenization."""
   target_sql_tokens = sql_tokenizer.tokenize_sql(target)
   target = " ".join(target_sql_tokens)
   target = _split_punc(target)
   # Split punc twice, to handle "%foo%" wrapped in two punc chars.
   # TODO(petershaw): Update _split_punc to correctly handle this case with
   # a single invocation.
-  return _split_punc(target)
+  target = _split_punc(target)
+  # Remove extra whitespace.
+  target = " ".join(target.split())
+  return target

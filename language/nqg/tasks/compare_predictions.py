@@ -32,7 +32,7 @@ def main(unused_argv):
   gold_examples = tsv_utils.read_tsv(FLAGS.gold)
 
   preds = []
-  with gfile.Open(FLAGS.predictions, "r") as f:
+  with gfile.GFile(FLAGS.predictions, "r") as f:
     for line in f:
       preds.append(line.rstrip())
 

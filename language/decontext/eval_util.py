@@ -327,6 +327,13 @@ def compute_sentence_generation_scores(original_sent_dict, reference_dict,
   del_p, del_r, del_f1 = get_p_r_f1(sari_del_tps, sari_del_fps, sari_del_fns)
   logging.info('SARI ADD p:%.2f r:%.2f f1:%.2f', add_p, add_r, add_f1)
   logging.info('SARI DEL p:%.2f r:%.2f f1:%.2f', del_p, del_r, del_f1)
+  return dict(
+      add_p=add_p,
+      add_r=add_r,
+      add_f1=add_f1,
+      del_p=del_p,
+      del_r=del_r,
+      del_f1=del_f1)
 
 
 def score_classification(annotation_dict, prediction_dict):
@@ -346,3 +353,6 @@ def score_classification(annotation_dict, prediction_dict):
   impossible_ratio = get_avg(category_prediction_list)
   logging.info('Impossible Category Ratio: %.2f', impossible_ratio)
   logging.info('Annotation Match Score: %.2f', binary_agreement_score)
+  return dict(
+      impossible_ratio=impossible_ratio,
+      binary_agreement_score=binary_agreement_score)
