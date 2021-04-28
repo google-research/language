@@ -193,21 +193,21 @@ def compute_raw_sari_score(original, pred, references):
   return RawSARIScore(add_tp, add_fp, add_fn, del_tp, del_fp, del_fn)
 
 
-def process_annotation(annotation_dict):
+def process_annotation(annotation_dict, allow_single_annotations=False):
   """Process annotation dictionary to generate references.
 
-
   Not all annotations will be a reference set to which prediction will be
-  evaluated against.
+  evaluated against. The median annotation will reserved to approximate human
+  performance. In case there's only one reference annotation, the
+  `allow_single_annotations` argument determines whether it is reserved.
 
-  The median annotation will reserved to approximate human perfromance.
-
-  The output dictionaries will only contain examples where at least three
-
+  The output dictionaries will only contain examples where at least half the
   annotators found decontextualization is feasible.
 
   Args:
     annotation_dict: dictionary with a list of decontext labels.
+    allow_single_annotations: bool, when there's only a single annotation,
+      whether to pass that single annotation to the reference_sents_dict.
 
   Returns:
     For all dictionaries, key is the example id.
@@ -226,22 +226,24 @@ def process_annotation(annotation_dict):
 
   for ex_id in list(annotation_dict.keys()):
     annotations = annotation_dict[ex_id]
-    done_labels = [
+    if not annotations:
+      raise ValueError('Empty annotations encountered while processing '
+                       'reference annotations.')
+    not_impossible = [
         get_sent(label)
         for label in annotations
         if label.category != 'IMPOSSIBLE'
     ]
-    others = sorted(done_labels, key=len)
-    if len(others) == 5:
-      median_val = 2
-    elif len(others) >= 3:
-      median_val = 1
-    else:
-      # Skip the example if more than two annotators marked it as impossible.
+    not_impossible = sorted(not_impossible, key=len)
+    if 2 * len(not_impossible) < len(annotations):
+      # Skip the example if the majority of annotators marked it as IMPOSSIBLE.
       continue
-    compare_human_sent = others.pop(median_val)
-    median_annotation_dict[ex_id] = compare_human_sent
-    reference_sents_dict[ex_id] = others
+    median_val = (len(not_impossible) - 1) // 2
+    if len(not_impossible) == 1 and allow_single_annotations:
+      median_annotation_dict[ex_id] = not_impossible[median_val]
+    else:
+      median_annotation_dict[ex_id] = not_impossible.pop(median_val)
+    reference_sents_dict[ex_id] = not_impossible
     original_sent_dict[ex_id] = annotations[0].original_sentence
   logging.info('%d examples needs to be decontextualized out of %d',
                len(median_annotation_dict), len(annotation_dict))
