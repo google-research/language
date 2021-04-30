@@ -1,0 +1,14 @@
+{
+  "batch_size": 256,
+  "learning_rate": 0.0001,
+  "training_steps": 256,
+  "warmup_steps": 100,
+  "steps_per_iteration": 8,
+  "save_checkpoint_every": 64,
+  "model_dims": 256,
+  "max_num_wordpieces": 24,
+  "max_num_applications": 50,
+  "max_num_numerator_nodes": 32,
+  "max_num_denominator_nodes": 64,
+  "max_num_rules": 30
+}

@@ -1,0 +1,61 @@
+# Defines a loose CFG for FunQL based on definitions here:
+# https://www.cs.utexas.edu/~ml/wasp/geo-funql.html
+# Note that the CFG here is still rather loose and could potentially be made
+# more precise by considering non-terminals specific to types (e.g. numbers,
+# places, etc.).
+ROOT => answer ( ##FUNC )
+FUNC => ##ARITY_1 ( ##FUNC )
+FUNC => ##ARITY_2 ( ##FUNC_COMMA_FUNC )
+FUNC_COMMA_FUNC => ##FUNC , ##FUNC
+FUNC => capital
+FUNC => city
+FUNC => lake
+FUNC => major
+FUNC => mountain
+FUNC => place
+FUNC => river
+FUNC => state
+FUNC => m0
+FUNC => m1
+ARITY_1 => smallest
+ARITY_1 => highest
+ARITY_1 => lowest
+ARITY_1 => longest
+ARITY_1 => shortest
+ARITY_1 => count
+ARITY_1 => sum
+ARITY_1 => area_1
+ARITY_1 => capital_1
+ARITY_1 => capital_2
+ARITY_1 => density_1
+ARITY_1 => elevation_1
+ARITY_1 => elevation_2
+ARITY_1 => high_point_1
+ARITY_1 => high_point_2
+ARITY_1 => higher_2
+ARITY_1 => loc_1
+ARITY_1 => loc_2
+ARITY_1 => low_point_1
+ARITY_1 => low_point_2
+ARITY_1 => lower_2
+ARITY_1 => next_to_1
+ARITY_1 => next_to_2
+ARITY_1 => population_1
+ARITY_1 => traverse_1
+ARITY_1 => traverse_2
+ARITY_1 => longer
+ARITY_1 => len
+ARITY_1 => size
+ARITY_2 => intersection
+ARITY_2 => exclude
+FUNC_COMMA_ARITY_1 => ##FUNC , ##ARITY_1
+FUNC => most ( ##FUNC_COMMA_ARITY_1 , ##FUNC )
+FUNC => fewest ( ##FUNC_COMMA_ARITY_1 , ##FUNC )
+FUNC => largest_one ( ##ARITY_1 , ##FUNC )
+FUNC => smallest_one ( ##ARITY_1 , ##FUNC )
+FUNC => largest ( state )
+FUNC => largest ( city )
+FUNC => largest ( capital )
+FUNC => largest ( intersection ( state , ##FUNC ) )
+FUNC => largest ( intersection ( city , ##FUNC ) )
+FUNC => largest ( intersection ( capital , ##FUNC ) )

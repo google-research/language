@@ -4,9 +4,6 @@ This directory contains code related to the paper "Compositional Generalization
 and Natural Language Variation: Can a Semantic Parsing Approach Handle Both?"
 (Peter Shaw, Ming-Wei Chang, Panupong Pasupat, Kristina Toutanova).
 
-The current version of this library contains code for reproducing the dataset
-splits used in the paper, and generating new splits.
-
 ### Setup and Prerequisites
 
 All python scripts should be run using Python 3 while in the top-level of this
@@ -217,3 +214,166 @@ Note: the appendix of the preprint states the batch size used for T5 was
 128, which we recently discovered is incorrect (see `tokens_per_batch` above).
 We are working to release a new version of the paper with this corrected.
 
+### NQG
+
+The `model/` directory contains code for a discriminative neural parsing model and a
+Quasi-synchronous Context-Free Grammar (QCFG) induction algorithm, collectively
+referred to as NQG.
+The inference code also supports evaluations of NQG-T5, a combination of NQG
+with T5, and other hybrids combining NQG with another higher coverage model.
+
+The sub-directory structure of `model/` is:
+
+- `qcfg` consists of common modules for representing and parsing QCFGs.
+- `induction` consists of all of the code necessary for inducing QCFGs given a
+set of examples.
+- `parser` consists of code for training the BERT-based neural parsing model.
+
+Note that the grammar induction algorithm can be used independently from the
+neural parsing model, and conversely the neural parsing model can also be used
+with any other method for producing a QCFG (such as manual annotation).
+
+Input examples are expected to be in the `source\ttarget\n` TSV format used
+elsewhere in this codebase. The following will expect that the environment
+variables `TRAIN_TSV` and `TEST_TSV` point the train and test splits,
+respectively.
+
+#### QCFG Induction
+
+Grammar induction requires only a dataset in TSV format. Various
+options and hyperparameters are configured via command line flags.
+
+Example usage:
+
+```shell
+python -m language.nqg.model.induction.induce_rules \
+  --input=${TRAIN_TSV} \
+  --output=${RULES} \
+  --sample_size=500 \
+  --terminal_codelength=32 \
+  --allow_repeated_target_nts=true
+```
+
+As the computational complexity of grammar induction increases with the
+length (in tokens) of the training examples and the total number of examples,
+it is necessary to set `sample_size` appropriately so that grammar induction
+can complete in a reasonable amount of time for your dataset. For reference,
+we used the following hyperparameters.
+
+* SCAN: `--sample_size=500 --terminal_codelength=32 --allow_repeated_target_nts=true`
+* GeoQuery: `--sample_size=0 --terminal_codelength=8 --allow_repeated_target_nts=false`
+* Spider: `--sample_size=1000 --terminal_codelength=8 --allow_repeated_target_nts=true`
+
+Note that for Spider, the script `tasks/spider/nqg_preprocess.py` should be run
+on the dataset TSV file to prepare the input for the space separated tokenization
+used by NQG.
+
+#### Neural Parsing Model Training
+
+The neural model code is implemented in TF 2.x, using the BERT implementation from:
+
+https://github.com/tensorflow/models/tree/master/official/nlp/bert#pre-trained-models
+
+The model itself, defined in `nqg_model.py`, consists only of relatively
+simple layers on top a BERT encoder. However, there is more complexity for model
+training, which requires generating parse forest representations for the numerator of
+the MML objective (which sums over derivations of the goal target) and the
+denominator (a partition function which sums over all derivations of the input).
+These parse forests are serialized into a set of integer tensors when writing the model training data. During training,
+the training loop uses `tf.TensorArray` to sequentially iterate over the
+serialized forests leveraging dynamic programming for efficiency. At inference time, model scores
+are integrated with a
+QCFG parsing algorithm to efficiently produce the highest scoring derivation,
+and output the corresponding target.
+
+JSON config files are used to configure parsing model hyperparameters.
+Reference configs for SCAN, GeoQuery, and Spider are located in
+the `model/parser/configs/` directory. The example commands below expect `CONFIG` to
+point to such a JSON config file.
+
+First, you need to generate training data, which is formatted as a TFRecord file
+of `tf.Example` protobuffers. This is done using the `write_examples.py` script,
+e.g.:
+
+```shell
+python -m language.nqg.model.parser.data.write_examples \
+  --input=${TRAIN_TSV} \
+  --output=${TF_EXAMPLES} \
+  --config=${CONFIG} \
+  --rules=${RULES} \
+  --bert_dir=${BERT_DIR}
+```
+
+This will write training examples to `TF_EXAMPLES`.
+
+`BERT_DIR` should point to BERT directory with a vocab file, a BERT config file,
+and a TF 2.x compatible BERT checkpoint. See the following link for details on TF 2.x compatible BERT checkpoints:
+
+https://github.com/tensorflow/models/tree/master/official/nlp/bert#pre-trained-models
+
+You can then run model training locally as follows:
+
+```shell
+python -m language.nqg.model.parser.training.train_model \
+  --input=${TF_EXAMPLES} \
+  --config=${CONFIG} \
+  --model_dir=${MODEL_DIR} \
+  --bert_dir=${BERT_DIR}
+```
+
+Model checkpoints will be saved to `MODEL_DIR`.
+
+`train_model.py` also supports distributed GPU training using the `--use_gpu` flag.
+
+#### Inference and Evaluation
+
+There are two scripts that useful for generating predictions and evaluation, `eval_model.py` and `generate_predictions.py`.
+
+The `eval_model.py` script can be
+run in parallel with model training. If run with `--poll` and `--write`, it will wait for new checkpoints to be written to `MODEL_DIR`, compute evaluation metrics, and then write metrics to `MODEL_DIR`. These metrics
+can then be visualized in TensorBoard:
+
+https://www.tensorflow.org/tensorboard
+
+Here is an example usage:
+
+```shell
+python -m language.nqg.model.parser.inference.eval_model \
+  --input=${TEST_TSV} \
+  --config=${CONFIG} \
+  --model_dir=${MODEL_DIR} \
+  --bert_dir=${BERT_DIR} \
+  --rules=${RULES}
+```
+
+The script computes the following metrics are computed for NQG (which can
+abstrain from making a prediction):
+
+* `nqg_accuracy` - Number of correct NQG predictions / number of test examples
+* `nqg_coverage` - Number of NQG predictions / number of test examples
+* `nqg_precision` - Number of correct NQG predictions / number of NQG predictions
+
+To compute performance for a setting such as NQG-T5, you can optionally provide predictions (e.g. from T5 or some other high coverage model)
+to be used in the case that NQG does not produce an output. These predictions are provided in the form of a txt
+file with one prediction per line, and specified as the argument for the flag `--fallback_predictions`.
+The `eval_model.py` script will also produce metrics for this setting:
+
+* `fallback_accuracy` - Number of correct fallback predictions / number of test examples
+* `hybrid_accuracy` - Number of correct hybrid predictions / number of test examples
+
+The hybrid prediction for a given example will be the NQG prediction if one is generated, and the fallback prediction (if one is provided) otherwise.
+
+You can also optionally provide a CFG defining valid targets for a particular task with the
+flag `--target_grammar`. NQG predictions that cannot be parsed by this CFG will
+be discarded. A CFG for FunQL as used by GeoQuery is provided in
+`parser/inference/targets/funql.txt`, and a CFG for Spider can be generated by
+`parser/inference/targets/generate_spider_grammars.py`.
+
+The script `generate_predictions.py` accepts similar command line flags as `eval_model.py`, except
+rather than accepting a TSV file as input, the input should be a txt file of inputs
+to generate predicted targets for.
+An input txt file can be generated from a TSV file using the `tasks/strip_targets.py` script.
+Instead of computing evaluation metrics, a txt file of predictions is generated.
+This script is therefore useful for generating predictions when the gold targets are not given.
+This script is also useful for datasets such as Spider where an evaluation metric other than
+exact string comparison is used, as the generated predictions can be used as input to some other evaluation script.
