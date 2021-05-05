@@ -18,7 +18,7 @@ import abc
 import collections
 import json
 import os
-
+from typing import Optional, Text
 
 from absl import logging
 from language.canine.tydiqa import postproc
@@ -34,41 +34,41 @@ class TyDiRunner(metaclass=abc.ABCMeta):
 
   def __init__(
       self,
-      model_config_file = None,
-      output_dir = None,
-      train_records_file = None,
-      record_count_file = None,
-      candidate_beam = 30,
-      predict_file = None,
-      precomputed_predict_file = None,
-      output_prediction_file = None,
-      init_checkpoint = None,
-      max_seq_length = 512,
-      doc_stride = 128,
-      max_question_length = 64,
-      do_train = False,
-      do_predict = False,
-      train_batch_size = 16,
-      predict_batch_size = 8,
-      predict_file_shard_size = None,
-      learning_rate = 5e-5,
-      num_train_epochs = 3.0,
-      warmup_proportion = 0.1,
-      save_checkpoints_steps = 1000,
-      iterations_per_loop = 1000,
-      max_answer_length = 100,
-      include_unknowns = -1.0,
-      verbose_logging = False,
-      max_passages = 45,
-      max_position = 45,
-      fail_on_invalid = True,
-      use_tpu = False,
-      tpu_name = None,
-      tpu_zone = None,
-      gcp_project = None,
-      master = None,
-      num_tpu_cores = 8,
-      max_to_predict = None,
+      model_config_file: Optional[Text] = None,
+      output_dir: Optional[Text] = None,
+      train_records_file: Optional[Text] = None,
+      record_count_file: Optional[Text] = None,
+      candidate_beam: int = 30,
+      predict_file: Optional[Text] = None,
+      precomputed_predict_file: Optional[Text] = None,
+      output_prediction_file: Optional[Text] = None,
+      init_checkpoint: Optional[Text] = None,
+      max_seq_length: int = 512,
+      doc_stride: int = 128,
+      max_question_length: int = 64,
+      do_train: bool = False,
+      do_predict: bool = False,
+      train_batch_size: int = 16,
+      predict_batch_size: int = 8,
+      predict_file_shard_size: Optional[int] = None,
+      learning_rate: float = 5e-5,
+      num_train_epochs: float = 3.0,
+      warmup_proportion: float = 0.1,
+      save_checkpoints_steps: int = 1000,
+      iterations_per_loop: int = 1000,
+      max_answer_length: int = 100,
+      include_unknowns: float = -1.0,
+      verbose_logging: bool = False,
+      max_passages: int = 45,
+      max_position: int = 45,
+      fail_on_invalid: bool = True,
+      use_tpu: bool = False,
+      tpu_name: Optional[Text] = None,
+      tpu_zone: Optional[Text] = None,
+      gcp_project: Optional[Text] = None,
+      master: Optional[Text] = None,
+      num_tpu_cores: int = 8,
+      max_to_predict: Optional[int] = None,
   ):
     self.model_config_file = model_config_file
     self.output_dir = output_dir
@@ -111,7 +111,7 @@ class TyDiRunner(metaclass=abc.ABCMeta):
     """Validate the input FLAGS or throw an exception."""
     raise NotImplementedError()
 
-  def run(self):
+  def run(self) -> None:
     """Main entry point for this class."""
     self.validate_flags_or_throw()
 
@@ -153,8 +153,8 @@ class TyDiRunner(metaclass=abc.ABCMeta):
     if self.do_predict:
       self.predict(estimator)
 
-  def get_model_fn(self, num_train_steps,
-                   num_warmup_steps):
+  def get_model_fn(self, num_train_steps: Optional[int],
+                   num_warmup_steps: Optional[int]):
     tydi_model_builder = self.get_tydi_model_builder()
     return tydi_model_builder.model_fn_builder(
         init_checkpoint=self.init_checkpoint,
@@ -363,7 +363,7 @@ class TyDiRunner(metaclass=abc.ABCMeta):
       yield shard()
 
   @abc.abstractmethod
-  def get_tokenizer(self):
+  def get_tokenizer(self) -> tydi_tokenization_interface.TokenizerWithOffsets:
     raise NotImplementedError()
 
   def read_candidates(self, input_pattern):

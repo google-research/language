@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import pprint
-
+from typing import Text
 
 from language.canine.tydiqa import char_splitter
 from language.canine.tydiqa import preproc
@@ -31,7 +31,7 @@ def _print_dict(d):
   print(pprint.PrettyPrinter().pformat(d).replace("°", "@"))
 
 
-def make_tokenizer():
+def make_tokenizer() -> tydi_tokenization_interface.TokenizerWithOffsets:
   return char_splitter.CharacterSplitter()
 
 
@@ -220,12 +220,12 @@ class PreprocTest(tf.test.TestCase):
       self,
       json_dict,
       result,
-      expected_context,
-      expected_answer_type,
-      expected_passage_answer_index,
-      expected_min_span_start,
-      expected_min_span_end,
-      expected_min_span_text,
+      expected_context: Text,
+      expected_answer_type: Text,
+      expected_passage_answer_index: int,
+      expected_min_span_start: int,
+      expected_min_span_end: int,
+      expected_min_span_text: Text,
   ):
     self.assertAllEqual(
         set(result),

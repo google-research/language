@@ -14,7 +14,7 @@
 # limitations under the License.
 """Constants defining canonical codepoints for special, pseudo-characters."""
 
-
+from typing import Dict, Text
 
 # Padding is always index zero. This means that the NULL character is
 # technically not embeddable. This seems fine according to all reasonable

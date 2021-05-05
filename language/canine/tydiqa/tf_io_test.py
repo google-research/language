@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import re
-
+from typing import Any, List, Mapping, Optional, Text
 
 from language.canine.tydiqa import char_splitter
 from language.canine.tydiqa import data
@@ -27,12 +27,12 @@ flags = tf.flags
 FLAGS = flags.FLAGS
 
 
-def make_tokenizer():
+def make_tokenizer() -> tydi_tokenization_interface.TokenizerWithOffsets:
   return char_splitter.CharacterSplitter()
 
 
-def _print_debug_info(results,
-                      creator_fn):
+def _print_debug_info(results: List[tf.train.Example],
+                      creator_fn: tf_io.CreateTFExampleFn):
   for r, result in enumerate(results):
     print(f'\nRESULT[{r}]')
     # print(text_format.MessageToString(result))
@@ -219,18 +219,18 @@ class TfIoTest(tf.test.TestCase):
 
   def assertCreateTfexampleFnResult(
       self,
-      entry,
-      creator_fn,
-      result,
-      result_index,
-      expected_language,
-      expected_input_ids_length,
-      expected_question_ids_length,
-      expected_content_pieces,
-      expected_answer_type = None,
-      expected_answer_span_start = None,
-      expected_answer_span_end = None,
-      expected_answer_span_pieces = None,
+      entry: Mapping[Text, Any],
+      creator_fn: tf_io.CreateTFExampleFn,
+      result: tf.train.Example,
+      result_index: int,
+      expected_language: data.Language,
+      expected_input_ids_length: int,
+      expected_question_ids_length: int,
+      expected_content_pieces: List[Text],
+      expected_answer_type: Optional[data.AnswerType] = None,
+      expected_answer_span_start: Optional[int] = None,
+      expected_answer_span_end: Optional[int] = None,
+      expected_answer_span_pieces: Optional[List[Text]] = None,
   ):
     """Checks the results of running `CreateTFExampleFn.process`.
 
@@ -255,7 +255,7 @@ class TfIoTest(tf.test.TestCase):
       expected_answer_span_pieces: Required iff is_training==True.
     """
 
-    def feature_vals(key):
+    def feature_vals(key: Text) -> List[int]:
       return result.features.feature[key].int64_list.value
 
     if creator_fn.is_training:

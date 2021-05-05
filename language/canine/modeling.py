@@ -14,7 +14,7 @@
 # limitations under the License.
 """The main CANINE model and related functions."""
 
-
+from typing import Optional, Sequence, Text
 
 import dataclasses
 from language.canine import bert_modeling
@@ -64,11 +64,11 @@ class CanineModelConfig(config_utils.Config):
     tc.NamedDim("batch", "a", 0),
     tc.NamedDim("seq", "a", 1),
     tc.NamedDim("dim", "a", 2))
-def _safe_add(a, b):
+def _safe_add(a: tf.Tensor, b: tf.Tensor) -> tf.Tensor:
   return a + b
 
 
-def _is_valid_codepoint(codepoints):
+def _is_valid_codepoint(codepoints: tf.Tensor) -> tf.Tensor:
   return tf.logical_and(codepoints >= 0, codepoints <= LARGEST_CODEPOINT)
 
 
@@ -76,12 +76,12 @@ class CanineModel:
   """Main model for CANINE. See constructor for details."""
 
   def __init__(self,
-               config,
-               atom_input_ids,
-               atom_input_mask,
-               atom_segment_ids,
-               is_training,
-               final_seq_char_positions = None):
+               config: CanineModelConfig,
+               atom_input_ids: tf.Tensor,
+               atom_input_mask: tf.Tensor,
+               atom_segment_ids: tf.Tensor,
+               is_training: bool,
+               final_seq_char_positions: Optional[tf.Tensor] = None):
     """Creates a `CanineModel`.
 
     This interface mirrors the `BertModel` class from the public BERT code, but
@@ -218,8 +218,8 @@ class CanineModel:
       tc.NamedDim("batch", "codepoints", 0),
       tc.NamedDim("char_seq", "codepoints", 1),
       tc.NamedDim("char_dim", value_of="self.config.hidden_size"))
-  def _embed_chars(self, codepoints,
-                   segment_ids):
+  def _embed_chars(self, codepoints: tf.Tensor,
+                   segment_ids: tf.Tensor) -> tf.Tensor:
     """Lookup character embeddings given integer Unicode codepoints."""
 
     with tf.variable_scope("char_embeddings"):
@@ -250,8 +250,8 @@ class CanineModel:
       tc.NamedDim("batch", "char_embed_seq", 0),
       tc.NamedDim("char_seq", "char_embed_seq", 1),
       tc.NamedDim("char_dim", "char_embed_seq", 2))
-  def _encode_initial_chars(self, char_embed_seq,
-                            char_attention_mask):
+  def _encode_initial_chars(self, char_embed_seq: tf.Tensor,
+                            char_attention_mask: tf.Tensor) -> tf.Tensor:
     """Encode characters using shallow/low dim transformer."""
     with tf.variable_scope("initial_char_encoder"):
       return local_attention.local_transformer_model(
@@ -286,8 +286,8 @@ class CanineModel:
       tc.NamedDim("molecule_dim", value_of="self.config.hidden_size"))
   def _chars_to_molecules(
       self,
-      char_encoding,
-      expected_molecule_seq_length):
+      char_encoding: tf.Tensor,
+      expected_molecule_seq_length: tf.Tensor) -> tf.Tensor:
     """Convert char seq to initial molecule seq."""
 
     del expected_molecule_seq_length  # Used by contract only.
@@ -340,8 +340,8 @@ class CanineModel:
       tc.NamedDim("batch", "molecules_in", 0),
       tc.NamedDim("seq", "molecules_in", 1),
       tc.NamedDim("dim", "molecules_in", 2))
-  def _bert_stack(self, molecules_in,
-                  attention_mask):
+  def _bert_stack(self, molecules_in: tf.Tensor,
+                  attention_mask: tf.Tensor) -> Sequence[tf.Tensor]:
     """Encode the molecules using a deep transformer stack."""
     with tf.variable_scope("bert"):
       return bert_modeling.transformer_model(
@@ -368,8 +368,8 @@ class CanineModel:
       tc.NamedDim("molecule_seq", "molecules", 1),
       tc.NamedDim("molecule_dim", "molecules", 2),
       tc.NamedDim("char_seq", value_of="char_seq_length"))
-  def _repeat_molecules(self, molecules, char_seq_length,
-                        molecule_seq_length):
+  def _repeat_molecules(self, molecules: tf.Tensor, char_seq_length: tf.Tensor,
+                        molecule_seq_length: tf.Tensor) -> tf.Tensor:
     """Repeats molecules to make them the same length as the char sequence."""
 
     del molecule_seq_length  # Used for contract only.
@@ -406,10 +406,10 @@ class CanineModel:
       tc.NamedDim("molecule_dim", "molecules", 2),
       tc.NamedDim("char_seq", value_of="expected_char_seq_length"),
       tc.NamedDim("char_dim", value_of="expected_char_dim"))
-  def _molecules_to_chars(self, molecules,
-                          molecule_seq_length,
-                          expected_char_seq_length,
-                          expected_char_dim):
+  def _molecules_to_chars(self, molecules: tf.Tensor,
+                          molecule_seq_length: tf.Tensor,
+                          expected_char_seq_length: tf.Tensor,
+                          expected_char_dim: int) -> tf.Tensor:
     """Converts molecule seq back to a char seq."""
 
     del expected_char_dim  # Used by contract only.
@@ -467,12 +467,12 @@ class CanineModel:
       tc.NamedDim("molecule_dim", "full_molecules", 2))
   def _encode_final_chars(
       self,
-      final_char_input_seq,
-      char_attention_mask,
-      full_molecules,
-      char_to_molecule_attention_mask,
-      molecule_seq_length,
-      final_seq_char_positions):
+      final_char_input_seq: tf.Tensor,
+      char_attention_mask: tf.Tensor,
+      full_molecules: tf.Tensor,
+      char_to_molecule_attention_mask: tf.Tensor,
+      molecule_seq_length: tf.Tensor,
+      final_seq_char_positions: Optional[tf.Tensor]) -> tf.Tensor:
     """Run a shallow/low-dim transformer to get a final character encoding."""
 
     _, char_seq_length, _ = bert_modeling.get_shape_list(final_char_input_seq)
@@ -548,7 +548,7 @@ class CanineModel:
       tc.Ensure(tc.RESULT, shape=["batch", "hidden_size"]),
       tc.NamedDim("batch", "seq_to_pool", 0),
       tc.NamedDim("hidden_size", "seq_to_pool", 2))
-  def _pool(self, seq_to_pool):
+  def _pool(self, seq_to_pool: tf.Tensor) -> tf.Tensor:
     """Grab the [CLS] molecule for use in classification tasks."""
     # The "pooler" converts the encoded sequence tensor of shape
     # [batch_size, seq_length, hidden_size] to a tensor of shape
@@ -574,9 +574,9 @@ class CanineModel:
                 shape=["batch", tc.Unchecked("seq"), tc.Unchecked("seq")]),
       tc.NamedDim("batch", "char_attention_mask", 0))
   def downsample_attention_mask(self,
-                                char_attention_mask,
-                                downsampling_rate,
-                                dim = -1):
+                                char_attention_mask: tf.Tensor,
+                                downsampling_rate: int,
+                                dim: int = -1) -> tf.Tensor:
     """Downsample one dimension of an attention mask."""
     perm = None
     if dim != -1:
@@ -606,8 +606,8 @@ class CanineModel:
       molecule_attention_mask = tf.transpose(molecule_attention_mask, perm)
     return molecule_attention_mask
 
-  def _hash_bucket_tensors(self, ids, num_hashes,
-                           num_buckets):
+  def _hash_bucket_tensors(self, ids: tf.Tensor, num_hashes: int,
+                           num_buckets: int) -> Sequence[tf.Tensor]:
     """Converts ids to hash bucket ids via multiple hashing.
 
     Args:
@@ -636,9 +636,9 @@ class CanineModel:
       tc.NamedDim("batch", "ids", 0),
       tc.NamedDim("seq", "ids", 1),
       tc.NamedDim("dim", value_of="embedding_size"))
-  def _embed_hash_buckets(self, ids, embedding_size,
-                          num_hashes, num_buckets,
-                          initializer_range):
+  def _embed_hash_buckets(self, ids: tf.Tensor, embedding_size: int,
+                          num_hashes: int, num_buckets: int,
+                          initializer_range: int) -> tf.Tensor:
     """Converts IDs (e.g. codepoints) into embeddings via multiple hashing.
 
     Args:
@@ -677,7 +677,7 @@ class CanineModel:
       tc.NamedDim("batch", value_of="self._batch_size"),
       tc.NamedDim("downsampled_seq", value_of="self.molecule_seq_length"),
       tc.NamedDim("hidden_size", value_of="self.config.hidden_size"))
-  def get_downsampled_layers(self):
+  def get_downsampled_layers(self) -> Sequence[tf.Tensor]:
     """Gets a sequence representation, one position per character."""
     assert len(self.downsampled_layers) == self.config.num_hidden_layers
     return self.downsampled_layers
@@ -689,7 +689,7 @@ class CanineModel:
       tc.NamedDim("char_seq", value_of="self._final_char_seq_length"),
       tc.NamedDim("hidden_size",
                   value_of="self.config.hidden_size"))
-  def get_sequence_output(self):
+  def get_sequence_output(self) -> tf.Tensor:
     """Gets a sequence representation, one position per character."""
     return self.final_char_encoding
 
@@ -697,6 +697,6 @@ class CanineModel:
       tc.Ensure(tc.RESULT, dtype=tf.float32, shape=["batch", "hidden_size"]),
       tc.NamedDim("batch", value_of="self._batch_size"),
       tc.NamedDim("hidden_size", value_of="self.config.hidden_size"))
-  def get_pooled_output(self):
+  def get_pooled_output(self) -> tf.Tensor:
     """Gets a single sequence representation for classification."""
     return self.pooled

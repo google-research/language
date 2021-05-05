@@ -21,7 +21,7 @@ favorite ML/DL framework.
 import abc
 
 import typing
-
+from typing import Dict, List, Optional, Text
 
 
 # For CANINE, all `SubTokens` will always be codepoints.
@@ -36,18 +36,18 @@ TokenizedIdsWithOffsets = typing.NamedTuple("TokenizedIdsWithOffsets", [
 class TokenizerWithOffsets(metaclass=abc.ABCMeta):
   """Tokenizes an input string into a sequence of IDs and tracks byte offsets."""
 
-  def tokenize(self, text):
+  def tokenize(self, text: Text) -> List[int]:
     """Tokenizes a piece of `text` and returns a list of vocab IDs."""
     wordpieces, _, _, _ = self.tokenize_with_offsets(text)
     return wordpieces
 
   @abc.abstractmethod
-  def tokenize_with_offsets(self, text):
+  def tokenize_with_offsets(self, text: Text) -> TokenizedIdsWithOffsets:
     """Tokenizes a piece of `text` and returns IDs and offset information."""
     raise NotImplementedError()
 
   @abc.abstractmethod
-  def get_passage_marker(self, i):
+  def get_passage_marker(self, i: int) -> Text:
     """Returns a marker for the start of passage `i`.
 
     Args:
@@ -61,10 +61,10 @@ class TokenizerWithOffsets(metaclass=abc.ABCMeta):
     raise NotImplementedError()
 
   @abc.abstractmethod
-  def get_vocab_id(self, key, default = None):
+  def get_vocab_id(self, key: Text, default: Optional[int] = None) -> int:
     raise NotImplementedError()
 
   # Only needed by debugging code.
   @abc.abstractmethod
-  def id_to_string(self, i):
+  def id_to_string(self, i: int) -> Text:
     raise NotImplementedError()

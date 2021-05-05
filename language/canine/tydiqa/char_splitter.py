@@ -14,7 +14,7 @@
 # limitations under the License.
 """Character-level preprocessing for CANINE."""
 
-
+from typing import Dict, Optional, Text
 
 from language.canine import special_codepoints
 from language.canine.tydiqa import data
@@ -51,7 +51,7 @@ class CharacterSplitter(tydi_tokenization_interface.TokenizerWithOffsets):
     }
 
   def tokenize_with_offsets(
-      self, text):
+      self, text: Text) -> tydi_tokenization_interface.TokenizedIdsWithOffsets:
     result = tydi_tokenization_interface.TokenizedIdsWithOffsets([], [], [], {})
     byte_index = 0
     for char_index, c in enumerate(text):
@@ -63,10 +63,10 @@ class CharacterSplitter(tydi_tokenization_interface.TokenizerWithOffsets):
       result.limit_bytes.append(byte_index - 1)
     return result
 
-  def get_passage_marker(self, i):
+  def get_passage_marker(self, i: int) -> Text:
     return chr(self._passage_0_codepoint + i)
 
-  def get_vocab_id(self, key, default = None):
+  def get_vocab_id(self, key: Text, default: Optional[int] = None) -> int:
     """Gets the vocab id of `key`."""
     if key in self._special_codepoints:
       return self._special_codepoints[key]
@@ -75,7 +75,7 @@ class CharacterSplitter(tydi_tokenization_interface.TokenizerWithOffsets):
     except TypeError:
       raise ValueError(f"invalid vocab key: '{key}'")
 
-  def id_to_string(self, i):
+  def id_to_string(self, i: int) -> Text:
     if i in self._special_codepoint_strings:
       return self._special_codepoint_strings[i]
     try:

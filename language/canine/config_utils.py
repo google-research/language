@@ -21,7 +21,7 @@ import inspect
 import json
 import traceback
 
-
+from typing import Any, Dict, Optional, Set, Text, Type, TypeVar, Union
 
 import dataclasses
 import tensorflow.compat.v1 as tf
@@ -99,7 +99,7 @@ class Config:
   See also `config_utils_test.py`.
   """
 
-  def validate(self):
+  def validate(self) -> None:
     """Raises an exception if this configuration is invalid."""
     # Run any custom validation logic provided by a subclass's implementation.
     self._validate_self()
@@ -110,14 +110,14 @@ class Config:
       if isinstance(value, Config):
         value.validate()
 
-  def _validate_self(self):
+  def _validate_self(self) -> None:
     """To be overridden by implementing classes for custom validation logic."""
     pass
 
   @classmethod
-  def from_dict(cls,
-                json_object,
-                debug_filename = None):
+  def from_dict(cls: Type[ConfigT],
+                json_object: Dict[Text, JsonAtomicValue],
+                debug_filename: Optional[Text] = None) -> ConfigT:
     """Constructs a `Config` from a Python dictionary of parameters."""
     if not issubclass(cls, Config):
       raise ValueError(
@@ -136,7 +136,7 @@ class Config:
     return config
 
   @classmethod
-  def from_json_file(cls, json_file):
+  def from_json_file(cls: Type[ConfigT], json_file: Text) -> ConfigT:
     """Constructs a `BertConfig` from a json file of parameters."""
     if not issubclass(cls, Config):
       raise ValueError(
@@ -145,7 +145,7 @@ class Config:
     with tf.gfile.GFile(json_file, "r") as f:
       return cls.from_dict(json.load(f), debug_filename=json_file)
 
-  def to_dict(self, namespace_prefix = ""):
+  def to_dict(self, namespace_prefix: Text = "") -> Dict[Text, JsonAtomicValue]:
     """Serializes this instance to a Python dictionary."""
     assert not namespace_prefix or namespace_prefix.endswith(".")
 
@@ -160,7 +160,7 @@ class Config:
         output[namespace_prefix + key] = value
     return output
 
-  def to_json_string(self):
+  def to_json_string(self) -> Text:
     """Serializes this instance to a JSON string."""
     try:
       return json.dumps(self.to_dict(), indent=2, sort_keys=True)
@@ -170,13 +170,13 @@ class Config:
           "Could not JSON serialize a child attribute. "
           "Did you forget to make it an instance of `Config`?", e_str)
 
-  def __str__(self):
+  def __str__(self) -> Text:
     return self.to_json_string()
 
   # Private members:
 
   @property
-  def _field_names(self):
+  def _field_names(self) -> Set[Text]:
     """Returns this config's field names as a set."""
     if dataclasses.is_dataclass(self):
       # Dataclasses have their own way of storing information about their
@@ -192,7 +192,7 @@ class Config:
         if not field_name.startswith("_")  # Skip private fields.
     }
 
-  def _cast_value(self, target, value):
+  def _cast_value(self, target: Any, value: JsonAtomicValue) -> JsonAtomicValue:
     # Prevent implicit casting "false" to `True`.
     if isinstance(target, bool) and isinstance(value, str):
       if value.lower() == "true":
@@ -201,8 +201,8 @@ class Config:
         value = False
     return value
 
-  def _set_value(self, key, value, debug_filename,
-                 debug_orig_key):
+  def _set_value(self, key: Text, value: JsonAtomicValue, debug_filename: Text,
+                 debug_orig_key: Text):
     """Sets the value of a key-value pair, recursively traversing namespaces."""
     # Detect if this key has a namespace prefix.
     # If so, strip it and recursively delegate to corresponding child object.

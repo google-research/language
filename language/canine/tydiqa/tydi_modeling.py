@@ -199,7 +199,7 @@ class GenericModelBuilder(metaclass=abc.ABCMeta):
 class CanineModelBuilder(GenericModelBuilder):
   """Class for constructing a TyDi QA model based on CANINE."""
 
-  def __init__(self, model_config):
+  def __init__(self, model_config: canine_modeling.CanineModelConfig):
     self.model_config = model_config
 
   def create_encoder_model(self, is_training, input_ids, input_mask,

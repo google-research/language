@@ -14,7 +14,7 @@
 # limitations under the License.
 """A fork of BERT's transformer implementation that performs local attention."""
 
-
+from typing import Optional, Text
 
 from language.canine import bert_modeling
 from language.canine import tensor_contracts as tc
@@ -27,7 +27,7 @@ import tensorflow.compat.v1 as tf
     tc.NamedDim("batch", "a", 0),
     tc.NamedDim("seq", "a", 1),
     tc.NamedDim("dim", "a", 2))
-def _safe_add(a, b):
+def _safe_add(a: tf.Tensor, b: tf.Tensor) -> tf.Tensor:
   return a + b
 
 
@@ -46,25 +46,25 @@ def _safe_add(a, b):
     tc.NamedDim("from_dim", "from_tensor", 2),
     tc.NamedDim("to_len", value_of="to_seq_length"),
     tc.NamedDim("to_dim", "to_tensor", 2))
-def local_attention_layer(from_tensor,
-                          to_tensor,
-                          from_seq_length,
-                          to_seq_length,
-                          attention_mask,
-                          num_attention_heads = 1,
-                          size_per_head = 512,
-                          query_act = None,
-                          key_act = None,
-                          value_act = None,
-                          attention_probs_dropout_prob = 0.0,
-                          initializer_range = 0.02,
-                          batch_size = None,
-                          always_attend_to_first_position = True,
-                          first_position_attends_to_all = True,
-                          attend_from_chunk_width = 128,
-                          attend_from_chunk_stride = 128,
-                          attend_to_chunk_width = 128,
-                          attend_to_chunk_stride = 128):
+def local_attention_layer(from_tensor: tf.Tensor,
+                          to_tensor: tf.Tensor,
+                          from_seq_length: int,
+                          to_seq_length: int,
+                          attention_mask: tf.Tensor,
+                          num_attention_heads: int = 1,
+                          size_per_head: int = 512,
+                          query_act: Optional[Text] = None,
+                          key_act: Optional[Text] = None,
+                          value_act: Optional[Text] = None,
+                          attention_probs_dropout_prob: float = 0.0,
+                          initializer_range: float = 0.02,
+                          batch_size: Optional[int] = None,
+                          always_attend_to_first_position: bool = True,
+                          first_position_attends_to_all: bool = True,
+                          attend_from_chunk_width: int = 128,
+                          attend_from_chunk_stride: int = 128,
+                          attend_to_chunk_width: int = 128,
+                          attend_to_chunk_stride: int = 128):
   """A fork of BERT's `attention_layer` that performs local attention.
 
   This attention is local in that attention happens only within each block
@@ -197,28 +197,28 @@ def local_attention_layer(from_tensor,
     tc.NamedDim("batch", "input_tensor", 0),
     tc.NamedDim("seq_len", "input_tensor", 1),
     tc.NamedDim("dim", value_of="hidden_size"))
-def local_transformer_model(input_tensor,
-                            attention_mask,
-                            input_kv_tensor = None,
-                            init_kv_attention_mask = None,
-                            hidden_size = 768,
-                            num_hidden_layers = 12,
-                            num_attention_heads = 12,
-                            intermediate_size = 3072,
-                            intermediate_act_fn = None,
-                            hidden_dropout_prob = 0.1,
-                            attention_probs_dropout_prob = 0.1,
-                            initializer_range = 0.02,
-                            do_return_all_layers = False,
-                            num_layers_to_update = None,
-                            always_attend_to_first_position = True,
-                            first_position_attends_to_all = True,
-                            attend_from_chunk_width = 128,
-                            attend_from_chunk_stride = 128,
-                            attend_to_chunk_width = 128,
-                            attend_to_chunk_stride = 128,
-                            init_attend_to_chunk_width = 128,
-                            init_attend_to_chunk_stride = 128):
+def local_transformer_model(input_tensor: tf.Tensor,
+                            attention_mask: tf.Tensor,
+                            input_kv_tensor: Optional[tf.Tensor] = None,
+                            init_kv_attention_mask: Optional[tf.Tensor] = None,
+                            hidden_size: int = 768,
+                            num_hidden_layers: int = 12,
+                            num_attention_heads: int = 12,
+                            intermediate_size: int = 3072,
+                            intermediate_act_fn: Optional[Text] = None,
+                            hidden_dropout_prob: float = 0.1,
+                            attention_probs_dropout_prob: float = 0.1,
+                            initializer_range: float = 0.02,
+                            do_return_all_layers: bool = False,
+                            num_layers_to_update: Optional[int] = None,
+                            always_attend_to_first_position: bool = True,
+                            first_position_attends_to_all: bool = True,
+                            attend_from_chunk_width: int = 128,
+                            attend_from_chunk_stride: int = 128,
+                            attend_to_chunk_width: int = 128,
+                            attend_to_chunk_stride: int = 128,
+                            init_attend_to_chunk_width: int = 128,
+                            init_attend_to_chunk_stride: int = 128):
   """Fork of BERT's `transformer_model` that performs local attention.
 
   This attention is local in that attention happens only within each block

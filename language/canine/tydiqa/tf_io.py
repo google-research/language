@@ -21,7 +21,7 @@ files via `tf.gfile`.
 import collections
 import gzip
 import json
-
+from typing import Iterator, List, Sequence, Text
 
 from absl import logging
 from language.canine.tydiqa import data
@@ -30,9 +30,9 @@ from language.canine.tydiqa import tydi_tokenization_interface as tok_interface
 import tensorflow.compat.v1 as tf
 
 
-def read_entries(input_jsonl_pattern,
-                 tokenizer,
-                 max_passages, max_position, fail_on_invalid):
+def read_entries(input_jsonl_pattern: Text,
+                 tokenizer: tok_interface.TokenizerWithOffsets,
+                 max_passages: int, max_position: int, fail_on_invalid: bool):
   """Reads TyDi QA examples from JSONL files.
 
   Args:
@@ -131,17 +131,17 @@ def input_fn_builder(input_file, seq_length, is_training, drop_remainder):
 class FeatureWriter(object):
   """Writes InputFeatures to TF example file."""
 
-  def __init__(self, filename, is_training):
+  def __init__(self, filename: Text, is_training: bool):
     self.filename = filename
     self.is_training = is_training
     self.num_features = 0
     self._writer = tf.python_io.TFRecordWriter(filename)
 
-  def process_feature(self, feature):
+  def process_feature(self, feature: preproc.InputFeatures) -> None:
     """Writes InputFeatures to the TFRecordWriter as a tf.train.Example."""
     self.num_features += 1
 
-    def create_int_feature(values):
+    def create_int_feature(values: Sequence[int]) -> tf.train.Feature:
       return tf.train.Feature(int64_list=tf.train.Int64List(value=list(values)))
 
     # This needs to be kept in sync with `input_fn_builder`.
@@ -172,7 +172,7 @@ class CreateTFExampleFn(object):
 
   def __init__(self, is_training, max_question_length, max_seq_length,
                doc_stride, include_unknowns,
-               tokenizer):
+               tokenizer: tok_interface.TokenizerWithOffsets):
     self.is_training = is_training
     self.tokenizer = tokenizer
     self.max_question_length = max_question_length
@@ -183,7 +183,7 @@ class CreateTFExampleFn(object):
   def process(self,
               entry,
               errors,
-              debug_info=None):
+              debug_info=None) -> Iterator[tf.train.Example]:
     """Converts TyDi entries into serialized tf examples.
 
     Args:

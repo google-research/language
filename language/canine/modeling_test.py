@@ -18,7 +18,7 @@ import itertools
 import json
 import random
 import re
-
+from typing import Dict, Text
 
 from absl.testing import parameterized
 from language.canine import modeling

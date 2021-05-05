@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from typing import Optional, Sequence
 
 from language.canine import tensor_contracts as tc
 import tensorflow.compat.v1 as tf
@@ -22,7 +22,7 @@ class TensorContractsTest(tf.test.TestCase):
 
   def test_static_rank(self):
     @tc.contract(tc.Require("t", rank=1))
-    def my_func(t):
+    def my_func(t: tf.Tensor):
       del t  # Unused.
 
     # Passes:
@@ -34,7 +34,7 @@ class TensorContractsTest(tf.test.TestCase):
 
   def test_static_shape(self):
     @tc.contract(tc.Require("t", shape=[1, 2]))
-    def my_func(t):
+    def my_func(t: tf.Tensor):
       del t  # Unused.
 
     # Passes:
@@ -46,7 +46,7 @@ class TensorContractsTest(tf.test.TestCase):
 
   def test_dynamic_shape(self):
     @tc.contract(tc.Require("t", shape=[1, 2]))
-    def my_func(t):
+    def my_func(t: tf.Tensor) -> tf.Tensor:
       return t
 
     input_tensor = tf.placeholder(tf.float32, shape=[None, None])
@@ -67,7 +67,7 @@ class TensorContractsTest(tf.test.TestCase):
         tc.Require("a", shape=["seq_length"]),
         tc.Require("b", shape=["seq_length"]),
         tc.NamedDim("seq_length", "a", 0))
-    def my_func(a, b):
+    def my_func(a: tf.Tensor, b: tf.Tensor):
       del a  # Unused.
       del b  # Unused.
 
@@ -87,7 +87,7 @@ class TensorContractsTest(tf.test.TestCase):
         self.t = tf.constant([[0, 1]])
 
     @tc.contract(tc.Require("obj.t", shape=[1, 2]))
-    def my_func(obj):
+    def my_func(obj: tf.Tensor):
       del obj  # Unused.
 
     my_func(Obj())
@@ -99,7 +99,7 @@ class TensorContractsTest(tf.test.TestCase):
       return tf.greater(a, b)
 
     @tc.contract(tc.RequireTrue(_greater, tensors=["a", "b"], error="Fail."))
-    def my_func(a, b):
+    def my_func(a: tf.Tensor, b: tf.Tensor):
       return a + b
 
     small = tf.constant([1, 2])
@@ -125,7 +125,7 @@ class TensorContractsTest(tf.test.TestCase):
     # TODO(jhclark): Notice that the syntax is currently insufficient for
     # handling tuple return types with `EnsureTrue`.
     @tc.contract(tc.EnsureTrue(_nonzero, tensors=["RESULT"], error="Fail."))
-    def my_func(a):
+    def my_func(a: tf.Tensor) -> tf.Tensor:
       return a
 
     a = tf.constant([1, 2])
@@ -143,14 +143,14 @@ class TensorContractsTest(tf.test.TestCase):
 
   def test_varargs(self):
     @tc.contract(tc.Require("t", shape=[1, 2]))
-    def my_func(t, *args):
+    def my_func(t: tf.Tensor, *args):
       del t  # Unused.
       del args  # Unused.
     my_func(tf.constant([[0, 1]]))
 
   def test_kwargs(self):
     @tc.contract(tc.Require("t", shape=[1, 2]))
-    def my_func(t, **kwargs):
+    def my_func(t: tf.Tensor, **kwargs):
       del t  # Unused.
       del kwargs  # Unused.
     my_func(tf.constant([[0, 1]]))
@@ -187,7 +187,7 @@ class TensorContractsTest(tf.test.TestCase):
       return result
 
     @tc.contract(tc.Dynamic(_condition_generator, "a", "b"))
-    def my_func(a, b):
+    def my_func(a: Sequence[tf.Tensor], b: Sequence[tf.Tensor]):
       return a[0] + b[0]
 
     small = [tf.constant([1, 2])]
@@ -208,7 +208,7 @@ class TensorContractsTest(tf.test.TestCase):
     class MyClass(object):
 
       @tc.contract(tc.Require("t", rank=1))
-      def __init__(self, t):
+      def __init__(self, t: tf.Tensor):
         del t  # Unused.
 
     # Passes:
@@ -220,7 +220,7 @@ class TensorContractsTest(tf.test.TestCase):
 
   def test_static_rank_optional(self):
     @tc.contract(tc.Require("t", rank=1, optional=True))
-    def my_func(t):
+    def my_func(t: Optional[tf.Tensor]):
       del t  # Unused.
 
     # Passes:
@@ -234,7 +234,7 @@ class TensorContractsTest(tf.test.TestCase):
   def test_self_property_access(self):
     class MyClass(object):
 
-      def __init__(self, t, desired_dim):
+      def __init__(self, t: tf.Tensor, desired_dim: tf.Tensor):
         self.t = t
         self.desired_dim = desired_dim
 
@@ -261,7 +261,7 @@ class TensorContractsTest(tf.test.TestCase):
 
   def test_static_dims(self):
     @tc.contract(tc.Require("t", static_dims=[0]))
-    def my_func(t):
+    def my_func(t: tf.Tensor):
       return t
 
     # Passes:

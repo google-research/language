@@ -24,7 +24,7 @@ favorite ML/DL framework.
 import collections
 import enum
 
-
+from typing import Any, Mapping, Optional, Sequence, Text
 
 TextSpan = collections.namedtuple("TextSpan", "byte_positions text")
 
@@ -61,9 +61,9 @@ class Answer(collections.namedtuple("Answer", ["type", "text", "offset"])):
   """
 
   def __new__(cls,
-              type_,
-              text = None,
-              offset = None):
+              type_: AnswerType,
+              text: Optional[Text] = None,
+              offset: Optional[int] = None):
     return super(Answer, cls).__new__(cls, type_, text, offset)
 
 
@@ -76,15 +76,15 @@ class TyDiExample(object):
   """
 
   def __init__(self,
-               example_id,
-               language_id,
-               question,
-               contexts,
-               plaintext,
-               context_to_plaintext_offset,
-               answer = None,
-               start_byte_offset = None,
-               end_byte_offset = None):
+               example_id: int,
+               language_id: Language,
+               question: Text,
+               contexts: Text,
+               plaintext: Text,
+               context_to_plaintext_offset: Sequence[int],
+               answer: Optional[Answer] = None,
+               start_byte_offset: Optional[int] = None,
+               end_byte_offset: Optional[int] = None):
     self.example_id = example_id
 
     # A member of the `Language` enumeration as converted by `get_language_id`.
@@ -215,7 +215,7 @@ def candidates_iter(json_dict):
     yield idx, cand
 
 
-def make_tydi_answer(contexts, answer):
+def make_tydi_answer(contexts: Text, answer: Mapping[Text, Any]) -> Answer:
   """Makes an Answer object following TyDi conventions.
 
   Args:
@@ -249,7 +249,7 @@ def make_tydi_answer(contexts, answer):
       answer_type, text=byte_slice(contexts, start, end), offset=start)
 
 
-def get_language_id(input_text):
+def get_language_id(input_text: Text) -> Language:
   """Maps string language id into integer."""
   if input_text.lower() == "arabic":
     language_id = Language.ARABIC
@@ -278,8 +278,8 @@ def get_language_id(input_text):
   return language_id
 
 
-def to_tydi_example(entry,
-                    is_training):
+def to_tydi_example(entry: Mapping[Text, Any],
+                    is_training: bool) -> TyDiExample:
   """Converts a TyDi 'entry' from `create_entry_from_json` to `TyDiExample`."""
 
   if is_training:

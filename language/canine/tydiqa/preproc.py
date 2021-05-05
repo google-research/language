@@ -27,7 +27,7 @@ import glob
 import json
 import random
 
-
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Text, Tuple
 
 from absl import logging
 from language.canine.tydiqa import data
@@ -35,12 +35,12 @@ from language.canine.tydiqa import tydi_tokenization_interface
 
 
 def create_entry_from_json(
-    json_dict,
-    tokenizer,
-    max_passages,
-    max_position,
-    fail_on_invalid,
-    ignore_yes_no_answer = True):
+    json_dict: Mapping[Text, Any],
+    tokenizer: tydi_tokenization_interface.TokenizerWithOffsets,
+    max_passages: int,
+    max_position: int,
+    fail_on_invalid: bool,
+    ignore_yes_no_answer: bool = True) -> Dict[Text, Any]:
   """Creates an TyDi 'entry' from the raw JSON.
 
   The 'TyDiEntry' dict is an intermediate format that is later converted into
@@ -281,19 +281,19 @@ class InputFeatures(object):
   """A single set of features of data."""
 
   def __init__(self,
-               unique_id,
-               example_index,
-               language_id,
-               doc_span_index,
-               wp_start_offset,
-               wp_end_offset,
-               input_ids,
-               input_mask,
-               segment_ids,
-               start_position = None,
-               end_position = None,
-               answer_text = "",
-               answer_type = data.AnswerType.MINIMAL):
+               unique_id: int,
+               example_index: int,
+               language_id: data.Language,
+               doc_span_index: int,
+               wp_start_offset: Sequence[int],
+               wp_end_offset: Sequence[int],
+               input_ids: Sequence[int],
+               input_mask: Sequence[int],
+               segment_ids: Sequence[int],
+               start_position: Optional[int] = None,
+               end_position: Optional[int] = None,
+               answer_text: Text = "",
+               answer_type: data.AnswerType = data.AnswerType.MINIMAL):
     self.unique_id = unique_id
     self.example_index = example_index
     self.doc_span_index = doc_span_index
@@ -311,7 +311,7 @@ class InputFeatures(object):
 
 def convert_examples_to_features(
     tydi_examples, is_training,
-    tokenizer,
+    tokenizer: tydi_tokenization_interface.TokenizerWithOffsets,
     max_question_length, max_seq_length, doc_stride, include_unknowns,
     output_fn):
   """Converts `TyDiExample`s into `InputFeatures` and sends them to `output_fn`.
@@ -374,9 +374,9 @@ def convert_examples_to_features(
   return num_spans_to_ids, num_examples
 
 
-def find_nearest_wordpiece_index(offset_index,
-                                 offset_to_wp,
-                                 scan_right = True):
+def find_nearest_wordpiece_index(offset_index: int,
+                                 offset_to_wp: Mapping[int, int],
+                                 scan_right: bool = True) -> int:
   """According to offset_to_wp dictionary, find the wordpiece index for offset.
 
   Some offsets do not have mapping to word piece index if they are delimited.
@@ -404,15 +404,15 @@ def find_nearest_wordpiece_index(offset_index,
 
 
 def convert_single_example(
-    tydi_example,
-    tokenizer,
+    tydi_example: data.TyDiExample,
+    tokenizer: tydi_tokenization_interface.TokenizerWithOffsets,
     is_training,
     max_question_length,
     max_seq_length,
     doc_stride,
     include_unknowns,
     errors,
-    debug_info=None):
+    debug_info=None) -> List[InputFeatures]:
   """Converts a single `TyDiExample` into a list of InputFeatures.
 
   Args:
@@ -665,10 +665,10 @@ def convert_single_example(
 
 
 def create_mapping(
-    start_offsets,
-    end_offsets,
-    context_to_plaintext_offset,
-):
+    start_offsets: Sequence[int],
+    end_offsets: Sequence[int],
+    context_to_plaintext_offset: Sequence[int],
+) -> Tuple[List[int], List[int]]:
   """Creates a mapping from context offsets to plaintext offsets.
 
   Args:
@@ -691,7 +691,7 @@ def create_mapping(
 
 
 def read_tydi_examples(
-    input_file, tokenizer,
+    input_file, tokenizer: tydi_tokenization_interface.TokenizerWithOffsets,
     is_training, max_passages, max_position, fail_on_invalid, open_fn):
   """Read a TyDi json file into a list of `TyDiExample`.
 

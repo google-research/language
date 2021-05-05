@@ -25,7 +25,7 @@ solve both of these problems.
 
 import contextlib
 import inspect
-
+from typing import Any, Callable, ContextManager, Dict, Iterable, List, Optional, Sequence, Text, Tuple, Union
 
 import tensorflow.compat.v1 as tf
 
@@ -40,7 +40,7 @@ _summarize_num_elements = 256
 _add_function_variable_scopes = False
 
 
-def enable_dynamic_asserts(enable = True):
+def enable_dynamic_asserts(enable: bool = True):
   """Turn on or off using dynamic (graph execution time) checks.
 
   Enabled by default, but can be disabled to ensure we aren't doing any
@@ -58,7 +58,7 @@ def disable_dynamic_asserts():
   enable_dynamic_asserts(False)
 
 
-def enable_predicates(enable = True):
+def enable_predicates(enable: bool = True):
   """Turn on or off whether predicates (`RequireTrue`/`EnsureTrue`) are used.
 
   Enabled by default, but can be disabled to ensure we aren't doing any
@@ -84,7 +84,7 @@ def disable_all_checks():
   _all_disabled = True
 
 
-def enable_add_function_variable_scopes(enable = True):
+def enable_add_function_variable_scopes(enable: bool = True):
   """Add tf.variable_scope with the function name in each `tc.contract`?
 
   This is disabled by default because it will *CHANGE THE NAMES OF YOUR
@@ -100,7 +100,7 @@ def enable_add_function_variable_scopes(enable = True):
   _add_function_variable_scopes = enable
 
 
-def set_summarize_num_elements(n):
+def set_summarize_num_elements(n: int):
   """Sets number of tensor elements to print in `Assert`s."""
   global _summarize_num_elements
   _summarize_num_elements = n
@@ -109,8 +109,8 @@ def set_summarize_num_elements(n):
 class _Context(object):
   """Contains information that we might want to print out in error messages."""
 
-  def __init__(self, func_name, caller_name, caller_file,
-               caller_line):
+  def __init__(self, func_name: Text, caller_name: Text, caller_file: Text,
+               caller_line: int):
     self.func_name = func_name
     self.caller_name = caller_name
     self.caller_file = caller_file
@@ -126,9 +126,9 @@ class Condition(object):
 class CheckableCondition(Condition):
   """A condition that implements `check`."""
 
-  def check(self, context, args_dict,
-            named_dims,
-            dynamic_asserts):
+  def check(self, context: _Context, args_dict: Dict[Text, Any],
+            named_dims: Dict[Text, Union[int, tf.Tensor]],
+            dynamic_asserts: bool) -> Iterable[tf.Operation]:
     # Unused:
     del context
     del args_dict
@@ -143,13 +143,13 @@ class NamedDim(Condition):
   """Specifies a name of a dimension that can be used in `shape` checks."""
 
   def __init__(self,
-               dim_name,
-               tensor = None,
-               dim = None,
-               tuple_index = None,
-               value_of = None,
-               var = None,
-               var_name = None):
+               dim_name: Text,
+               tensor: Optional[Text] = None,
+               dim: Optional[int] = None,
+               tuple_index: Optional[int] = None,
+               value_of: Optional[Text] = None,
+               var: Optional[tf.Tensor] = None,
+               var_name: Optional[Text] = None):
     """Creates a `NamedDim`.
 
     Caller must specify either (`tensor` and `dim`) OR `value_of`.
@@ -212,7 +212,7 @@ class Unchecked(object):
   e.g. `shape=["batch_size", tc.Unchecked('seq_length')]`
   """
 
-  def __init__(self, name = None):
+  def __init__(self, name: Optional[Text] = None):
     pass
 
 
@@ -221,22 +221,22 @@ class Require(CheckableCondition):
 
   def __init__(
       self,
-      tensor = None,
-      tuple_index = None,
-      rank = None,
-      shape = None,
-      static_dims = None,
-      bounding_shape = None,
-      shape_of = None,
-      dtype = None,
-      dtype_of = None,
-      is_tensor = True,
-      optional = False,
-      vanilla_tensor = False,
-      ragged = False,
-      row_splits_dtype = None,
-      var = None,
-      var_name = None):
+      tensor: Optional[Text] = None,
+      tuple_index: Optional[int] = None,
+      rank: Optional[int] = None,
+      shape: Optional[Sequence[Union[int, Text, Unchecked]]] = None,
+      static_dims: Optional[Sequence[int]] = None,
+      bounding_shape: Optional[Sequence[Union[int, Text, Unchecked]]] = None,
+      shape_of: Optional[Text] = None,
+      dtype: Optional[Union[tf.dtypes.DType, Sequence[tf.dtypes.DType]]] = None,
+      dtype_of: Optional[Text] = None,
+      is_tensor: bool = True,
+      optional: bool = False,
+      vanilla_tensor: bool = False,
+      ragged: bool = False,
+      row_splits_dtype: Optional[tf.dtypes.DType] = None,
+      var: Optional[tf.Tensor] = None,
+      var_name: Optional[Text] = None):
     """Creates `Require` contract spec for use within a `tc.contract` decorator.
 
     These same options apply to `Ensure`, but `tensor` must be specified as
@@ -320,9 +320,9 @@ class Require(CheckableCondition):
     # TODO(jhclark): Validate that shape is consistent with rank right here
     # (i.e. fail fast).
 
-  def check(self, context, args_dict,
-            named_dims,
-            dynamic_asserts):
+  def check(self, context: _Context, args_dict: Dict[Text, Any],
+            named_dims: Dict[Text, Union[int, tf.Tensor]],
+            dynamic_asserts: bool) -> Iterable[tf.Operation]:
 
     assert_ops = []
 
@@ -584,7 +584,7 @@ class Ensure(Require):
 class Dynamic(Condition):
   """Specifies a function that generates `Condition`s in a `tc.contract`."""
 
-  def __init__(self, condition_generator,
+  def __init__(self, condition_generator: Callable[..., Sequence[Condition]],
                *args):
     """Constructs a `tc.Dynamic` condition.
 
@@ -609,8 +609,8 @@ class Dynamic(Condition):
     # TODO(jhclark): Check return type of `condition_generator` to make sure
     # it's not a generator.
 
-  def generate(self, context,
-               args_dict):
+  def generate(self, context: _Context,
+               args_dict: Dict[Text, Any]) -> Iterable[Condition]:
     selected_args = []
     for requested_arg in self.args:
       arg_value = _get_arg(
@@ -636,12 +636,13 @@ class RequireTrue(CheckableCondition):
 
   def __init__(
       self,
-      check_func,
-      tensors,
-      error,
-      error_tensors = None,
-      tensor_format = None,
-      error_tensor_format = None):
+      check_func: Callable[..., Union[tf.Tensor, bool]],
+      tensors: Sequence[Union[Text, Tuple[Text, tf.Tensor]]],
+      error: Text,
+      error_tensors: Optional[Sequence[
+          Union[Text, Tuple[Text, tf.Tensor]]]] = None,
+      tensor_format: Optional[Callable[..., Sequence[tf.Tensor]]] = None,
+      error_tensor_format: Optional[Callable[..., Sequence[tf.Tensor]]] = None):
     """Creates a `RequireTrue` condition.
 
     This is used for checking arbitrary conditions on tensors or groups of
@@ -688,9 +689,9 @@ class RequireTrue(CheckableCondition):
     if not callable(check_func):
       raise ValueError("`check_func` must be a callable function.")
 
-  def _get_my_args(self, tensors,
-                   args_dict,
-                   context):
+  def _get_my_args(self, tensors: Sequence[Union[Text, Tuple[Text, tf.Tensor]]],
+                   args_dict: Dict[Text, Any],
+                   context: _Context) -> Tuple[Sequence[Text], Sequence[Any]]:
     """Helper function for check`, which extracts function args."""
     requested_tensor_names = []
     tensor_args = []
@@ -717,9 +718,9 @@ class RequireTrue(CheckableCondition):
         tensor_args.append(maybe_tensor)
     return requested_tensor_names, tensor_args
 
-  def check(self, context, args_dict,
-            named_dims,
-            dynamic_asserts):
+  def check(self, context: _Context, args_dict: Dict[Text, Any],
+            named_dims: Dict[Text, Union[int, tf.Tensor]],
+            dynamic_asserts: bool) -> Iterable[tf.Operation]:
 
     # TODO(jhclark): Check type of `check_func` to make sure it's not a lambda,
     # but *only if* this is a decorator; lambdas seem fine in the case of
@@ -826,9 +827,9 @@ class EnsureTrue(RequireTrue):
   pass
 
 
-def _check_static_shape(expected_dims,
-                        actual_dims,
-                        tensor_name, func_name):
+def _check_static_shape(expected_dims: Sequence[Union[int, tf.Tensor]],
+                        actual_dims: Sequence[Union[int, tf.Tensor]],
+                        tensor_name: Text, func_name: Text):
   """Checks the shape of a tensor argument, if it's possible statically."""
   for expected_dim, actual_dim in zip(expected_dims, actual_dims):
     if _is_dynamic(expected_dim) or _is_dynamic(actual_dim):
@@ -841,15 +842,15 @@ def _check_static_shape(expected_dims,
                            func_name))
 
 
-def _is_dynamic(dim):
+def _is_dynamic(dim: Union[int, tf.Tensor]) -> bool:
   """Returns true for dynamic dimensions (a tensor value, not an int)."""
   return not isinstance(dim, int)
 
 
-def _resolve_named_dims(shape,
-                        named_dims,
-                        tensor_name,
-                        func_name):
+def _resolve_named_dims(shape: Sequence[Union[int, Text]],
+                        named_dims: Dict[Text, Union[tf.Tensor, int]],
+                        tensor_name: Text,
+                        func_name: Text) -> Sequence[Union[int, tf.Tensor]]:
   """Resolves the name of any named dimensions and returns the scalar value."""
   numeric_shape: List[Union[int, tf.Tensor]] = list()
   for dim in shape:
@@ -868,8 +869,8 @@ def _resolve_named_dims(shape,
   return numeric_shape
 
 
-def _get_arg(args_dict, tensor_name,
-             context):
+def _get_arg(args_dict: Dict[Text, Any], tensor_name: Text,
+             context: _Context) -> Any:
   """Gets the value of the specified function argument."""
   if "." not in tensor_name:
     if tensor_name not in args_dict:
@@ -898,8 +899,8 @@ def _get_arg(args_dict, tensor_name,
   return result
 
 
-def _get_tensor_arg(args_dict, tensor_name,
-                    tuple_index, context):
+def _get_tensor_arg(args_dict: Dict[Text, Any], tensor_name: Text,
+                    tuple_index: Optional[int], context: _Context) -> Any:
   """Like `_get_arg`, but also resolves `tuple_index`."""
   maybe_tensor = _get_arg(
       args_dict=args_dict, tensor_name=tensor_name, context=context)
@@ -912,7 +913,7 @@ def _get_tensor_arg(args_dict, tensor_name,
   return maybe_tensor
 
 
-def _bounding_shape(tensor):
+def _bounding_shape(tensor: Union[tf.Tensor, tf.RaggedTensor]) -> tf.Tensor:
   """Returns the bounding shape of a Tensor, which is possibly Ragged."""
   if isinstance(tensor, tf.RaggedTensor):
     # TODO(jhclark): How do we handle dynamic vs static dimensions here?
@@ -926,7 +927,7 @@ def _getfullargspec(func):
 
 
 # TODO(jhclark): Write tests with function with default args, etc.
-def _get_func_args(func, func_args, func_kwargs):
+def _get_func_args(func, func_args, func_kwargs) -> Dict[Text, Any]:
   """Gets the names and values of the arguments of `func`."""
   argspec = _getfullargspec(func)
   defaults = argspec.defaults or []
@@ -948,7 +949,7 @@ def _to_tensor(t):
     return t
 
 
-def _is_tensor(t):
+def _is_tensor(t) -> bool:
   """Returns true if the value is a tensor or can be converted to a tensor."""
   if tf.is_tensor(t):
     return True
@@ -962,7 +963,7 @@ def _is_tensor(t):
     return False
 
 
-def _is_ragged_tensor(t):
+def _is_ragged_tensor(t) -> bool:
   """Returns true if the value is a RaggedTensor *or* a normal tensor."""
   if isinstance(t, tf.RaggedTensor):
     return True
@@ -971,8 +972,8 @@ def _is_ragged_tensor(t):
   return False
 
 
-def _get_tensor_shape(tensor,
-                      context):
+def _get_tensor_shape(tensor: tf.Tensor,
+                      context: _Context) -> Sequence[Union[int, tf.Tensor]]:
   """Gets actual shape of a Tensor: `int`s for static; `Tensor` for dynamic."""
 
   # This code is derived from BERT's `common_utils.get_shape_list`, but does
@@ -1000,13 +1001,13 @@ def _get_tensor_shape(tensor,
   return shape
 
 
-def _is_scalar(tensor):
+def _is_scalar(tensor: tf.Tensor) -> bool:
   """Returns true for tensors that are a scalar."""
   return tensor.shape.ndims == 0
 
 
-def _get_tensor_dim(tensor, dim,
-                    context):
+def _get_tensor_dim(tensor: tf.Tensor, dim: int,
+                    context: _Context) -> Union[int, tf.Tensor]:
   """Gets  specified tensor dimension, backing off to a bound if ragged."""
 
   # TODO(jhclark): Add tutorial section on how this backoff works.
@@ -1034,7 +1035,7 @@ def _get_tensor_dim(tensor, dim,
     return dyn_shape[dim]
 
 
-def _get_caller_locals(stack):
+def _get_caller_locals(stack) -> Dict[Text, Any]:
   """Gets the local variables defined by the calling function."""
   return stack[1][0].f_locals
 
@@ -1048,8 +1049,8 @@ def _get_function_and_line(stack):
 
 
 def _get_named_dims(
-    conditions, args_dict,
-    context):
+    conditions: Sequence[Condition], args_dict: Dict[Text, Any],
+    context: _Context) -> Dict[Text, Union[int, tf.Tensor]]:
   """Resolves `NamedDim`s to actual dimension (static or dynamic)."""
 
   named_dims: Dict[Text, Union[int, tf.Tensor]] = dict()
@@ -1093,10 +1094,10 @@ def _get_named_dims(
   return named_dims
 
 
-def _check_preconditions(preconditions,
-                         args_dict,
-                         named_dims,
-                         context):
+def _check_preconditions(preconditions: Sequence[Union[Require, RequireTrue]],
+                         args_dict: Dict[Text, Any],
+                         named_dims: Dict[Text, Union[int, tf.Tensor]],
+                         context: _Context) -> Sequence[tf.Operation]:
   """Check preconditions, returning any ops needed for dynamic checks."""
   precondition_ops = []
   for precondition in preconditions:
@@ -1114,11 +1115,11 @@ def _check_preconditions(preconditions,
   return precondition_ops
 
 
-def _check_postconditions(postconditions,
-                          args_dict,
-                          named_dims,
-                          context,
-                          result):
+def _check_postconditions(postconditions: Sequence[Union[Ensure, EnsureTrue]],
+                          args_dict: Dict[Text, Any],
+                          named_dims: Dict[Text, Union[int, tf.Tensor]],
+                          context: _Context,
+                          result: Any) -> Any:
   """Check postconditions, mutating `result` to include dynamic checks."""
   for postcondition in postconditions:
     if isinstance(postcondition, Ensure):
@@ -1167,9 +1168,9 @@ def _check_postconditions(postconditions,
   return result
 
 
-def _expand_dynamic_conditions(conditions,
-                               args_dict,
-                               context):
+def _expand_dynamic_conditions(conditions: Sequence[Condition],
+                               args_dict: Dict[Text, Any],
+                               context: _Context) -> List[Condition]:
   result = []
   for condition in conditions:
     if isinstance(condition, Dynamic):
@@ -1179,7 +1180,7 @@ def _expand_dynamic_conditions(conditions,
   return result
 
 
-def contract(*conditions):
+def contract(*conditions: Condition):
   """Decorator that specifies the tensor contract for a function.
 
   This is the primary API for tensor contracts.
@@ -1198,7 +1199,7 @@ def contract(*conditions):
     """Invoked by Python when `@contract` is used as a function decorator."""
 
     def check_preconditions_and_run_func(
-        *args, **kwargs):
+        *args: Any, **kwargs: Dict[Text, Any]) -> Any:
       """Invoked by Python when `@contract` is used as a function decorator."""
       # If contracts are disable, just call the function normally without any
       # intervention.
@@ -1275,7 +1276,7 @@ def _noop_context_manager():
   yield None
 
 
-def local_invariant(*conditions):
+def local_invariant(*conditions: Condition) -> ContextManager[None]:
   """A variant of a contract that can be specified inline via a `with` block."""
   if _all_disabled:
     return _noop_context_manager()
@@ -1340,7 +1341,7 @@ def _is_named_tuple(x):
   return all(isinstance(n, str) for n in f)
 
 
-def _tuple_assign(target, index, item):
+def _tuple_assign(target: Tuple[Any], index: int, item: Any) -> Tuple[Any]:
   """Assign a result into an (immutable) tuple via copy-on-write."""
 
   # TODO(jhclark): Support `tuple_item` with string names for named tuples.
@@ -1375,7 +1376,7 @@ def func_name_scope():
   def decorator(func):
     """Invoked by Python when `@contract` is used as a function decorator."""
 
-    def add_scope(*args, **kwargs):
+    def add_scope(*args: Any, **kwargs: Dict[Text, Any]):
       pretty_func_name = "{}.{}".format(func.__module__, func.__name__)
       with tf.variable_scope(pretty_func_name):
         return func(*args, **kwargs)
