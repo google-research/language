@@ -302,22 +302,8 @@ class CanineModel:
           activation=bert_modeling.get_activation(self.config.hidden_act),
           name="conv")
 
-      # `char_dim_cls_position`: [batch, 1, char_dim]
-      # And below: `cls_position`: [batch, 1, molecule_dim]
-      char_dim_cls_position = char_encoding[:, 0:1, :]
-      # `molecule_dim_seq`: [batch, char_seq_len, molecule_dim]
-      if self.config.hidden_size == self.config.hidden_size:
-        cls_position = char_dim_cls_position
-      else:
-        assert self.config.hidden_size != self.config.hidden_size
-        cls_position = bert_modeling.dense_layer_2d(
-            char_dim_cls_position, self.config.hidden_size,
-            bert_modeling.create_initializer(self.config.initializer_range),
-            None,
-            "cls_position_dense")
-        if self._is_training:
-          cls_position = bert_modeling.dropout(
-              cls_position, self.config.hidden_dropout_prob)
+      # `cls_encoding`: [batch, 1, hidden_size]
+      cls_encoding = char_encoding[:, 0:1, :]
 
       # Truncate the last molecule in order to reserve a position for [CLS].
       # Often, the last position is never used (unless we completely fill the
@@ -329,7 +315,7 @@ class CanineModel:
       # want to reserve a position (and the model capacity that goes along
       # with that) in the deep BERT stack.
       # `result`: [batch, molecule_seq, molecule_dim]
-      result = tf.concat([cls_position, downsampled_truncated], axis=1)
+      result = tf.concat([cls_encoding, downsampled_truncated], axis=1)
 
       return bert_modeling.layer_norm(result)
 
