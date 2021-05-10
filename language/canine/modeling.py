@@ -39,7 +39,6 @@ class CanineModelConfig(config_utils.Config):
 
   # Character config:
   downsampling_rate: int = 4
-  downsampling_kernel_size: int = 4
   upsampling_kernel_size: int = 4
   num_hash_functions: int = 8
   num_hash_buckets: int = 16384
