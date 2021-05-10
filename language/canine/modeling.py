@@ -52,7 +52,7 @@ class CanineModelConfig(config_utils.Config):
   hidden_act: Text = "gelu"
   hidden_dropout_prob: float = 0.1
   attention_probs_dropout_prob: float = 0.1
-  type_vocab_size: int = 2
+  type_vocab_size: int = 16
   max_positions: int = 16384
   initializer_range: float = 0.02
 
@@ -235,7 +235,7 @@ class CanineModel:
           input_tensor=embed_seq,
           use_token_type=True,
           token_type_ids=segment_ids,
-          token_type_vocab_size=16,
+          token_type_vocab_size=self.config.type_vocab_size,
           token_type_embedding_name="segment_embeddings",
           use_position_embeddings=True,
           position_embedding_name="char_position_embeddings",
