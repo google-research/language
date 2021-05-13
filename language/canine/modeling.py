@@ -144,11 +144,6 @@ class CanineModel:
     molecule_to_char_attention_mask = self.downsample_attention_mask(
         char_attention_mask, config.downsampling_rate, dim=-2)
 
-    # ...for attending from final character encoder to deep BERT stack:
-    # `char_to_molecule_attention_mask`: <float>[batch, char_seq, molecule_seq]
-    char_to_molecule_attention_mask = self.downsample_attention_mask(
-        char_attention_mask, config.downsampling_rate, dim=-1)
-
     # ...for self-attention within deep BERT molecule stack:
     # `molecule_attention_mask`: <float>[batch, molecule_seq, molecule_seq]
     molecule_attention_mask = self.downsample_attention_mask(
@@ -192,7 +187,6 @@ class CanineModel:
         init_output_char_encoding,
         char_attention_mask=char_attention_mask,
         full_molecules=bert_molecule_encoding,
-        char_to_molecule_attention_mask=char_to_molecule_attention_mask,
         molecule_seq_length=molecule_seq_length,
         final_seq_char_positions=final_seq_char_positions)
 
@@ -382,64 +376,12 @@ class CanineModel:
 
   @tc.contract(
       tc.Require(
-          "molecules", shape=["batch", "molecule_seq", "molecule_dim"]),
-      tc.Require("expected_char_seq_length", dtype=tf.int32, rank=0),
-      tc.Require("molecule_seq_length", dtype=tf.int32, rank=0),
-      tc.Ensure(tc.RESULT, shape=["batch", "char_seq", "char_dim"]),
-      tc.NamedDim("batch", "molecules", 0),
-      tc.NamedDim("molecule_seq", "molecules", 1),
-      tc.NamedDim("molecule_dim", "molecules", 2),
-      tc.NamedDim("char_seq", value_of="expected_char_seq_length"),
-      tc.NamedDim("char_dim", value_of="expected_char_dim"))
-  def _molecules_to_chars(self, molecules: tf.Tensor,
-                          molecule_seq_length: tf.Tensor,
-                          expected_char_seq_length: tf.Tensor,
-                          expected_char_dim: int) -> tf.Tensor:
-    """Converts molecule seq back to a char seq."""
-
-    del expected_char_dim  # Used by contract only.
-
-    with tf.variable_scope("molecules_to_chars"):
-      repeated = self._repeat_molecules(
-          molecules,
-          char_seq_length=expected_char_seq_length,
-          molecule_seq_length=molecule_seq_length)
-
-      if self.config.hidden_size == self.config.hidden_size:
-        # If the dimensionality matches, just directly add a residual (not the
-        # typical case).
-        return repeated
-
-      # Use a *slice* of the original features in order to create a residual
-      # connection despite having different dimensions. This is a fairly
-      # unusual (novel?) way of performing residual connections since they
-      # typically assume uniform dimensionality.
-      orig_features_for_residual = (
-          repeated[:, :, :self.config.hidden_size])
-
-      # Project molecules back to `char_dim`.
-      result = bert_modeling.dense_layer_2d(
-          repeated, self.config.hidden_size,
-          bert_modeling.create_initializer(self.config.initializer_range), None,
-          "dense")
-      if self._is_training:
-        result = bert_modeling.dropout(result, self.config.hidden_dropout_prob)
-      # Add a resnet connection from the final character stack back through
-      # the molecule transformer stack for a *slice* of the features.
-      return bert_modeling.layer_norm(
-          _safe_add(result, orig_features_for_residual))
-
-  @tc.contract(
-      tc.Require(
           "final_char_input_seq", shape=["batch", "char_seq", "init_char_dim"]),
       tc.Require(
           "char_attention_mask", dtype=tf.float32,
           shape=["batch", "char_seq", "char_seq"]),
       tc.Require(
           "full_molecules", shape=["batch", "molecule_seq", "molecule_dim"]),
-      tc.Require(
-          "char_to_molecule_attention_mask", dtype=tf.float32,
-          shape=["batch", "char_seq", "molecule_seq"]),
       tc.Require("molecule_seq_length", dtype=tf.int32, rank=0),
       tc.Ensure(tc.RESULT, shape=["batch", "final_char_seq", "final_char_dim"]),
       tc.NamedDim("batch", "final_char_input_seq", 0),
@@ -455,7 +397,6 @@ class CanineModel:
       final_char_input_seq: tf.Tensor,
       char_attention_mask: tf.Tensor,
       full_molecules: tf.Tensor,
-      char_to_molecule_attention_mask: tf.Tensor,
       molecule_seq_length: tf.Tensor,
       final_seq_char_positions: Optional[tf.Tensor]) -> tf.Tensor:
     """Run a shallow/low-dim transformer to get a final character encoding."""
@@ -498,19 +439,12 @@ class CanineModel:
         # `query_seq`: [batch, final_char_seq, char_dim]
         query_seq = tf.gather(
             final_char_seq, final_seq_char_positions, batch_dims=1)
-        # `char_to_molecule_attention_mask`:
-        #   [batch, final_len, molecule_seq]
-        char_to_molecule_attention_mask = tf.gather(
-            char_to_molecule_attention_mask,
-            final_seq_char_positions,
-            batch_dims=1)
         char_attention_mask = tf.gather(
             char_attention_mask,
             final_seq_char_positions,
             batch_dims=1)
       else:
         query_seq = final_char_seq
-        # `char_to_molecule_attention_mask` remains unmodified.
 
       return bert_modeling.transformer_model(
           input_tensor=query_seq,
