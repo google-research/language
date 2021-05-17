@@ -187,7 +187,6 @@ class CanineModel:
         init_output_char_encoding,
         char_attention_mask=char_attention_mask,
         full_molecules=bert_molecule_encoding,
-        molecule_seq_length=molecule_seq_length,
         final_seq_char_positions=final_seq_char_positions)
 
     # For pooling (sequence-level tasks), we use only the output of the deep
@@ -338,20 +337,16 @@ class CanineModel:
           do_return_all_layers=True)
 
   @tc.contract(
-      tc.Require(
-          "molecules", shape=["batch", "molecule_seq", "molecule_dim"]),
+      tc.Require("molecules", shape=["batch", "molecule_seq", "molecule_dim"]),
       tc.Require("char_seq_length", dtype=tf.int32, rank=0),
-      tc.Require("molecule_seq_length", dtype=tf.int32, rank=0),
       tc.Ensure(tc.RESULT, shape=["batch", "char_seq", "molecule_dim"]),
       tc.NamedDim("batch", "molecules", 0),
       tc.NamedDim("molecule_seq", "molecules", 1),
       tc.NamedDim("molecule_dim", "molecules", 2),
       tc.NamedDim("char_seq", value_of="char_seq_length"))
-  def _repeat_molecules(self, molecules: tf.Tensor, char_seq_length: tf.Tensor,
-                        molecule_seq_length: tf.Tensor) -> tf.Tensor:
+  def _repeat_molecules(self, molecules: tf.Tensor,
+                        char_seq_length: tf.Tensor) -> tf.Tensor:
     """Repeats molecules to make them the same length as the char sequence."""
-
-    del molecule_seq_length  # Used for contract only.
 
     rate = self.config.downsampling_rate
 
@@ -378,26 +373,22 @@ class CanineModel:
       tc.Require(
           "final_char_input_seq", shape=["batch", "char_seq", "init_char_dim"]),
       tc.Require(
-          "char_attention_mask", dtype=tf.float32,
+          "char_attention_mask",
+          dtype=tf.float32,
           shape=["batch", "char_seq", "char_seq"]),
       tc.Require(
           "full_molecules", shape=["batch", "molecule_seq", "molecule_dim"]),
-      tc.Require("molecule_seq_length", dtype=tf.int32, rank=0),
       tc.Ensure(tc.RESULT, shape=["batch", "final_char_seq", "final_char_dim"]),
       tc.NamedDim("batch", "final_char_input_seq", 0),
       tc.NamedDim("char_seq", "final_char_input_seq", 1),
       tc.NamedDim("final_char_seq", value_of="self._final_char_seq_length"),
       tc.NamedDim("init_char_dim", "final_char_input_seq", 2),
-      tc.NamedDim("final_char_dim",
-                  value_of="self.config.hidden_size"),
+      tc.NamedDim("final_char_dim", value_of="self.config.hidden_size"),
       tc.NamedDim("molecule_seq", "full_molecules", 1),
       tc.NamedDim("molecule_dim", "full_molecules", 2))
   def _encode_final_chars(
-      self,
-      final_char_input_seq: tf.Tensor,
-      char_attention_mask: tf.Tensor,
+      self, final_char_input_seq: tf.Tensor, char_attention_mask: tf.Tensor,
       full_molecules: tf.Tensor,
-      molecule_seq_length: tf.Tensor,
       final_seq_char_positions: Optional[tf.Tensor]) -> tf.Tensor:
     """Run a shallow/low-dim transformer to get a final character encoding."""
 
@@ -408,9 +399,7 @@ class CanineModel:
     with tf.variable_scope("final_char_encoder"):
       # `repeated_molecules`: [batch_size, char_seq_len, molecule_hidden_size]
       repeated_molecules = self._repeat_molecules(
-          full_molecules,
-          char_seq_length=char_seq_length,
-          molecule_seq_length=molecule_seq_length)
+          full_molecules, char_seq_length=char_seq_length)
       layers = [final_char_input_seq, repeated_molecules]
       # `concat`:
       #     [batch_size, char_seq_len, molecule_hidden_size+char_hidden_final]
