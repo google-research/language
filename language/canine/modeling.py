@@ -221,9 +221,8 @@ class CanineModel:
           num_hashes=self.config.num_hash_functions,
           num_buckets=self.config.num_hash_buckets,
           initializer_range=self.config.initializer_range)
-      dropout_prob = self.config.hidden_dropout_prob
-      if self._is_training:
-        dropout_prob = 0.0
+      dropout_prob = (
+          self.config.hidden_dropout_prob if self._is_training else 0.0)
       return bert_modeling.embedding_postprocessor(
           input_tensor=embed_seq,
           use_token_type=True,
