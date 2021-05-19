@@ -391,52 +391,29 @@ class CanineModel:
       final_seq_char_positions: Optional[tf.Tensor]) -> tf.Tensor:
     """Run a shallow/low-dim transformer to get a final character encoding."""
 
-    _, char_seq_length, _ = bert_modeling.get_shape_list(final_char_input_seq)
-
     # `final_char_input_seq` is a projected version of the deep molecule BERT
     # stack with slice-wise resnet connections.
     with tf.variable_scope("final_char_encoder"):
-      # `repeated_molecules`: [batch_size, char_seq_len, molecule_hidden_size]
-      repeated_molecules = self._repeat_molecules(
-          full_molecules, char_seq_length=char_seq_length)
-      layers = [final_char_input_seq, repeated_molecules]
-      # `concat`:
-      #     [batch_size, char_seq_len, molecule_hidden_size+char_hidden_final]
-      concat = tf.concat(layers, axis=-1)
-
-      # `result`: [batch_size, char_seq_len, hidden_size]
-      result = tf.layers.conv1d(
-          inputs=concat,
-          filters=self.config.hidden_size,
-          kernel_size=self.config.upsampling_kernel_size,
-          strides=1,
-          padding="same",
-          activation=bert_modeling.get_activation(self.config.hidden_act),
-          name="conv")
-      result = bert_modeling.layer_norm(result)
-      if self._is_training:
-        result = bert_modeling.dropout(result,
-                                       self.config.hidden_dropout_prob)
-      final_char_seq = result
+      # `upsampled`: [batch_size, char_seq_len, hidden_size]
+      upsampled = self._upsample_molecules_to_chars(final_char_input_seq,
+                                                    full_molecules)
 
       if final_seq_char_positions is not None:
         # Limit transformer query seq and attention mask to these character
         # positions to greatly reduce the compute cost. Typically, this is just
         # done for the MLM training task.
 
-        # `query_seq`: [batch, final_char_seq, char_dim]
-        query_seq = tf.gather(
-            final_char_seq, final_seq_char_positions, batch_dims=1)
+        # `final_seq_char_query`: [batch, final_seq_char_len, char_dim]
+        final_seq_char_query = tf.gather(
+            upsampled, final_seq_char_positions, batch_dims=1)
         char_attention_mask = tf.gather(
-            char_attention_mask,
-            final_seq_char_positions,
-            batch_dims=1)
+            char_attention_mask, final_seq_char_positions, batch_dims=1)
       else:
-        query_seq = final_char_seq
+        final_seq_char_query = upsampled
 
       return bert_modeling.transformer_model(
-          input_tensor=query_seq,
-          input_kv_tensor=final_char_seq,
+          input_tensor=final_seq_char_query,
+          input_kv_tensor=upsampled,
           attention_mask=char_attention_mask,
           hidden_size=self.config.hidden_size,
           num_hidden_layers=1,
@@ -448,6 +425,45 @@ class CanineModel:
           attention_probs_dropout_prob=(
               self.config.attention_probs_dropout_prob),
           initializer_range=self.config.initializer_range)
+
+  @tc.contract(
+      tc.Require(
+          "final_char_input_seq", shape=["batch", "char_seq", "init_char_dim"]),
+      tc.Require(
+          "full_molecules", shape=["batch", "molecule_seq", "molecule_dim"]),
+      tc.Ensure(tc.RESULT, shape=["batch", "char_seq", "final_char_dim"]),
+      tc.NamedDim("batch", "final_char_input_seq", 0),
+      tc.NamedDim("char_seq", "final_char_input_seq", 1),
+      tc.NamedDim("init_char_dim", "final_char_input_seq", 2),
+      tc.NamedDim("final_char_dim", value_of="self.config.hidden_size"),
+      tc.NamedDim("molecule_seq", "full_molecules", 1),
+      tc.NamedDim("molecule_dim", "full_molecules", 2))
+  def _upsample_molecules_to_chars(self, final_char_input_seq: tf.Tensor,
+                                   full_molecules: tf.Tensor) -> tf.Tensor:
+    """Run a shallow/low-dim transformer to get a final character encoding."""
+    _, char_seq_length, _ = bert_modeling.get_shape_list(final_char_input_seq)
+
+    # `repeated_molecules`: [batch_size, char_seq_len, molecule_hidden_size]
+    repeated_molecules = self._repeat_molecules(
+        full_molecules, char_seq_length=char_seq_length)
+    # `concat`:
+    #     [batch_size, char_seq_len, molecule_hidden_size+char_hidden_final]
+    concat = tf.concat([final_char_input_seq, repeated_molecules], axis=-1)
+
+    # `upsampled`: [batch_size, char_seq_len, hidden_size]
+    upsampled = tf.layers.conv1d(
+        inputs=concat,
+        filters=self.config.hidden_size,
+        kernel_size=self.config.upsampling_kernel_size,
+        strides=1,
+        padding="same",
+        activation=bert_modeling.get_activation(self.config.hidden_act),
+        name="conv")
+    upsampled = bert_modeling.layer_norm(upsampled)
+    if self._is_training:
+      upsampled = bert_modeling.dropout(upsampled,
+                                        self.config.hidden_dropout_prob)
+    return upsampled
 
   @tc.contract(
       tc.Require("seq_to_pool",
