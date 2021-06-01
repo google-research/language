@@ -181,10 +181,8 @@ class CanineModel:
         attention_mask=molecule_attention_mask)
     bert_molecule_encoding = bert_layers[-1]
 
-    init_output_char_encoding = input_char_encoding
-
     self.final_char_encoding = self._encode_final_chars(
-        init_output_char_encoding,
+        input_char_encoding,
         char_attention_mask=char_attention_mask,
         full_molecules=bert_molecule_encoding,
         final_seq_char_positions=final_seq_char_positions)
