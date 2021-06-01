@@ -1,0 +1,232 @@
+syntax = "proto2";
+
+package language.search_agents;
+
+enum DataSet {
+  NATURAL_QUESTIONS = 0;
+  DATASET_RESERVED_1 = 1;
+  DATASET_RESERVED_2 = 2;
+  DATASET_RESERVED_3 = 3;
+  DATASET_RESERVED_4 = 4;
+  DATASET_RESERVED_5 = 5;
+}
+
+enum DataSetType {
+  TRAIN = 0;
+  DEV = 1;
+  TEST = 2;
+}
+
+enum RetrievalRequestType {
+  LUCENE = 0;  // The default lucene server indexes 288-token documents.
+  LUCENE_100_TOKENS = 1;
+  RETRIEVAL_RESERVED_2 = 2;
+  RETRIEVAL_RESERVED_3 = 3;
+}
+
+enum ReaderRequestType {
+  NONE = 0;
+  READER_RESERVED_1 = 1;
+  READER_RESERVED_2 = 2;
+  READER_RESERVED_3 = 3;
+  READER_RESERVED_4 = 4;
+  DPR_READER = 5;
+  READER_RESERVED_6 = 6;
+  READER_RESERVED_7 = 7;
+}
+
+enum GrammarType {
+  // Relevance feedback with both + action and - action at each step, e.g.
+  // +(title:<term>) -(contents:<term>).
+  PLUS_AND_MINUS_TERMS = 1;
+  // Only + action OR - action at each step, e.g. +(title:<term>).
+  ONE_TERM_AT_A_TIME = 2;
+  // Only add terms at each step, e.g. <term>.
+  // This is equivalent to using an OR operator.
+  ADD_TERM_ONLY = 3;
+  // Pick either + action, - action, OR term only at each step.
+  // This combines the ONE_TERM_AT_A_TIME and ADD_TERM_ONLY grammars above.
+  ONE_TERM_AT_A_TIME_WITH_ADD_TERM_ONLY = 4;
+}
+
+enum ScoreType {
+  // Discounted cumulative gain. This measures the usefulness, or gain, of a
+  // document based on its position in the result list.
+  DCG = 1;
+  // Mean reciprocal rank. This measures where the first relevant item is.
+  MRR = 2;
+}
+
+// Structured query with additional operators when querying the underlying IR
+// system.
+message Query {
+  // The main text query. This query is used for querying all underlying systems
+  // in the environment, including IR, MR, and scorer.
+  optional string query = 1;
+
+  // Query with additional operations to be included when querying the
+  // underlying IR system. If this is provided, this is used instead of `query`
+  // to query the underlying IR system.
+  optional string query_with_operations = 2;
+}
+
+// Request to get the documents from the underlying IR system.
+message GetDocumentsRequest {
+  optional RetrievalRequestType request_type = 1 [default = LUCENE];
+  optional ReaderRequestType reader_request_type = 6 [default = NONE];
+  optional Query query = 2;
+
+  // The max number of results returned in the response. The underlying
+  // documents retrieved may be larger if max_num_ir_results is set to a
+  // larger value. When more documents are retrieved, the final documents in
+  // the response are re-ranked by the mr_score of the document against the
+  // original question.
+  optional int32 max_num_results = 3 [default = 5];
+
+  // This option only works for RequestType.LUCENE*.
+  optional bool should_exclude_title = 4;
+
+  optional bool reserved_5 = 5;
+
+  optional bool should_disable_cache = 7;
+
+  optional int32 reserved_8 = 8;
+  optional int32 reserved_9 = 9;
+  optional int32 reserved_10 = 10;
+
+  // The IR score is recomputed against q0 when this is true.
+  optional bool should_recompute_ir_score = 11;
+
+  // The max number of documents to retrieve from the underlying retriever.
+  // This option is ignored if it's set to a smaller value than max_num_results.
+  // This option only works for RequestType.LUCENE*.
+  optional int32 max_num_ir_results = 12;
+}
+
+// Document entity retrieved by the IR system.
+message Document {
+  // ID of the document, e.g. from Wikipedia.
+  optional string doc_id = 1;
+  // Content of the document.
+  optional string content = 2;
+  // Score from the underlying IR system.
+  optional double ir_score = 3;
+  // Relevance score of the document against the original query.
+  optional double relevance_score = 4;
+  // Top answer retrieved by the underlying MR system against the original
+  // query.
+  optional Answer answer = 5;
+  // EXACT_MATCH score of the (document, answer) tuple against the original
+  // query.
+  optional double exact_match_score = 6;
+  // Title of the document.
+  optional string title = 7;
+
+  optional Document reserved_8 = 8;
+  optional string reserved_9 = 9;
+
+  // URL of the document.
+  optional string url = 10;
+}
+
+// Answer entity retrieved by the MR system.
+message Answer {
+  optional string answer = 1;
+  optional double mr_score = 2;
+  optional int32 start_token_pos = 3;
+  // Exclusive.
+  optional int32 end_token_pos = 4;
+}
+
+// Response with the matching documents retrieved by the underlying IR system.
+message GetDocumentsResponse {
+  repeated Document documents = 1;
+
+  enum ResponseCode {
+    OK = 1;
+    INVALID_QUERY = 2;
+  }
+  optional ResponseCode status = 2 [default = OK];
+
+  // Indexes of the documents that contain the gold answer.
+  repeated int32 gold_answer_index = 3;
+
+  // DCG for the set of documents retrieved.
+  optional double discounted_cumulative_gain = 4;
+  // nDCG for the set of documents retrieved.
+  // This may not be set if the iDCG is not available for the query.
+  optional double normalized_discounted_cumulative_gain = 5;
+
+  optional string reserved_6 = 6;
+}
+
+message GetQueryRequest {
+  optional DataSet dataset = 1 [default = NATURAL_QUESTIONS];
+  optional DataSetType dataset_type = 2 [default = TRAIN];
+
+  // Index of the query to retrieve. Returns a random query if not provided.
+  optional int32 index = 3;
+}
+
+message GetQueryResponse {
+  optional string query = 1;
+
+  // Index of the given query in the dataset.
+  optional int32 index = 2;
+
+  // Total number of queries in the dataset.
+  optional int32 total = 3;
+
+  // Gold answers for the given query.
+  repeated string gold_answer = 4;
+}
+
+// Example for pre-training the agent, generated using the Relevance-Feedback
+// idea.  Each episode is a sequence of term additions and subtractions, derived
+// from the available tf-idf terms over the current result set.
+message RelevanceFeedbackEpisodeExample {
+  optional string q0 = 1;
+  optional string answer = 2;
+  repeated Document target_documents = 3;
+  repeated Document initial_documents = 4;
+  optional float initial_reward = 5;
+
+  optional string final_query = 6;
+
+  message Term {
+    optional string field = 1;
+    optional string term = 2;
+
+    // Type of the selected term. Possible values:
+    // _Wq_: Terms from q0
+    // _Wa_: Terms from answers in the state
+    // _Wd_: Terms from the document contents in the state
+    // _Wt_: Terms from the document titles in the state
+    optional string term_type = 3;
+  }
+
+  message Step {
+    optional float reward = 1;
+    optional Term add_term = 2;
+    optional Term subtract_term = 3;
+    optional Term or_term = 5;
+    // Results for this specific step.
+    repeated Document results = 4;
+  }
+
+  repeated Step steps = 7;
+
+  repeated Document final_docs_combined = 8;  // Combined over time.
+  optional float final_reward = 9;
+
+  optional string error = 10;
+}
+
+// GRPC service for the environment of the Search agent.
+service EnvironmentService {
+  // Retrieval and Machine Reading component (IR+MR)
+  rpc GetDocuments(GetDocumentsRequest) returns (GetDocumentsResponse) {}
+
+  // Gets the next query from the requested dataset.
+  rpc GetQuery(GetQueryRequest) returns (GetQueryResponse) {}
+}
