@@ -2,7 +2,8 @@
 
 [**Core Model**](#core-model) | [**Pre-trained Checkpoints**](#checkpoints)
 [**TyDi QA System**](#tydi-qa-system) | [**Tips and Tricks**](#tips-and-tricks)
-| [**Paper**](https://arxiv.org/abs/2103.06874)
+| [**Other Implementations**](#other-implementations) |
+[**Paper**](https://arxiv.org/abs/2103.06874)
 
 This repository contains a reference implementation of CANINE, download links
 for pre-trained checkpoints, and code for fine-tuning and evaluating on the TyDi
@@ -79,13 +80,17 @@ CANINE model, there are a few potential pitfalls to be aware of:
 *   Check that you've disabled your legacy tokenizers in all parts of your input
     preparation pipeline. Converting already-tokenized strings to codepoints
     will probably still work fine, but you will get the best performance by
-    feeding natural text---without any punctuation splitting, etc.---to
-    CANINE.
+    feeding natural text---without any punctuation splitting, etc.---to CANINE.
 *   Check your datasets to see if they have fossilized tokenization artifacts
     inside them. This is especially common for tagging tasks where punctuation
     may be split and spaces may be removed/replaced with a special charcacter.
     In these cases, you should expect better quality by
     detokenizing/unnormalizing the data back to a more natural form.
+
+## Other Implementations
+
+A PyTorch implementation of fine-tuning and inference is available in
+[HuggingFace Transformers](https://github.com/huggingface/transformers/blob/master/docs/source/model_doc/canine.rst).
 
 ## Citation
 
