@@ -1,0 +1,10 @@
+Wikidata ID,Relation,Template
+P54,member of sports team,<subject> plays for <object>.
+P39,position held,<subject> holds the position of <object>.
+P108,employer,<subject> works for <object>.
+P102,political party,<subject> is a member of the <object>.
+P286,head coach,<object> is the head coach of <subject>.
+P69,educated at,<subject> attended <object>.
+P488,chairperson,<object> is the chair of <subject>.
+P6,head of government,<object> is the head of the government of <subject>.
+P127,owned by,<subject> is owned by <object>.

@@ -13,15 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for language.common.layers.affine_transform."""
+from keras import keras_parameterized
+from keras import testing_utils
+from keras.utils.generic_utils import CustomObjectScope
 
 from language.common.layers import affine_transform
-import tensorflow as tf
 
-# pylint: disable=g-direct-tensorflow-import
-from tensorflow.python.keras import keras_parameterized
-from tensorflow.python.keras import testing_utils
-from tensorflow.python.keras.utils.generic_utils import CustomObjectScope
-# pylint: enable=g-direct-tensorflow-import
+import tensorflow as tf
 
 
 # This decorator runs the test in V1, V2-Eager, and V2-Functional mode. It

@@ -42,10 +42,10 @@ this is important to you.
 
 ## Checkpoints
 
-*   **[CANINE-S (~500 MB)](https://storage.googleapis.com/caninemodels/canine-s.zip)**:
+*   **[CANINE-C (~500 MB)](https://storage.googleapis.com/caninemodels/canine-c.zip)**:
     Pre-trained with autoregressive character loss, 12-layer, 768-hidden,
     12-heads, 121M parameters.
-*   **[CANINE-C (~500 MB)](https://storage.googleapis.com/caninemodels/canine-c.zip)**:
+*   **[CANINE-S (~500 MB)](https://storage.googleapis.com/caninemodels/canine-s.zip)**:
     Pre-trained with subword loss, 12-layer, 768-hidden, 12-heads, 121M
     parameters.
 
