@@ -9,13 +9,13 @@ Concretely, the release includes three components:
 * For the first five models, 28 checkpoints captured during the course of pre-training (140 checkpoints total).
 * A statistical library and a Colab notebook to demonstrate its use.
 
-We describe the release in detail and present example analyses in the [MultiBERTs paper](). All the data and checkpoints mentioned on this page and in the paper are available on [our Cloud Bucket](https://console.cloud.google.com/storage/browser/multiberts/public).
+We describe the release in detail and present example analyses in the [MultiBERTs paper](https://arxiv.org/abs/2106.16163). All the data and checkpoints mentioned on this page and in the paper are available on [our Cloud Bucket](https://console.cloud.google.com/storage/browser/multiberts/public).
 
 
 
 ## Models
 
-We release 25 English BERT-Base models (12 Transformer layers, hidden embeddings size 768, 12 attention heads, 110M parameters). They are directly compatible with the original [BERT repository](https://github.com/google-research/bert), and should be used as described on the repository's [README](https://github.com/google-research/bert#readme). We replicated the training configuration of the original [BERT-base](https://storage.googleapis.com/bert_models/2018_10_18/uncased_L-12_H-768_A-12.zip), with a few differences highlighted in the [MultiBERTs paper]().
+We release 25 English BERT-Base models (12 Transformer layers, hidden embeddings size 768, 12 attention heads, 110M parameters). They are directly compatible with the original [BERT repository](https://github.com/google-research/bert), and should be used as described on the repository's [README](https://github.com/google-research/bert#readme). We replicated the training configuration of the original [BERT-base](https://storage.googleapis.com/bert_models/2018_10_18/uncased_L-12_H-768_A-12.zip), with a few differences highlighted in the [MultiBERTs paper](https://arxiv.org/abs/2106.16163).
 
 The models should be used with the [BERT config file](https://storage.googleapis.com/multiberts/public/bert_config.json)
 and [WordPiece vocab file](https://storage.googleapis.com/multiberts/public/vocab.txt).
@@ -94,15 +94,20 @@ Note: the archives are large (>10 GB). You may download the checkpoints selectiv
 
 ## Statistical Library
 
-The script [`bootstrap.py`]() is our implementation of the Multi-Bootstrap, a non-parametric procedure to help researchers estimate significance and report confidence intervals in MultiBERTs experiments.
-Additional details are provided in out [demo Colab]() and the [MultiBERTs paper]() (work in progress).
+The script [`bootstrap.py`](https://github.com/google-research/language/blob/master/language/multiberts/multibootstrap.py) is our implementation of the Multi-Bootstrap, a non-parametric procedure to help researchers estimate significance and report confidence intervals in MultiBERTs experiments.
+Additional details are provided in our [demo Colab](https://github.com/google-research/language/blob/master/language/multiberts/multi_vs_original.ipynb) and the [MultiBERTs paper](https://arxiv.org/pdf/2106.16163).
 
 
 
 ## How to cite
 
 ```
-Work in progress.
+@article{sellam2021multiberts,
+  title={The MultiBERTs: BERT Reproductions for Robustness Analysis},
+  author={Thibault Sellam and Steve Yadlowsky and Jason Wei and Naomi Saphra and Alexander D'Amour and Tal Linzen and Jasmijn Bastings and Iulia Turc and Jacob Eisenstein and Dipanjan Das and Ian Tenney and Ellie Pavlick},
+  journal={arXiv preprint arXiv:2106.16163},
+  year={2021}
+}
 ```
 
 ## Contact information
