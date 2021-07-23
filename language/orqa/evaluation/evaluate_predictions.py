@@ -34,12 +34,21 @@ flags.DEFINE_boolean(
     "is_regex", False,
     "Whether answer references are formatted as regexes. Only "
     "applicable to CuratedTrec")
+flags.DEFINE_enum(
+    "answer_field", "answer", ["answer", "answer_and_def_correct_predictions"],
+    "Source of reference answers to use. Most tasks have a single source "
+    "of reference answers and these are kept in the `answer` field. The "
+    "EfficientQA test data also has post-hoc ratings for the top scoring "
+    "submissions which may be used for evaluation. The details of these "
+    "options are documented at: "
+    "https://github.com/google-research-datasets/natural-questions/tree/master/nq_open."
+)
 
 
 def main(_):
   metrics = eval_utils.evaluate_predictions(FLAGS.references_path,
                                             FLAGS.predictions_path,
-                                            FLAGS.is_regex)
+                                            FLAGS.is_regex, FLAGS.answer_field)
   print("Found {} missing predictions.".format(metrics["missing_predictions"]))
   print("Accuracy: {:.4f} ({}/{})".format(metrics["accuracy"],
                                           metrics["num_correct"],

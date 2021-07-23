@@ -39,6 +39,7 @@ def normalize_answer(s):
 
   def lower(text):
     return text.lower()
+
   return white_space_fix(remove_articles(remove_punc(lower(s))))
 
 
@@ -48,8 +49,8 @@ def exact_match_score(prediction, ground_truth):
 
 def regex_match_score(prediction, ground_truth):
   try:
-    regex = re.compile(ground_truth,
-                       flags=re.IGNORECASE + re.UNICODE + re.MULTILINE)
+    regex = re.compile(
+        ground_truth, flags=re.IGNORECASE + re.UNICODE + re.MULTILINE)
     return regex.match(prediction) is not None
   except re.error:
     return False
@@ -94,8 +95,11 @@ def evaluate_predictions_impl(references,
       accuracy=correct / float(len(references)))
 
 
-def evaluate_predictions(references_path, predictions_path,
-                         is_regex):
+def evaluate_predictions(
+    references_path,
+    predictions_path,
+    is_regex,
+    answer_field = "answer"):
   """Calculates and returns metrics."""
   if is_regex != ("CuratedTrec" in references_path):
     print("Warning: regex evaluation should (only) be applied to CuratedTrec.")
@@ -104,7 +108,7 @@ def evaluate_predictions(references_path, predictions_path,
   with tf.io.gfile.GFile(references_path) as f:
     for line in f:
       example = json.loads(line)
-      references[example["question"]] = example["answer"]
+      references[example["question"]] = example[answer_field]
   print("Found {} references in {}".format(len(references), references_path))
 
   predictions = {}
