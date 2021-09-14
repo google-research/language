@@ -263,11 +263,11 @@ class NeuralQueryExpression(object):
     g = self.context.get_group(rel_expr.type_name)
     if inverted == +1:
       with tf.name_scope('follow_group_%s' % rel_expr.type_name):
-        return (self.follow(g.subject_rel, -1) * \
+        return (self.follow(g.subject_rel, -1) *
                 rel_expr.follow(g.relation_rel, -1)).follow(g.object_rel)
     else:
       with tf.name_scope('follow_group_%s_inverse' % rel_expr.type_name):
-        return (self.follow(g.object_rel, -1) * \
+        return (self.follow(g.object_rel, -1) *
                 rel_expr.follow(g.relation_rel, -1)).follow(g.subject_rel)
 
   def _follow_named_rel(self, rel_name,
@@ -557,6 +557,7 @@ class NeuralQueryExpression(object):
       return result
 
 
+@tf.keras.utils.register_keras_serializable(package='nql')
 class NeuralQueryContext(object):
   """Context object needed to define NeuralQueryExpressions."""
 
@@ -564,15 +565,21 @@ class NeuralQueryContext(object):
   VALUE_PART = 0
   INDEX_PART = 1
 
-  def __init__(self):
+  def __init__(self,
+               symtab=None,
+               rel_name_symtab=None,
+               declaration=None,
+               np_initval=None,
+               group=None):
     # symbol table for every type
-    self._symtab = dict()
+    self._symtab = dict() if symtab is None else symtab
     # and a special symbol table for relation names
-    self._rel_name_symtab = symbol.SymbolTable()
+    self._rel_name_symtab = (
+        symbol.SymbolTable() if rel_name_symtab is None else rel_name_symtab)
     # map relation name to information like domain, range, ...
-    self._declaration = dict()
+    self._declaration = dict() if declaration is None else declaration
     # sparse scipy matrix with initial values for each relation
-    self._np_initval = dict()
+    self._np_initval = dict() if np_initval is None else np_initval
     # cached out tensors for each relation
     self._cached_tensor = dict()
     # intializers for all internal variables
@@ -583,7 +590,47 @@ class NeuralQueryContext(object):
     # define your own expression methods
     self.expression_factory_class = NeuralQueryExpression
     # map relation group name to information about that group
-    self._group = dict()
+    self._group = dict() if group is None else group
+
+  # Allow TF serialization.
+  @staticmethod
+  def _sparse_to_dict(sparse_matrix):
+    """Convert a SciPy sparse COO matrix to a JSON-serializable dict."""
+    return {
+        'data': sparse_matrix.data,
+        'row': sparse_matrix.row,
+        'col': sparse_matrix.col,
+        'shape': sparse_matrix.shape,
+    }
+
+  @staticmethod
+  def _dict_to_sparse(matrix_dict):
+    """Convert a dict back into a SciPy sparse COO matrix."""
+    return scipy.sparse.coo_matrix(
+        (matrix_dict['data'], (matrix_dict['row'], matrix_dict['col'])),
+        shape=matrix_dict['shape'])
+
+  def get_config(self):
+    return {
+        'symtab': self._symtab,
+        'rel_name_symtab': self._rel_name_symtab,
+        'declaration': self._declaration,
+        'np_initval': {
+            rel: NeuralQueryContext._sparse_to_dict(sparse_matrix)
+            for (rel, sparse_matrix) in self._np_initval.items()
+        },
+        'group': self._group,
+    }
+
+  # Allow TF deserialization.
+  @classmethod
+  def from_config(cls, config):
+    if 'np_initval' in config:
+      config['np_initval'] = {
+          rel: NeuralQueryContext._dict_to_sparse(matrix_dict)
+          for (rel, matrix_dict) in config['np_initval'].items()
+      }
+    return cls(**config)
 
   # Basic API
 
@@ -1522,7 +1569,6 @@ class NeuralQueryContext(object):
         raise RuntimeError('KG relation named %r has no initial value.' %
                            rel_name)
       m = self._np_initval[rel_name]
-      n_rows, n_cols = m.shape
       if self.is_dense(rel_name):
         self._cached_tensor[rel_name] = tf.Variable(
             m, trainable=self.is_trainable(rel_name), name='nql/' + rel_name)
@@ -1531,12 +1577,12 @@ class NeuralQueryContext(object):
       else:
         data_m = np.transpose(np.vstack([m.row, m.col]))
         if not self.is_trainable(rel_name):
-          sparse_tensor = tf.SparseTensor(data_m, m.data, [n_rows, n_cols])
+          sparse_tensor = tf.SparseTensor(data_m, m.data, m.shape)
         else:
           data_var_name = 'nql/%s_values' % rel_name
           data_var = tf.Variable(m.data, trainable=True, name=data_var_name)
           self._initializers.append(data_var.initializer)
-          sparse_tensor = tf.SparseTensor(data_m, data_var, [n_rows, n_cols])
+          sparse_tensor = tf.SparseTensor(data_m, data_var, m.shape)
           self._declaration[rel_name].underlying_parameter = data_var
         self._cached_tensor[rel_name] = (sparse_tensor.indices,
                                          sparse_tensor.values,
@@ -1737,11 +1783,40 @@ def nonneg_crossentropy(expr, target):
   Returns:
     Tensorflow expression for cross entropy.
   """
-  expr_replacing_0_with_1 = \
-     tf.where(expr > 0, expr, tf.ones(tf.shape(input=expr), tf.float32))
+  expr_replacing_0_with_1 = tf.where(expr > 0, expr,
+                                     tf.ones(tf.shape(input=expr), tf.float32))
   cross_entropies = tf.reduce_sum(
       input_tensor=-target * tf.math.log(expr_replacing_0_with_1), axis=1)
   return tf.reduce_mean(input_tensor=cross_entropies, axis=0)
+
+
+@tf.keras.utils.register_keras_serializable(package='nql')
+class NonnegSoftmax(tf.keras.layers.Layer):
+  """A softmax specialized to handle nonnegative tensors.
+
+  Attributes:
+    replace_nonpositives: will replace nonpositives with this number before
+      computing the softmax. Defaults to -10.
+  Input shape: Arbitrary. Use the keyword argument `input_shape` (tuple of
+    integers, does not include the samples axis) when using this layer as the
+    first layer in a model.
+  Output shape: Same shape as the input.
+  """
+
+  def __init__(self, replace_nonpositives=-10, **kwargs):
+    super().__init__(**kwargs)
+    self.replace_nonpositives = replace_nonpositives
+
+  def call(self, inputs):
+    return nonneg_softmax(inputs, self.replace_nonpositives)
+
+  def get_config(self):
+    config = {'replace_nonpositives': self.replace_nonpositives}
+    base_config = super().get_config()
+    return dict(list(base_config.items()) + list(config.items()))
+
+  def compute_output_shape(self, input_shape):
+    return input_shape
 
 
 class NonnegativeCrossentropy(tf.keras.losses.Loss):
@@ -1750,24 +1825,42 @@ class NonnegativeCrossentropy(tf.keras.losses.Loss):
     return nonneg_crossentropy(y_pred, y_true)
 
 
+@tf.keras.utils.register_keras_serializable(package='nql')
 class RelationDeclaration(object):
   """Holds information about a relation.
 
   See docs for declare_relation for explanation.
   """
 
-  def __init__(self, rel_name, domain_type, range_type, trainable, dense):
+  def __init__(self,
+               rel_name,
+               domain_type,
+               range_type,
+               trainable,
+               dense,
+               underlying_parameter=None):
     self.rel_name = rel_name
     self.domain_type = domain_type
     self.range_type = range_type
     self.trainable = trainable
     self.dense = dense
-    self.underlying_parameter = None
+    self.underlying_parameter = underlying_parameter
+
+  def get_config(self):
+    return {
+        'rel_name': self.rel_name,
+        'domain_type': self.domain_type,
+        'range_type': self.range_type,
+        'trainable': self.trainable,
+        'dense': self.dense,
+        'underlying_parameter': self.underlying_parameter,
+    }
 
   def __str__(self):
     return 'RelationDeclaration(%r)' % self.__dict__
 
 
+@tf.keras.utils.register_keras_serializable(package='nql')
 class RelationGroup(object):
   """Holds information about a relation group.
 
@@ -1786,6 +1879,12 @@ class RelationGroup(object):
 
   def __str__(self):
     return 'RelationGroup(%r)' % self.__dict__
+
+  def get_config(self):
+    return {
+        'group_name': self.name,
+        'members': self.members,
+    }
 
 
 class NQExprProvenance(object):

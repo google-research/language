@@ -43,7 +43,7 @@ import tensorflow as tf
 import transformers
 
 from muzero import core as mzcore
-from muzero import learner
+from muzero import learner_flags
 from official.nlp.bert import configs
 
 
@@ -170,7 +170,7 @@ def get_descriptor() -> mzcore.EnvironmentDescriptor:
           # checkpoint.
           'bert_init_ckpt':
               common_flags.BERT_INIT_CKPT.value
-              if learner.INIT_CHECKPOINT.value is None else None,
+              if learner_flags.INIT_CHECKPOINT.value is None else None,
           'action_encoder_hidden_size':
               common_flags.ACTION_ENCODER_HIDDEN_SIZE.value,
           'tokenizer':

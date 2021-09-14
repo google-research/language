@@ -21,18 +21,37 @@ from __future__ import print_function
 
 
 
+import tensorflow as tf
 
+
+@tf.keras.utils.register_keras_serializable(package='nql')
 class SymbolTable(object):
   """Birectionally map strings to integers."""
 
-  def __init__(self):
+  def __init__(self,
+               symbol_list=None,
+               next_id=0,
+               id_dict=None,
+               vocab_size=0,
+               frozen=False,
+               unk=None):
     """Initialize a SymbolTable."""
-    self._symbol_list = []
-    self._next_id = 0
-    self._id_dict = {}
-    self._vocab_size = 0
-    self._frozen = False
-    self._unk = None
+    self._symbol_list = [] if symbol_list is None else symbol_list
+    self._next_id = next_id
+    self._id_dict = {} if id_dict is None else id_dict
+    self._vocab_size = vocab_size
+    self._frozen = frozen
+    self._unk = unk
+
+  def get_config(self):
+    return {
+        'symbol_list': self._symbol_list,
+        'next_id': self._next_id,
+        'id_dict': self._id_dict,
+        'vocab_size': self._vocab_size,
+        'frozen': self._frozen,
+        'unk': self._unk,
+    }
 
   def freeze(self, unknown_marker = '<UNK>'):
     """Prevent further additions to the symbol table.

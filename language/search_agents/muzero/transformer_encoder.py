@@ -21,7 +21,7 @@ from typing import Text, Union
 from absl import logging
 import tensorflow as tf
 
-from muzero import learner
+from muzero import learner_flags
 
 from tensorflow.core.protobuf import trackable_object_graph_pb2  # pylint: disable=g-direct-tensorflow-import
 from official.modeling import activations
@@ -246,7 +246,7 @@ class TransformerEncoder(tf.keras.Model):
     super(TransformerEncoder, self).__init__(
         inputs=all_inputs, outputs=outputs, **kwargs)
 
-    if bert_init_ckpt and learner.INIT_CHECKPOINT.value is None:
+    if bert_init_ckpt and learner_flags.INIT_CHECKPOINT.value is None:
       self.init_weights(bert_init_ckpt)
 
   def init_weights(self, ckpt_directory: Text):
