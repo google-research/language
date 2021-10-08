@@ -51,7 +51,7 @@ class MLPBlock(nn.Module):
     self.dropout = nn.Dropout(self.dropout_rate)
     self.layer_norm = nn.LayerNorm(epsilon=self.layer_norm_epsilon)
 
-  def __call__(self, x, deterministic):
+  def __call__(self, x: Array, deterministic: bool) -> Array:
     """Applies MLP block update.
 
     Args:

@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains base implementation for entity-answer question answering tasks."""
 
-
+from typing import Any, Callable, Dict
 
 import jax.numpy as jnp
 from language.mentionmemory.tasks import mention_encoder_task
@@ -28,7 +28,7 @@ class EntityQATask(mention_encoder_task.MentionEncoderTask):
   """Abstract class for all entity-answer question answering tasks."""
 
   @staticmethod
-  def get_name_to_features(config):
+  def get_name_to_features(config: ml_collections.ConfigDict) -> Dict[str, Any]:
     """Return feature dict for decoding purposes. See BaseTask."""
     name_to_features = (
         mention_encoder_task.MentionEncoderTask.get_name_to_features(config))
@@ -41,8 +41,8 @@ class EntityQATask(mention_encoder_task.MentionEncoderTask):
 
   @staticmethod
   def make_preprocess_fn(
-      config
-  ):
+      config: ml_collections.ConfigDict
+  ) -> Callable[[Dict[str, tf.Tensor]], Dict[str, tf.Tensor]]:
     """Produces function to preprocess samples.
 
     See BaseTask.
@@ -60,7 +60,7 @@ class EntityQATask(mention_encoder_task.MentionEncoderTask):
     mask_token_id = getattr(config, 'mask_token_id', default_values.MASK_TOKEN)
     apply_answer_mask = config.apply_answer_mask
 
-    def preprocess_fn(example):
+    def preprocess_fn(example: Dict[str, tf.Tensor]) -> Dict[str, tf.Tensor]:
       """Performs preprocessing for individual sample."""
 
       int_type = example['text_ids'].dtype
@@ -78,7 +78,7 @@ class EntityQATask(mention_encoder_task.MentionEncoderTask):
     return preprocess_fn
 
   @staticmethod
-  def dummy_input(config):
+  def dummy_input(config: ml_collections.ConfigDict) -> Dict[str, Any]:
     """Produces model-specific dummy input batch. See BaseTask."""
 
     model_config = config.model_config

@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains entity attention layer."""
 
-
+from typing import Dict
 
 import flax.linen as nn
 import jax.numpy as jnp
@@ -53,13 +53,13 @@ class EntityAttentionLayer(nn.Module):
 
   def __call__(
       self,
-      encoded_input,
-      mention_batch_positions,
-      mention_start_positions,
-      mention_end_positions,
-      mention_mask,
-      entity_embeddings,
-  ):
+      encoded_input: Array,
+      mention_batch_positions: Array,
+      mention_start_positions: Array,
+      mention_end_positions: Array,
+      mention_mask: Array,
+      entity_embeddings: Array,
+  ) -> Dict[str, Array]:
     """Perform attention update over entity embedding table.
 
     Args:

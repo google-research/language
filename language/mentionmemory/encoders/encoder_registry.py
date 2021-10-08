@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains registry and registration function for tasks and encoders."""
 
-
+from typing import Callable, Type, TypeVar
 
 from language.mentionmemory.encoders import base_encoder
 
@@ -24,7 +24,7 @@ _BaseEncoderVar = TypeVar('_BaseEncoderVar', bound='base_encoder.BaseEncoder')
 
 
 def register_encoder(
-    name):
+    name: str) -> Callable[[Type[_BaseEncoderVar]], Type[_BaseEncoderVar]]:
   """Register encoder.
 
   Encoder should implement BaseEncoder abstraction. Used as decorator, for
@@ -40,7 +40,7 @@ def register_encoder(
     Mapping from BaseEncoder to BaseEncoder.
   """
 
-  def _wrap(cls):
+  def _wrap(cls: Type[_BaseEncoderVar]) -> Type[_BaseEncoderVar]:
     """Decorator inner wrapper needed to support `name` argument."""
     if not issubclass(cls, base_encoder.BaseEncoder):
       raise TypeError(
@@ -59,6 +59,6 @@ def register_encoder(
   return _wrap
 
 
-def get_registered_encoder(name):
+def get_registered_encoder(name: str) -> Type['base_encoder.BaseEncoder']:
   """Takes in encoder name and returns corresponding encoder from registry."""
   return _ENCODER_REGISTRY[name]

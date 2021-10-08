@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains mention auto-encoder implementation."""
 
-
+from typing import Dict
 
 import flax.linen as nn
 import jax.numpy as jnp
@@ -148,7 +148,7 @@ class MautoEncoder(base_encoder.BaseEncoder):
         dtype=self.dtype,
     )
 
-  def forward(self, batch, deterministic):
+  def forward(self, batch: Dict[str, Array], deterministic: bool):
     loss_helpers = {}
     logging_helpers = {}
 

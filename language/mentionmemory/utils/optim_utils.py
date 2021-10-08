@@ -14,20 +14,20 @@
 # limitations under the License.
 """Learning rate scheduler and other optimizer utils."""
 
-
+from typing import Callable
 
 import flax
 import jax.numpy as jnp
 
 
 def create_learning_rate_scheduler(
-    learning_rate,
-    warmup = False,
-    warmup_steps = 1000,
-    linear_decay = False,
-    max_steps = 500000,
-    decay_minimum_factor = 0.0,
-):
+    learning_rate: float,
+    warmup: bool = False,
+    warmup_steps: int = 1000,
+    linear_decay: bool = False,
+    max_steps: int = 500000,
+    decay_minimum_factor: float = 0.0,
+) -> Callable[[int], float]:
   """Creates learning rate scheduler with options for warmup and linear decay.
 
   Args:
@@ -42,7 +42,7 @@ def create_learning_rate_scheduler(
     Function that maps from step to lr.
   """
 
-  def step_fn(step):
+  def step_fn(step: int) -> float:
     factor = 1.0
     if warmup:
       factor *= jnp.minimum(1.0, step / warmup_steps)

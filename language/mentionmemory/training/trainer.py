@@ -16,7 +16,7 @@
 
 import functools
 import os
-
+from typing import Any, Dict, Optional, Sequence, Tuple
 
 from absl import logging
 from clu import metric_writers
@@ -41,9 +41,9 @@ import optax
 def eval_step(
     train_state,
     model_vars,
-    batch,
-    model_config,
-):
+    batch: Dict[str, Any],
+    model_config: ml_collections.FrozenConfigDict,
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
   """Calculate evaluation metrics on a batch.
 
   Args:
@@ -74,10 +74,11 @@ def eval_step(
 
 def evaluate(
     eval_step_fn,
-    train_state,
-    model_vars,
-    eval_data,
-):
+    train_state: ts.TrainState,
+    model_vars: Dict[str, Any],
+    eval_data: Sequence[Dict[str, Any]],
+) -> Tuple[Dict[str, Any], Sequence[Tuple[Dict[str, Any], Optional[Dict[
+    str, Any]]]]]:
   """Evaluate current parameters and return a dictionary with metrics.
 
   Args:
@@ -111,12 +112,12 @@ def evaluate(
 
 
 def train_step(
-    train_state,
-    model_vars,
-    batch,
-    dropout_rng,
-    model_config,
-):
+    train_state: ts.TrainState,
+    model_vars: Dict[str, Any],
+    batch: Dict[str, Any],
+    dropout_rng: jnp.ndarray,
+    model_config: ml_collections.FrozenConfigDict,
+) -> Tuple[ts.TrainState, Dict[str, Any]]:
   """Perform a single training step.
 
   Args:
@@ -152,7 +153,7 @@ def train_step(
   return new_train_state, metrics
 
 
-def train(config):
+def train(config: ml_collections.ConfigDict):
   """Run training."""
 
   # Establish host information

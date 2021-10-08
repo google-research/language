@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Simple model for testing purposes."""
-
+from typing import Any, Callable, Dict, Optional, Text, Tuple
 
 import flax.linen as nn
 import jax.numpy as jnp
@@ -62,10 +62,10 @@ class TextClassifierModel(nn.Module):
       self.dropout = nn.Dropout(self.encoder_config.dropout_rate)
     self.linear_classifier = nn.Dense(self.vocab_size, dtype=self.dtype)
 
-  def __call__(self, batch, deterministic):
+  def __call__(self, batch: Dict[str, Array], deterministic: bool):
     encoding, loss_helpers, logging_helpers = self.encoder.forward(
         batch, deterministic)
-    cls_encoding = encoding[:, 0, Ellipsis]
+    cls_encoding = encoding[:, 0, ...]
 
     if self.apply_mlp:
       cls_encoding = self.mlp(cls_encoding)
@@ -84,18 +84,18 @@ class TextClassifier(downstream_encoder_task.DownstreamEncoderTask):
 
   @classmethod
   def make_loss_fn(
-      cls, config
-  ):
+      cls, config: ml_collections.ConfigDict
+  ) -> Callable[..., Tuple[float, MetricGroups, Dict[str, Any]]]:
     """Creates task loss function."""
 
     def loss_fn(
-        model_config,
-        model_params,
-        model_vars,
-        batch,
-        deterministic,
-        dropout_rng = None,
-    ):
+        model_config: ml_collections.FrozenConfigDict,
+        model_params: Dict[Text, Any],
+        model_vars: Dict[Text, Any],
+        batch: Dict[Text, Any],
+        deterministic: bool,
+        dropout_rng: Optional[Dict[Text, Array]] = None,
+    ) -> Tuple[float, MetricGroups, Dict[str, Any]]:
       """Model-specific loss function.
 
       See BaseTask.
@@ -150,19 +150,19 @@ class TextClassifier(downstream_encoder_task.DownstreamEncoderTask):
 
   @staticmethod
   def make_preprocess_fn(
-      config
-  ):
+      config: ml_collections.ConfigDict
+  ) -> Callable[[Dict[Text, tf.Tensor]], Dict[Text, tf.Tensor]]:
     """Produces function to preprocess samples. See BaseTask."""
 
-    def preprocess_fn(example):
+    def preprocess_fn(example: Dict[Text, tf.Tensor]) -> Dict[Text, tf.Tensor]:
       return example
 
     return preprocess_fn
 
   @staticmethod
   def make_collater_fn(
-      config
-  ):
+      config: ml_collections.ConfigDict
+  ) -> Callable[[Dict[Text, tf.Tensor]], Dict[Text, tf.Tensor]]:
     """Produces function to preprocess batches.
 
     See BaseTask.
@@ -194,7 +194,7 @@ class TextClassifier(downstream_encoder_task.DownstreamEncoderTask):
     max_batch_mentions = config.max_mentions * bsz
     n_candidate_mentions = max_sample_mentions * bsz
 
-    def collater_fn(batch):
+    def collater_fn(batch: Dict[Text, tf.Tensor]) -> Dict[Text, tf.Tensor]:
 
       new_batch = {}
 
@@ -255,7 +255,7 @@ class TextClassifier(downstream_encoder_task.DownstreamEncoderTask):
 
   @staticmethod
   def get_name_to_features(
-      config):
+      config: ml_collections.ConfigDict) -> Dict[Text, Any]:
     """Return feature dict for decoding purposes. See BaseTask."""
 
     encoder_config = config.model_config.encoder_config
@@ -278,7 +278,7 @@ class TextClassifier(downstream_encoder_task.DownstreamEncoderTask):
     return name_to_features
 
   @staticmethod
-  def dummy_input(config):
+  def dummy_input(config: ml_collections.ConfigDict) -> Dict[Text, Any]:
     """Produces model-specific dummy input batch. See BaseTask."""
 
     if config.get('max_length_with_entity_tokens') is not None:

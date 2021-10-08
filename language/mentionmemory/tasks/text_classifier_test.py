@@ -16,7 +16,7 @@
 
 import copy
 import json
-
+from typing import Dict, Text
 
 from absl.testing import absltest
 from absl.testing import parameterized
@@ -88,8 +88,8 @@ class TextClassifierTest(test_utils.TestCase):
 
   def _gen_raw_batch(
       self,
-      n_mentions,
-  ):
+      n_mentions: int,
+  ) -> Dict[Text, tf.Tensor]:
     """Generate raw example."""
 
     bsz = self.config.per_device_batch_size

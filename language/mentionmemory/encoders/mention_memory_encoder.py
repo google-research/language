@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains mention memory encoder implementation."""
 
-
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from absl import logging
 import flax.linen as nn
@@ -37,7 +37,7 @@ import numpy as np
 class MemoryRetrievalResultProcessor:
   """Processes retrieval result for manual analysis."""
 
-  def __init__(self, config):
+  def __init__(self, config: ml_collections.ConfigDict):
     self.memory_reduction = config.memory_reduction
     self.memory_entity_id_pattern = config.memory_entity_id_pattern
     self.memory_text_pattern = config.memory_text_pattern
@@ -56,7 +56,7 @@ class MemoryRetrievalResultProcessor:
     # e.g. array = array[:int(memory_prop * array.shape[0])]
     assert config.memory_prop is None
 
-  def load_array(self, pattern):
+  def load_array(self, pattern: str):
     """Load sharded array as if it was loaded from multiple processes."""
     process_count = jax.process_count()
     arrays = []
@@ -81,8 +81,8 @@ class MemoryRetrievalResultProcessor:
     if self.memory_entity_id is None:
       self.load_memory()
 
-  def __call__(self, batch,
-               auxiliary_output):
+  def __call__(self, batch: Dict[str, Any],
+               auxiliary_output: Dict[str, Any]) -> Dict[str, Any]:
     """Produces memory texts and mention positions given memory IDs."""
     # We want to load memory lazily, so we do that here and not in the
     # constructor. First, we check if memory components have been loaded yet
@@ -229,7 +229,7 @@ class MentionMemoryEncoder(base_encoder.BaseEncoder):
 
   def setup(self):
 
-    def make_transformer_block(n_layers):
+    def make_transformer_block(n_layers: int):
       return transformer.TransformerBlock(
           num_layers=n_layers,
           model_dim=self.hidden_size,
@@ -372,9 +372,9 @@ class MentionMemoryEncoder(base_encoder.BaseEncoder):
 
   def forward(
       self,
-      batch,
-      deterministic,
-  ):
+      batch: Dict[str, Array],
+      deterministic: bool,
+  ) -> Tuple[Array, Dict[str, Array], Dict[str, Array]]:
     loss_helpers = {}
     logging_helpers = {}
 
@@ -493,7 +493,7 @@ class MentionMemoryEncoder(base_encoder.BaseEncoder):
     return encoding, loss_helpers, logging_helpers
 
   @staticmethod
-  def load_weights(config):
+  def load_weights(config: ml_collections.ConfigDict) -> Dict[str, Any]:
     """Load model weights and mention memory."""
 
     if config.load_weights == 'memory_only':
@@ -506,7 +506,7 @@ class MentionMemoryEncoder(base_encoder.BaseEncoder):
     return model_variables
 
   @staticmethod
-  def load_memory(config):
+  def load_memory(config: ml_collections.ConfigDict) -> Dict[str, Any]:
     """Load mention memory."""
     model_config = config.model_config
     encoder_config = model_config.encoder_config
@@ -571,8 +571,8 @@ class MentionMemoryEncoder(base_encoder.BaseEncoder):
   @classmethod
   def make_output_postprocess_fn(
       cls,
-      config  # pylint: disable=unused-argument
-  ):
+      config: ml_collections.ConfigDict  # pylint: disable=unused-argument
+  ) -> Callable[[Dict[str, Any], Dict[str, Any]], Dict[str, Any]]:
     """Postprocess task samples (input and output). See BaseTask."""
 
     return MemoryRetrievalResultProcessor(config)

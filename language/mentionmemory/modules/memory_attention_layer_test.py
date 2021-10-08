@@ -207,7 +207,7 @@ class MemoryAttentionLayerTest(parameterized.TestCase):
 
     # Check id 0 or 1 retrieved
     self.assertTrue(
-        jnp.all((entity_ids[Ellipsis, 0] == 0) + (entity_ids[Ellipsis, 0] == 1)))
+        jnp.all((entity_ids[..., 0] == 0) + (entity_ids[..., 0] == 1)))
 
     # Set some text identifiers to 0 and others to 1 so that some are binding
     text_identifiers = np.zeros((n_mentions), dtype=np.int32)

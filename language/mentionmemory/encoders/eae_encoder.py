@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains Entities as Experts encoder."""
 
-
+from typing import Dict, Tuple
 
 import flax.linen as nn
 import jax.numpy as jnp
@@ -155,9 +155,9 @@ class EaEEncoder(base_encoder.BaseEncoder):
 
   def forward(
       self,
-      batch,
-      deterministic,
-  ):
+      batch: Dict[str, Array],
+      deterministic: bool,
+  ) -> Tuple[Array, Dict[str, Array], Dict[str, Array]]:
 
     loss_helpers = {}
     logging_helpers = {}

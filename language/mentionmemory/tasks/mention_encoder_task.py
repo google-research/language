@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains task with base methods for pre-training a mention encoder."""
 
-
+from typing import Any, Callable, Dict
 
 import jax.numpy as jnp
 from language.mentionmemory.encoders import encoder_registry
@@ -32,8 +32,8 @@ class MentionEncoderTask(base_task.BaseTask):
 
   @staticmethod
   def make_preprocess_fn(
-      config
-  ):
+      config: ml_collections.ConfigDict
+  ) -> Callable[[Dict[str, tf.Tensor]], Dict[str, tf.Tensor]]:
     """Produces function to preprocess samples.
 
     See BaseTask.
@@ -57,7 +57,7 @@ class MentionEncoderTask(base_task.BaseTask):
     mention_mask_rate = config.mention_mask_rate
     mask_token_id = getattr(config, 'mask_token_id', 103)
 
-    def preprocess_fn(example):
+    def preprocess_fn(example: Dict[str, tf.Tensor]) -> Dict[str, tf.Tensor]:
       """Performs preprocessing for individual sample."""
       new_example = {}
       new_example['text_mask'] = example['text_mask']
@@ -104,8 +104,8 @@ class MentionEncoderTask(base_task.BaseTask):
 
   @staticmethod
   def make_collater_fn(
-      config
-  ):
+      config: ml_collections.ConfigDict
+  ) -> Callable[[Dict[str, tf.Tensor]], Dict[str, tf.Tensor]]:
     """Produces function to preprocess batches.
 
     See BaseTask.
@@ -124,7 +124,7 @@ class MentionEncoderTask(base_task.BaseTask):
     max_batch_mention_targets = (
         config.max_mention_targets * config.per_device_batch_size)
 
-    def collater_fn(batch):
+    def collater_fn(batch: Dict[str, tf.Tensor]) -> Dict[str, tf.Tensor]:
       new_features = mention_preprocess_utils.process_batchwise_mention_targets(
           dense_span_starts=batch['dense_span_starts'],
           dense_span_ends=batch['dense_span_ends'],
@@ -179,7 +179,7 @@ class MentionEncoderTask(base_task.BaseTask):
     return collater_fn
 
   @staticmethod
-  def get_name_to_features(config):
+  def get_name_to_features(config: ml_collections.ConfigDict) -> Dict[str, Any]:
     """Return feature dict for decoding purposes. See BaseTask."""
 
     encoder_config = config.model_config.encoder_config
@@ -196,7 +196,7 @@ class MentionEncoderTask(base_task.BaseTask):
     return name_to_features
 
   @staticmethod
-  def dummy_input(config):
+  def dummy_input(config: ml_collections.ConfigDict) -> Dict[str, Any]:
     """Produces model-specific dummy input batch. See BaseTask."""
 
     model_config = config.model_config
@@ -268,7 +268,7 @@ class MentionEncoderTask(base_task.BaseTask):
     return dummy_input
 
   @classmethod
-  def load_weights(cls, config):
+  def load_weights(cls, config: ml_collections.ConfigDict) -> Dict[str, Any]:
     """Load model weights from file.
 
     We assume that MentionEncoderTasks specify an encoder name as a class
@@ -291,8 +291,8 @@ class MentionEncoderTask(base_task.BaseTask):
   @classmethod
   def make_output_postprocess_fn(
       cls,
-      config  # pylint: disable=unused-argument
-  ):
+      config: ml_collections.ConfigDict  # pylint: disable=unused-argument
+  ) -> Callable[[Dict[str, Any], Dict[str, Any]], Dict[str, Any]]:
     """Postprocess task samples (input and output). See BaseTask."""
 
     base_postprocess_fn = base_task.BaseTask.make_output_postprocess_fn(config)
@@ -300,8 +300,8 @@ class MentionEncoderTask(base_task.BaseTask):
     encoder_class = encoder_registry.get_registered_encoder(cls.encoder_name)
     encoder_postprocess_fn = encoder_class.make_output_postprocess_fn(config)
 
-    def postprocess_fn(batch,
-                       auxiliary_output):
+    def postprocess_fn(batch: Dict[str, Any],
+                       auxiliary_output: Dict[str, Any]) -> Dict[str, Any]:
       """Function that prepares model's input and output for serialization."""
 
       new_auxiliary_output = {}

@@ -16,7 +16,7 @@
 
 import math
 import os
-
+from typing import Dict, Text
 
 from absl.testing import absltest
 from absl.testing import parameterized
@@ -37,7 +37,7 @@ class DataTest(parameterized.TestCase):
   }
 
   @staticmethod
-  def preprocess_fn(sample):
+  def preprocess_fn(sample: Dict[Text, tf.Tensor]) -> Dict[Text, tf.Tensor]:
     return sample
 
   def _get_test_data_path(self, file_name):

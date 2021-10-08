@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains registry and registration function for tasks."""
 
-
+from typing import Callable, Type, TypeVar
 
 from language.mentionmemory.tasks import base_task
 
@@ -24,7 +24,7 @@ _BaseTaskVar = TypeVar('_BaseTaskVar', bound='base_task.BaseTask')
 
 
 def register_task(
-    name):
+    name: str) -> Callable[[Type[_BaseTaskVar]], Type[_BaseTaskVar]]:
   """Register task.
 
   Task should implement BaseTask abstraction. Used as decorator, for example:
@@ -39,7 +39,7 @@ def register_task(
     Mapping from BaseTask to BaseTask.
   """
 
-  def _wrap(cls):
+  def _wrap(cls: Type[_BaseTaskVar]) -> Type[_BaseTaskVar]:
     """Decorator inner wrapper needed to support `name` argument."""
     if not issubclass(cls, base_task.BaseTask):
       raise TypeError('Invalid task. Task %s does not subclass BaseTask.' %
@@ -57,6 +57,6 @@ def register_task(
   return _wrap
 
 
-def get_registered_task(name):
+def get_registered_task(name: str) -> Type['base_task.BaseTask']:
   """Takes in task name and returns corresponding task from registry."""
   return _TASK_REGISTRY[name]

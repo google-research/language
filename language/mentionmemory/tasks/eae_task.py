@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains Entities as Experts pre-training task."""
 
-
+from typing import Any, Callable, Dict, Optional, Tuple
 
 import flax.linen as nn
 import jax.numpy as jnp
@@ -49,8 +49,8 @@ class EaEModel(nn.Module):
     )
 
   def __call__(
-      self, batch,
-      deterministic):
+      self, batch: Dict[str, Array],
+      deterministic: bool) -> Tuple[Dict[str, Array], Dict[str, Array]]:
     encoded_input, loss_helpers, logging_helpers = self.encoder.forward(
         batch, deterministic)
 
@@ -71,8 +71,8 @@ class EaETask(mention_encoder_task.MentionEncoderTask):
 
   @classmethod
   def make_loss_fn(
-      cls, config
-  ):
+      cls, config: ml_collections.ConfigDict
+  ) -> Callable[..., Tuple[float, MetricGroups, Dict[str, Any]]]:
     """Creates task loss function.
 
     See BaseTask.
@@ -98,13 +98,13 @@ class EaETask(mention_encoder_task.MentionEncoderTask):
     mtb_score_mode = config.get('mtb_score_mode', 'dot')
 
     def loss_fn(
-        model_config,
-        model_params,
-        model_vars,  # pylint: disable=unused-argument
-        batch,
-        deterministic,
-        dropout_rng = None,
-    ):
+        model_config: ml_collections.FrozenConfigDict,
+        model_params: Dict[str, Any],
+        model_vars: Dict[str, Any],  # pylint: disable=unused-argument
+        batch: Dict[str, Any],
+        deterministic: bool,
+        dropout_rng: Optional[Dict[str, Array]] = None,
+    ) -> Tuple[float, MetricGroups, Dict[str, Any]]:
       """Task-specific loss function. See BaseTask."""
 
       batch_size = batch['text_ids'].shape[0]

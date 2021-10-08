@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains sparse topk similarity layer."""
 
-
+from typing import Tuple
 
 import flax.linen as nn
 import jax
@@ -52,10 +52,10 @@ class SparseTopKSimilarityLayer(nn.Module):
 
   def __call__(
       self,
-      queries,
-      table,
-      prototypes,
-  ):
+      queries: Array,
+      table: Array,
+      prototypes: Array,
+  ) -> Tuple[Array, Array, Array]:
     """Perform approximate top-k similarity search over vector table.
 
     Args:
@@ -80,7 +80,7 @@ class SparseTopKSimilarityLayer(nn.Module):
     # Split queries to reduce size of selected clusters and save memory.
     queries = queries.reshape(self.splits, queries_per_split, vector_dim)
 
-    def split_top_k(split_queries):
+    def split_top_k(split_queries: Array) -> Tuple[Array, Array, Array]:
       # Find most similar clusters
       prototype_scores = jnp.einsum('qd,pd->qp', split_queries, prototypes)
       top_indices = jax.lax.top_k(prototype_scores, self.n_search)[1]

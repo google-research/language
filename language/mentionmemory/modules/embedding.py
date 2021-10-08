@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains embedding layers."""
 
-
+from typing import Callable, Dict
 
 import flax.linen as nn
 import jax
@@ -44,7 +44,7 @@ class Embed(nn.Module):
                                 (self.num_embeddings, self.embedding_dim),
                                 jnp.float32)
 
-  def __call__(self, embedding_input):
+  def __call__(self, embedding_input: Array):
     """Embeds the inputs along the last dimension.
 
     Args:
@@ -64,7 +64,7 @@ class DictEmbed(nn.Module):
   """
   embedders: Dict[str, Embed]
 
-  def __call__(self, inputs):
+  def __call__(self, inputs: Dict[str, Array]) -> Array:
     embeddings = {}
     for key, embedding_input in inputs.items():
       embeddings[key] = self.embedders[key](embedding_input)

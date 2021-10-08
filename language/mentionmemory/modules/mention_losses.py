@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains losses for mention encodings (e.g., coref resolution and MTB)."""
 
-
+from typing import Dict, Optional, Tuple
 import jax
 import jax.numpy as jnp
 
@@ -25,10 +25,10 @@ from language.mentionmemory.utils.custom_types import Array
 _SMALL_NUMBER = 1e-5
 
 
-def build_coref_positive_negative_mask(mention_batch_positions,
-                                       all_mention_batch_positions,
-                                       mention_target_ids,
-                                       all_mention_target_ids):
+def build_coref_positive_negative_mask(mention_batch_positions: Array,
+                                       all_mention_batch_positions: Array,
+                                       mention_target_ids: Array,
+                                       all_mention_target_ids: Array):
   """Decides which samples are positive / negative for coref resolution loss.
 
   positive_mask[i, j] is True <=> mention j in `all_mention_target_ids`
@@ -81,11 +81,11 @@ def build_coref_positive_negative_mask(mention_batch_positions,
   return positive_mask, negative_mask
 
 
-def build_mtb_positive_negative_mask(mention_batch_positions,
-                                     all_mention_batch_positions,
-                                     mention_target_ids,
-                                     all_mention_target_ids,
-                                     mtb_positive_mask):
+def build_mtb_positive_negative_mask(mention_batch_positions: Array,
+                                     all_mention_batch_positions: Array,
+                                     mention_target_ids: Array,
+                                     all_mention_target_ids: Array,
+                                     mtb_positive_mask: Array):
   """Decides which samples are positive / negative for MTB loss.
 
   On of the argument `mtb_positive_mask` contains information regarding how
@@ -160,7 +160,7 @@ def build_mtb_positive_negative_mask(mention_batch_positions,
 
 
 def get_all_encodings_and_target_ids(
-    mention_encodings, mention_target_ids):
+    mention_encodings: Array, mention_target_ids: Array) -> Tuple[Array, Array]:
   """Gather encodings and IDs from all devices."""
   hidden_dim = mention_encodings.shape[-1]
   device_id = mention_utils.get_device_id('batch')
@@ -178,13 +178,13 @@ def get_all_encodings_and_target_ids(
 
 
 def coreference_resolution_loss(
-    mention_encodings,
-    mention_batch_positions,
-    mention_target_ids,
-    batch_size,
-    mode,
-    mention_target_is_masked = None,
-    metrics_prefix = ''):
+    mention_encodings: Array,
+    mention_batch_positions: Array,
+    mention_target_ids: Array,
+    batch_size: int,
+    mode: str,
+    mention_target_is_masked: Optional[Array] = None,
+    metrics_prefix: str = '') -> Tuple[float, Dict[str, Dict[str, float]]]:
   """Compute coreference resolution loss over global batch (across all devices).
 
   Args:
@@ -295,13 +295,13 @@ def coreference_resolution_loss(
 
 
 def mtb_loss(
-    mention_encodings,
-    mention_batch_positions,
-    mention_target_ids,
-    batch_size,
-    mode,
-    mention_target_is_masked = None,
-    metrics_prefix = ''):
+    mention_encodings: Array,
+    mention_batch_positions: Array,
+    mention_target_ids: Array,
+    batch_size: int,
+    mode: str,
+    mention_target_is_masked: Optional[Array] = None,
+    metrics_prefix: str = '') -> Tuple[float, Dict[str, Dict[str, float]]]:
   """Compute MTB loss over global batch (over all devices).
 
   Args:
@@ -420,9 +420,9 @@ def mtb_loss(
   return loss, final_metrics
 
 
-def entity_linking_loss(mention_encodings, entity_embeddings,
-                        mention_target_ids,
-                        mention_target_weights, mode):
+def entity_linking_loss(mention_encodings: Array, entity_embeddings: Array,
+                        mention_target_ids: Array,
+                        mention_target_weights: Array, mode: str) -> Array:
   """Compute entity linking loss.
 
   Args:
@@ -485,11 +485,11 @@ def entity_linking_loss(mention_encodings, entity_embeddings,
 
 
 def get_batch_and_retrievals_entity_overlap(
-    mention_target_batch_positions,
-    mention_target_ids,
-    mention_target_weights,
-    memory_text_entities,
-    batch_size,
+    mention_target_batch_positions: Array,
+    mention_target_ids: Array,
+    mention_target_weights: Array,
+    memory_text_entities: Array,
+    batch_size: int,
 ):
   """Compute the overlap between entities in the batch and in retrievals.
 
@@ -544,16 +544,16 @@ def get_batch_and_retrievals_entity_overlap(
 
 
 def same_entity_set_retrieval_loss(
-    mention_target_batch_positions,
-    mention_target_ids,
-    mention_target_weights,
-    mention_batch_positions,
-    mention_mask,
-    memory_text_entities,
-    memory_attention_weights,
-    memory_mask,
-    batch_size,
-    same_entity_set_target_threshold,
+    mention_target_batch_positions: Array,
+    mention_target_ids: Array,
+    mention_target_weights: Array,
+    mention_batch_positions: Array,
+    mention_mask: Array,
+    memory_text_entities: Array,
+    memory_attention_weights: Array,
+    memory_mask: Array,
+    batch_size: int,
+    same_entity_set_target_threshold: int,
 ):
   """Computes same-entity-set-retrieval loss.
 

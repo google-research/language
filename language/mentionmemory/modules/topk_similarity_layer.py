@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains topk similarity layer."""
 
-
+from typing import Tuple
 
 import flax.linen as nn
 import jax
@@ -50,9 +50,9 @@ class TopKSimilarityLayer(nn.Module):
 
   def __call__(
       self,
-      queries,
-      table,
-  ):
+      queries: Array,
+      table: Array,
+  ) -> Tuple[Array, Array, Array]:
     """Perform approximate top-k similarity search over vector table.
 
     Args:

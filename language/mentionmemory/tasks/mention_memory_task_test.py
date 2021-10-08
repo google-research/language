@@ -110,7 +110,7 @@ class MentionMemoryTaskTest(test_utils.TestCase):
     test_utils.force_multi_devices(self.n_devices)
     self.devices = jax.local_devices()
 
-  def save_sharded_array(self, array, name):
+  def save_sharded_array(self, array: Array, name: str) -> str:
     tmp_dir = self.create_tempdir()
     prefix = os.path.join(tmp_dir.full_path, name)
     for device_index in range(self.n_devices):

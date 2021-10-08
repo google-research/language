@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains readtwice encoder implementation."""
 
-
+from typing import Dict, Optional, Tuple
 
 import flax.linen as nn
 import jax.numpy as jnp
@@ -121,7 +121,7 @@ class ReadTwiceEncoder(base_encoder.BaseEncoder):
 
   def setup(self):
 
-    def make_transformer_block(n_layers):
+    def make_transformer_block(n_layers: int):
       return transformer.TransformerBlock(
           num_layers=n_layers,
           model_dim=self.hidden_size,
@@ -210,8 +210,8 @@ class ReadTwiceEncoder(base_encoder.BaseEncoder):
     )
 
   def forward(
-      self, batch,
-      deterministic):
+      self, batch: Dict[str, Array],
+      deterministic: bool) -> Tuple[Array, Dict[str, Array], Dict[str, Array]]:
     loss_helpers = {}
     logging_helpers = {}
 

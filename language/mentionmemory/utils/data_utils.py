@@ -18,7 +18,7 @@ import functools
 import json
 import math
 import os
-
+from typing import Any, Callable, Dict, List, Sequence, Tuple, Union
 
 from absl import logging
 import jax
@@ -27,7 +27,7 @@ import numpy as np
 import tensorflow.compat.v2 as tf
 
 
-def pad_fn(features, bsz):
+def pad_fn(features: Dict[str, tf.Tensor], bsz: int) -> Dict[str, tf.Tensor]:
   """Pads a batch up to specified batch size and adds sample weights."""
   new_features = {}
   for feature_name, feature in features.items():
@@ -44,8 +44,8 @@ def pad_fn(features, bsz):
   return new_features
 
 
-def update_name_to_features(name_to_features,
-                            samples_per_example):
+def update_name_to_features(name_to_features: Dict[str, Any],
+                            samples_per_example: int) -> Dict[str, Any]:
   """Adjust feature shapes according to `samples_per_example`."""
   new_name_to_features = {}
   for k, v in name_to_features.items():
@@ -60,8 +60,8 @@ def update_name_to_features(name_to_features,
 
 
 def make_decode_fn(
-    name_to_features,
-    samples_per_example):
+    name_to_features: Dict[str, Any],
+    samples_per_example: int) -> Callable[[bytes], Dict[str, tf.Tensor]]:
   """Make function to decode TF examples.
 
   Args:
@@ -76,7 +76,7 @@ def make_decode_fn(
   name_to_features = update_name_to_features(name_to_features,
                                              samples_per_example)
 
-  def decode_fn(record):
+  def decode_fn(record: bytes) -> Dict[str, tf.Tensor]:
     """Decodes tf examples."""
     example = tf.io.parse_single_example(record, name_to_features)
     for feature, tensor in example.items():
@@ -89,9 +89,11 @@ def make_decode_fn(
 
 
 def _get_input_output_names(
-    patterns, decode_fn,
-    preprocess_fn
-):
+    patterns: Union[str, Sequence[str]], decode_fn: Callable[[bytes],
+                                                             Dict[str,
+                                                                  tf.Tensor]],
+    preprocess_fn: Callable[[Dict[str, tf.Tensor]], Dict[str, tf.Tensor]]
+) -> Tuple[Sequence[str], Dict[str, Any]]:
   """Records input and output features of decode_fn and preprocess_fn.
 
   Args:
@@ -124,7 +126,7 @@ def _get_input_output_names(
 
 def wrap_numpy_function(
     preprocess_input_names, preprocess_fn, preprocess_output_types
-):
+) -> Callable[[Dict[str, tf.Tensor]], Dict[str, tf.Tensor]]:
   """Wraps python function into Tensorflow op.
 
   Args:
@@ -139,13 +141,13 @@ def wrap_numpy_function(
     A function that preprocesses features using tensorflow ops.
   """
 
-  def preprocess_with_list_input_fn(*args):
+  def preprocess_with_list_input_fn(*args) -> Tuple[tf.Tensor]:
     input_dict = {k: v for k, v in zip(preprocess_input_names, args)}
     output_dict = preprocess_fn(input_dict)
     output_list = tuple(output_dict[k] for k in preprocess_output_types)
     return output_list
 
-  def f(example):
+  def f(example: Dict[str, tf.Tensor]) -> Dict[str, tf.Tensor]:
     input_list = [example[k] for k in preprocess_input_names]
     output_types = [v for k, v in preprocess_output_types.items()]
     output_list = tf.numpy_function(preprocess_with_list_input_fn, input_list,
@@ -159,18 +161,18 @@ def wrap_numpy_function(
 
 
 def load_dataset(
-    patterns,
-    decode_fn,
-    preprocess_fn,
-    collater_fn,
-    is_training,
-    per_device_batch_size,
-    local_device_count,
-    host_count,
-    host_id,
-    seed = 0,
-    pad_eval = False,
-):
+    patterns: Union[str, Sequence[str]],
+    decode_fn: Callable[[bytes], Dict[str, tf.Tensor]],
+    preprocess_fn: Callable[[Dict[str, tf.Tensor]], Dict[str, tf.Tensor]],
+    collater_fn: Callable[[Dict[str, tf.Tensor]], Dict[str, tf.Tensor]],
+    is_training: bool,
+    per_device_batch_size: int,
+    local_device_count: int,
+    host_count: int,
+    host_id: int,
+    seed: int = 0,
+    pad_eval: bool = False,
+) -> tf.data.Dataset:
   """Create TF dataset from one or more file patterns.
 
   Args:
@@ -277,18 +279,18 @@ def load_dataset(
 
 
 def load_multi_dataset(
-    datasets_config,
-    name_to_features,
-    preprocess_fn,
-    collater_fn,
-    is_training,
-    per_device_batch_size,
-    local_device_count,
-    host_count,
-    host_id,
-    seed = 0,
-    pad_eval = False,
-):
+    datasets_config: List[Dict[str, Union[int, str, Sequence[str]]]],
+    name_to_features: Dict[str, Any],
+    preprocess_fn: Callable[[Dict[str, tf.Tensor]], Dict[str, tf.Tensor]],
+    collater_fn: Callable[[Dict[str, tf.Tensor]], Dict[str, tf.Tensor]],
+    is_training: bool,
+    per_device_batch_size: int,
+    local_device_count: int,
+    host_count: int,
+    host_id: int,
+    seed: int = 0,
+    pad_eval: bool = False,
+) -> tf.data.Dataset:
   """Create TF dataset from different data sources.
 
   Args:
@@ -336,10 +338,10 @@ def load_multi_dataset(
 
 
 def load_sharded_array(
-    pattern,
-    stride,
-    offset,
-):
+    pattern: Union[str, Sequence[str]],
+    stride: int,
+    offset: int,
+) -> np.ndarray:
   """Load and concatenate numpy arrays according to pattern.
 
   Args:
@@ -361,8 +363,8 @@ def load_sharded_array(
   return array
 
 
-def save_sharded_array(array, prefix, num_shards,
-                       stride, offset, shard_size_divisible):
+def save_sharded_array(array: np.ndarray, prefix: str, num_shards: int,
+                       stride: int, offset: int, shard_size_divisible: int):
   """Save numpy array into multiple shards.
 
   Input array will be divided and saved into files with names
@@ -408,8 +410,8 @@ def save_sharded_array(array, prefix, num_shards,
     start_index = end_index
 
 
-def save_samples_to_json(features,
-                         config, step):
+def save_samples_to_json(features: List[Dict[str, Any]],
+                         config: ml_collections.ConfigDict, step: int):
   """Save samples to a json file."""
   save_samples_for_this_step = (
       config.get('save_samples_every_steps') and

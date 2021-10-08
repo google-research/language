@@ -14,7 +14,7 @@
 # limitations under the License.
 """Defines abstract encoder class used as base for other encoders in package."""
 
-
+from typing import Any, Callable, Dict, Tuple
 
 import flax.linen as nn
 import jax
@@ -34,9 +34,9 @@ class BaseEncoder(nn.Module):
 
   def forward(
       self,
-      batch,
-      deterministic,
-  ):
+      batch: Dict[str, Array],
+      deterministic: bool,
+  ) -> Tuple[Array, Dict[str, Array], Dict[str, Array]]:
     """The forward pass of the encoder.
 
     Models that use an encoder should call this method to encode a passage.
@@ -54,7 +54,7 @@ class BaseEncoder(nn.Module):
     raise NotImplementedError
 
   @staticmethod
-  def load_weights(config):
+  def load_weights(config: ml_collections.ConfigDict) -> Dict[str, Any]:
     """Load model weights from file."""
     params = checkpoint_utils.load_weights(config.load_weights)
     params = jax.device_put_replicated(params, jax.local_devices())
@@ -63,8 +63,8 @@ class BaseEncoder(nn.Module):
   @classmethod
   def make_output_postprocess_fn(
       cls,
-      config  # pylint: disable=unused-argument
-  ):
+      config: ml_collections.ConfigDict  # pylint: disable=unused-argument
+  ) -> Callable[[Dict[str, Any], Dict[str, Any]], Dict[str, Any]]:
     """Produces function to postprocess task samples (input and output).
 
     The method is called occasionally during training or evaluation to save
@@ -83,9 +83,9 @@ class BaseEncoder(nn.Module):
     """
 
     def postprocess_fn(
-        batch,  # pylint: disable=unused-argument
-        auxiliary_output  # pylint: disable=unused-argument
-    ):
+        batch: Dict[str, Any],  # pylint: disable=unused-argument
+        auxiliary_output: Dict[str, Any]  # pylint: disable=unused-argument
+    ) -> Dict[str, Any]:
       """Function that prepares model's input and output for serialization."""
       return {}
 

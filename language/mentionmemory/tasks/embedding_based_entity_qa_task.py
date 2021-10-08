@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains entity-answer question answering tasks via entity embeddings."""
 
-
+from typing import Any, Callable, Dict, Optional, Tuple
 
 import flax.linen as nn
 from language.mentionmemory.encoders import eae_encoder
@@ -37,8 +37,8 @@ class EaEQAModel(nn.Module):
     self.encoder = eae_encoder.EaEEncoder(**self.encoder_config)
 
   def __call__(
-      self, batch,
-      deterministic):
+      self, batch: Dict[str, Array],
+      deterministic: bool) -> Tuple[Dict[str, Array], Dict[str, Array]]:
     _, loss_helpers, logging_helpers = self.encoder.forward(
         batch, deterministic)
 
@@ -54,8 +54,8 @@ class EmbeddingBasedEntityQATask(entity_qa_task.EntityQATask):
 
   @classmethod
   def make_loss_fn(
-      cls, config
-  ):
+      cls, config: ml_collections.ConfigDict
+  ) -> Callable[..., Tuple[float, MetricGroups, Dict[str, Any]]]:
     """Creates task loss function.
 
     See BaseTask.
@@ -71,13 +71,13 @@ class EmbeddingBasedEntityQATask(entity_qa_task.EntityQATask):
     el_score_mode = config.get('el_score_mode', 'dot')
 
     def loss_fn(
-        model_config,
-        model_params,
-        model_vars,  # pylint: disable=unused-argument
-        batch,
-        deterministic,
-        dropout_rng = None,
-    ):
+        model_config: ml_collections.FrozenConfigDict,
+        model_params: Dict[str, Any],
+        model_vars: Dict[str, Any],  # pylint: disable=unused-argument
+        batch: Dict[str, Any],
+        deterministic: bool,
+        dropout_rng: Optional[Dict[str, Array]] = None,
+    ) -> Tuple[float, MetricGroups, Dict[str, Any]]:
       """Task-specific loss function. See BaseTask."""
 
       loss_helpers, logging_helpers = cls.build_model(model_config).apply(  # pylint: disable=unused-variable

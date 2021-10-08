@@ -15,7 +15,7 @@
 """Tests for mention utils."""
 
 import functools
-
+from typing import List
 
 from absl.testing import absltest
 from absl.testing import parameterized
@@ -91,8 +91,8 @@ class NumCommonUniqueItemsTest(test_utils.TestCase):
       ),
   )
   def test_get_num_common_unique_items_single_device(self,
-                                                     batch,
-                                                     expected):
+                                                     batch: List[List[int]],
+                                                     expected: List[List[int]]):
     batch_positions, ids = [], []
     for batch_index, sample in enumerate(batch):
       for x in sample:
@@ -125,10 +125,10 @@ class NumCommonUniqueItemsTest(test_utils.TestCase):
       (10, 20, 20, 5),
       (11, 20, 20, 20),
   )
-  def test_get_num_common_unique_items_multi_devices(self, seed,
-                                                     batch_size,
-                                                     n_mentions,
-                                                     vocab_size):
+  def test_get_num_common_unique_items_multi_devices(self, seed: int,
+                                                     batch_size: int,
+                                                     n_mentions: int,
+                                                     vocab_size: int):
     np.random.seed(seed)
 
     batch_positions_sharded = jax.device_put_sharded(

@@ -15,7 +15,7 @@
 """K-means clustering algorithm."""
 
 import functools
-
+from typing import Optional, Tuple
 
 import jax
 from jax.experimental import host_callback as hcb
@@ -24,7 +24,7 @@ import jax.numpy as jnp
 from language.mentionmemory.utils.custom_types import Array
 
 
-def l2_distance(a, b):
+def l2_distance(a: Array, b: Array):
   """Compute l2 distance between arrays."""
   aa = jnp.einsum('ad,ad->a', a, a)
   bb = jnp.einsum('bd,bd->b', b, b)
@@ -37,10 +37,10 @@ def l2_distance(a, b):
 
 
 def compute_assignments(
-    centroids,
-    observations,
-    n_splits,
-):
+    centroids: Array,
+    observations: Array,
+    n_splits: int,
+) -> Tuple[Array, Array]:
   """Assigns observations to cluster centroids.
 
   Computes l2 distance between each pair of observation and centroids, and
@@ -74,10 +74,10 @@ def compute_assignments(
 
 
 def kmeans_step(
-    val,
-    n_splits,
-    parallel_computation = False,
-):
+    val: Tuple[Array, Array, float, Optional[float], int],
+    n_splits: int,
+    parallel_computation: bool = False,
+) -> Tuple[Array, Array, float, float, int]:
   """Perform single K-means step.
 
   Standard K-means step. Assigns observations to nearest cluster, then updates
@@ -124,12 +124,12 @@ def kmeans_step(
 
 
 def kmeans(
-    observations,
-    centroids,
-    n_splits,
-    threshold = 1e-5,
-    max_iterations = None,
-    parallel_computation = False):
+    observations: Array,
+    centroids: Array,
+    n_splits: int,
+    threshold: float = 1e-5,
+    max_iterations: Optional[int] = None,
+    parallel_computation: bool = False) -> Tuple[Array, Array, float, int]:
   """Perform K-means clustering.
 
   Args:
@@ -151,7 +151,7 @@ def kmeans(
       kmeans_step, n_splits=n_splits, parallel_computation=parallel_computation)
   initial_val = partial_step((centroids, observations, jnp.inf, None, 0))
 
-  def condition_fun(val):
+  def condition_fun(val) -> bool:
     below_max_iters = (max_iterations is None or val[4] < max_iterations)
     above_threshold = val[3] - val[2] > threshold
     should_continue = below_max_iters & above_threshold

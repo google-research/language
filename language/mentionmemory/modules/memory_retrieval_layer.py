@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains memory attention layer."""
 
-
+from typing import Dict, Optional
 
 import flax.linen as nn
 import jax
@@ -26,7 +26,7 @@ from language.mentionmemory.utils import jax_utils as jut
 from language.mentionmemory.utils.custom_types import Array
 
 
-def _assert_array_is_integer_or_none(array, array_name):
+def _assert_array_is_integer_or_none(array: Optional[Array], array_name: str):
   if array is not None and array.dtype.kind != 'i':
     raise ValueError('Array %s must be integer (currently, %s). '
                      'Otherwise, there might be data corruption.' %
@@ -64,15 +64,15 @@ class MemoryRetrievalLayer(nn.Module):
 
   def __call__(
       self,
-      queries,
-      memory_keys,
-      memory_identifiers,
-      memory_entity_ids,
-      memory_values = None,
-      text_identifiers = None,
-      memory_text_entities = None,
-      same_passage_memory_policy = 'disallow',
-  ):
+      queries: Array,
+      memory_keys: Array,
+      memory_identifiers: Array,
+      memory_entity_ids: Array,
+      memory_values: Optional[Array] = None,
+      text_identifiers: Optional[Array] = None,
+      memory_text_entities: Optional[Array] = None,
+      same_passage_memory_policy: str = 'disallow',
+  ) -> Dict[str, Array]:
     """Perform attention update over memory table.
 
     Args:

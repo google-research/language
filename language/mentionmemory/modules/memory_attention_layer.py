@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains memory attention layer."""
 
-
+from typing import Dict, Optional, Tuple
 
 import flax.linen as nn
 import jax.numpy as jnp
@@ -25,7 +25,7 @@ from language.mentionmemory.utils.custom_types import Array, Dtype  # pylint: di
 import ml_collections
 
 
-def _assert_array_is_integer_or_none(array, array_name):
+def _assert_array_is_integer_or_none(array: Optional[Array], array_name: str):
   if array is not None and array.dtype.kind != 'i':
     raise ValueError('Array %s must be integer (currently, %s). '
                      'Otherwise, there might be data corruption.' %
@@ -96,20 +96,20 @@ class MemoryAttentionLayer(nn.Module):
 
   def __call__(
       self,
-      encoded_input,
-      mention_batch_positions,
-      mention_start_positions,
-      mention_end_positions,
-      mention_mask,
-      memory_keys,
-      memory_identifiers,
-      memory_entity_ids,
-      deterministic,
-      memory_values = None,
-      text_identifiers = None,
-      memory_text_entities = None,
-      same_passage_memory_policy = 'disallow',
-  ):
+      encoded_input: Array,
+      mention_batch_positions: Array,
+      mention_start_positions: Array,
+      mention_end_positions: Array,
+      mention_mask: Array,
+      memory_keys: Array,
+      memory_identifiers: Array,
+      memory_entity_ids: Array,
+      deterministic: bool,
+      memory_values: Optional[Array] = None,
+      text_identifiers: Optional[Array] = None,
+      memory_text_entities: Optional[Array] = None,
+      same_passage_memory_policy: str = 'disallow',
+  ) -> Tuple[Array, Dict[str, Array], Dict[str, Array]]:
     """Perform attention update over memory table.
 
     Args:

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Contains custom type definitions."""
-
+from typing import Any, Callable, Dict, Iterable
 
 import jax.numpy as jnp
 

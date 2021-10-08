@@ -16,7 +16,7 @@
 
 import json
 import os
-
+from typing import Any, Dict, Sequence, Text
 from urllib import request
 
 from absl import app
@@ -51,8 +51,8 @@ LABEL_DICT = {
 }
 
 
-def process_data(data, spacy_model,
-                 tokenizer):
+def process_data(data: Sequence[Dict[Text, Any]], spacy_model: Any,
+                 tokenizer: Any):
   """Processes fever splits.
 
   Given claims and accompanying labels, tokenizes the claims and annotates
@@ -125,7 +125,7 @@ def process_data(data, spacy_model,
   return processed_data
 
 
-def main(argv):
+def main(argv: Sequence[str]) -> None:
   if len(argv) > 1:
     raise app.UsageError('Too many command-line arguments.')
 

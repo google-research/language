@@ -41,14 +41,14 @@ class LrSchedulerTest(parameterized.TestCase):
   )
   def test_key_values_correct(
       self,
-      step,
-      value,
-      learning_rate,
-      warmup,
-      warmup_steps,
-      linear_decay,
-      max_steps,
-      decay_minimum_factor,
+      step: int,
+      value: float,
+      learning_rate: float,
+      warmup: bool,
+      warmup_steps: int,
+      linear_decay: bool,
+      max_steps: int,
+      decay_minimum_factor: float,
   ):
     """Match scheduler output with expected value."""
     lr_scheduler = optim_utils.create_learning_rate_scheduler(

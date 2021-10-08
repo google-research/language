@@ -14,7 +14,7 @@
 # limitations under the License.
 """Defines abstract task class used as base for other tasks in package."""
 
-
+from typing import Any, Callable, Dict, Optional, Tuple
 
 import flax.linen as nn
 import jax.numpy as jnp
@@ -35,15 +35,15 @@ class BaseTask():
 
   @classmethod
   def build_model(cls,
-                  model_config):
+                  model_config: ml_collections.FrozenConfigDict) -> nn.Module:
     """Builds model by instantiating flax module associated with task."""
     return cls.model_class(**model_config)
 
   @classmethod
   def make_loss_fn(
       cls,  # pylint: disable=unused-argument
-      config  # pylint: disable=unused-argument
-  ):
+      config: ml_collections.ConfigDict  # pylint: disable=unused-argument
+  ) -> Callable[..., Tuple[float, MetricGroups, Dict[str, Any]]]:
     """Creates task loss function.
 
     Args:
@@ -54,13 +54,13 @@ class BaseTask():
     """
 
     def loss_fn(
-        model_config,
-        model_params,
-        model_vars,
-        batch,
-        deterministic,
-        dropout_rng = None,
-    ):
+        model_config: ml_collections.FrozenConfigDict,
+        model_params: Dict[str, Any],
+        model_vars: Dict[str, Any],
+        batch: Dict[str, Any],
+        deterministic: bool,
+        dropout_rng: Optional[Dict[str, Array]] = None,
+    ) -> Tuple[float, MetricGroups, Dict[str, Any]]:
       """Model-specific loss function.
 
       Tasks are responsible for providing a loss function that
@@ -83,8 +83,8 @@ class BaseTask():
 
   @staticmethod
   def get_name_to_features(
-      config  # pylint: disable=unused-argument
-  ):
+      config: ml_collections.ConfigDict  # pylint: disable=unused-argument
+  ) -> Dict[str, Any]:
     """Return feature dict for decoding purposes.
 
     Models are responsible for preprocessing and therefore should
@@ -100,8 +100,8 @@ class BaseTask():
 
   @staticmethod
   def make_preprocess_fn(
-      config  # pylint: disable=unused-argument
-  ):
+      config: ml_collections.ConfigDict  # pylint: disable=unused-argument
+  ) -> Callable[[Dict[str, tf.Tensor]], Dict[str, tf.Tensor]]:
     """Produces function to preprocess samples.
 
     Tasks should be aware of what type of input they require and are
@@ -118,15 +118,15 @@ class BaseTask():
       (mod casting from tf to jnp dtype).
     """
 
-    def preprocess_fn(sample):
+    def preprocess_fn(sample: Dict[str, tf.Tensor]) -> Dict[str, tf.Tensor]:
       return sample
 
     return preprocess_fn
 
   @staticmethod
   def make_collater_fn(
-      config  # pylint: disable=unused-argument
-  ):
+      config: ml_collections.ConfigDict  # pylint: disable=unused-argument
+  ) -> Callable[[Dict[str, tf.Tensor]], Dict[str, tf.Tensor]]:
     """Produces function to preprocess batches.
 
     The difference compared to `preprocess_fn` is that `collater_fn_` does not
@@ -143,13 +143,13 @@ class BaseTask():
       (mod casting from tf to jnp dtype).
     """
 
-    def collater_fn(batch):
+    def collater_fn(batch: Dict[str, tf.Tensor]) -> Dict[str, tf.Tensor]:
       raise NotImplementedError
 
     return collater_fn
 
   @staticmethod
-  def dummy_input(config):
+  def dummy_input(config: ml_collections.ConfigDict) -> Dict[str, Any]:
     """Produces model-specific dummy input batch.
 
     Tasks are responsible for producing a dummy input in the form of
@@ -165,7 +165,7 @@ class BaseTask():
     raise NotImplementedError
 
   @classmethod
-  def load_weights(cls, config):
+  def load_weights(cls, config: ml_collections.ConfigDict) -> Dict[str, Any]:
     """Load model weights from file.
 
     Args:
@@ -179,8 +179,8 @@ class BaseTask():
   @classmethod
   def make_output_postprocess_fn(
       cls,
-      config  # pylint: disable=unused-argument
-  ):
+      config: ml_collections.ConfigDict  # pylint: disable=unused-argument
+  ) -> Callable[[Dict[str, Any], Dict[str, Any]], Dict[str, Any]]:
     """Produces function to postprocess task samples (input and output).
 
     The method is occasionally called during training or evaluation to save
@@ -200,8 +200,8 @@ class BaseTask():
       Function that postprocesses model's input and output for serialization.
     """
 
-    def postprocess_fn(batch,
-                       auxiliary_output):
+    def postprocess_fn(batch: Dict[str, Any],
+                       auxiliary_output: Dict[str, Any]) -> Dict[str, Any]:
       """Function that prepares model's input and output for serialization."""
 
       features = {}

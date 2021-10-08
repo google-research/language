@@ -55,13 +55,13 @@ class MemoryExtractionLayer(nn.Module):
 
   def __call__(
       self,
-      encoding,
-      mention_batch_positions,
-      mention_start_positions,
-      mention_end_positions,
-      mention_mask,
-      mention_entity_ids,
-  ):
+      encoding: Array,
+      mention_batch_positions: Array,
+      mention_start_positions: Array,
+      mention_end_positions: Array,
+      mention_mask: Array,
+      mention_entity_ids: Array,
+  ) -> Array:
     """.
 
     Args:

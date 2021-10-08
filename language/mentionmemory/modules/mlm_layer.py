@@ -52,10 +52,10 @@ class MLMLayer(nn.Module):
 
   def __call__(
       self,
-      encoded_input,
-      mlm_target_positions,
-      shared_embedding,
-  ):
+      encoded_input: Array,
+      mlm_target_positions: Array,
+      shared_embedding: Array,
+  ) -> Array:
     """Perform masked language modeling scoring.
 
     Args:

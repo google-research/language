@@ -16,7 +16,7 @@
 
 import logging
 import os
-
+from typing import Any, Dict, Tuple, Sequence
 
 from flax import serialization
 import jax
@@ -24,7 +24,7 @@ import jax.numpy as jnp
 from tensorflow.io import gfile
 
 
-def save_weights(weight_path, model_params):
+def save_weights(weight_path: str, model_params: Dict[str, Any]):
   """Save serialized weight dictionary."""
   serialized_params = serialization.to_bytes(model_params)
   gfile.makedirs(os.path.dirname(weight_path))
@@ -32,7 +32,7 @@ def save_weights(weight_path, model_params):
     fp.write(serialized_params)
 
 
-def load_weights(weight_path):
+def load_weights(weight_path: str) -> Dict[str, Any]:
   """Load and deserialize weight dictionary."""
   if not gfile.exists(weight_path):
     raise ValueError('Matching checkpoint not found: {}'.format(weight_path))
@@ -43,9 +43,9 @@ def load_weights(weight_path):
     return jax.tree_map(jnp.asarray, params)
 
 
-def flatten_nested_dict(x,
-                        join_str = '/',
-                        prefix = ''):
+def flatten_nested_dict(x: Dict[str, Any],
+                        join_str: str = '/',
+                        prefix: str = '') -> Dict[str, Any]:
   """Transforms nested dictionary into a flat dictionary."""
   assert isinstance(x, dict)
   result = {}
@@ -58,9 +58,9 @@ def flatten_nested_dict(x,
   return result
 
 
-def _merge_nested_dicts_rec(original,
-                            update,
-                            prefix = ''):
+def _merge_nested_dicts_rec(original: Dict[str, Any],
+                            update: Dict[str, Any],
+                            prefix: str = '') -> Sequence[str]:
   """Procedure to merge two nested dictionaries."""
   unexpected = []
   for key in update:
@@ -85,8 +85,8 @@ def _merge_nested_dicts_rec(original,
 
 
 def merge_nested_dicts(
-    original,
-    update):
+    original: Dict[str, Any],
+    update: Dict[str, Any]) -> Tuple[Sequence[str], Sequence[str]]:
   """Merges `update` nested dict into the `original` dict.
 
   Args:

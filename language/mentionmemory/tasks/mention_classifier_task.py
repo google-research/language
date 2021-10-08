@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Contains base implementation for all mention-level classification tasks."""
-
+from typing import Any, Callable, Dict, Text
 
 import flax.linen as nn
 import jax.numpy as jnp
@@ -51,7 +51,7 @@ class MentionClassifierModel(nn.Module):
         self.encoder_name)(**self.encoder_config)
     self.linear_classifier = nn.Dense(self.num_classes, dtype=self.dtype)
 
-  def __call__(self, batch, deterministic):
+  def __call__(self, batch: Dict[str, Array], deterministic: bool):
     _, loss_helpers, logging_helpers = self.encoder.forward(
         batch, deterministic)
     mention_encodings = loss_helpers[self.mention_encodings_feature]
@@ -68,8 +68,8 @@ class MentionClassifierTask(downstream_encoder_task.DownstreamEncoderTask):
 
   @staticmethod
   def make_collater_fn(
-      config
-  ):
+      config: ml_collections.ConfigDict
+  ) -> Callable[[Dict[Text, tf.Tensor]], Dict[Text, tf.Tensor]]:
     """Produces function to preprocess batches for mention classification task.
 
     This function samples and flattens mentions from input data.
@@ -86,7 +86,7 @@ class MentionClassifierTask(downstream_encoder_task.DownstreamEncoderTask):
     max_batch_mentions = config.max_mentions * bsz
     n_candidate_mentions = max_mentions_per_sample * bsz
 
-    def collater_fn(batch):
+    def collater_fn(batch: Dict[Text, tf.Tensor]) -> Dict[Text, tf.Tensor]:
       """Collater function for mention classification task. See BaseTask."""
 
       new_batch = {}
@@ -199,7 +199,7 @@ class MentionClassifierTask(downstream_encoder_task.DownstreamEncoderTask):
 
   @staticmethod
   def get_name_to_features(
-      config):
+      config: ml_collections.ConfigDict) -> Dict[Text, Any]:
     """Return feature dict for decoding purposes. See BaseTask for details."""
     encoder_config = config.model_config.encoder_config
     max_length = encoder_config.max_length
@@ -226,7 +226,7 @@ class MentionClassifierTask(downstream_encoder_task.DownstreamEncoderTask):
     return name_to_features
 
   @staticmethod
-  def dummy_input(config):
+  def dummy_input(config: ml_collections.ConfigDict) -> Dict[Text, Any]:
     """Produces model-specific dummy input batch. See BaseTask for details."""
 
     encoder_config = config.model_config.encoder_config

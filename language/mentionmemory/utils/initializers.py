@@ -20,10 +20,10 @@ import jax.numpy as jnp
 from language.mentionmemory.utils.custom_types import Array, Dtype, InitType, PRNGKey, Shape  # pylint: disable=g-multiple-import
 
 
-def truncated_normal(stddev):
+def truncated_normal(stddev: float) -> InitType:
   """Truncated normal initializer."""
 
-  def init(key, shape, dtype = jnp.float32):
+  def init(key: PRNGKey, shape: Shape, dtype: Dtype = jnp.float32) -> Array:
     return jax.random.truncated_normal(
         key=key, lower=-2., upper=2., shape=shape, dtype=dtype) * stddev
 

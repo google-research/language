@@ -17,7 +17,7 @@
 import json
 import os
 import re
-
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from absl import app
 from absl import flags
@@ -42,11 +42,11 @@ NO_RELATION = 'no_relation'
 
 
 def process_sample(
-    sample,
-    relation_vocab,
-    spacy_model,
-    tokenizer,
-):
+    sample: Dict[str, Any],
+    relation_vocab: Dict[str, int],
+    spacy_model: Any,
+    tokenizer: Any,
+) -> Tuple[Optional[Dict[str, Any]], Dict[str, int]]:
   """Processes WebRED sample and updates relation vocabulary.
 
   To process a raw WebRED example, we first extract subj and obj and remove the
@@ -79,8 +79,8 @@ def process_sample(
   text = sample['annotated_text']
 
   # Remove subj and obj annotations from text and store position
-  def find_span(input_text, pattern,
-                prefix_len):
+  def find_span(input_text: str, pattern: Any,
+                prefix_len: int) -> Tuple[int, int]:
     """Find span corresponding to actual subj or obj strings."""
     match = pattern.search(input_text)
     span_start = match.start() + prefix_len + 1
@@ -89,8 +89,8 @@ def process_sample(
     return (span_start, span_end)
 
   def replace_and_adjust(
-      input_text, match, prefix_len,
-      inverted_mapping):
+      input_text: str, match: Any, prefix_len: int,
+      inverted_mapping: np.ndarray) -> Tuple[str, np.ndarray]:
     """Remove subj/obj annotations and adjust token mapping accordingly."""
 
     original_span_start = match.start() + prefix_len + 1
@@ -148,9 +148,10 @@ def process_sample(
   mention_char_spans.append(subj_span)
   mention_char_spans.append(obj_span)
 
-  def overlaps(first_span, second_span):
+  def overlaps(first_span: Tuple[int, int], second_span: Tuple[int,
+                                                               int]) -> bool:
 
-    def point_inside_span(point, span):
+    def point_inside_span(point: int, span: Tuple[int, int]) -> bool:
       return span[0] >= point and point <= span[1]
 
     spans_overlap = (
@@ -242,11 +243,11 @@ def process_sample(
 
 
 def process_data(
-    raw_samples,
-    relation_vocab,
-    spacy_model,
-    tokenizer,
-):
+    raw_samples: List[Dict[str, Any]],
+    relation_vocab: Dict[str, int],
+    spacy_model: Any,
+    tokenizer: Any,
+) -> Tuple[List[Dict[str, Any]], Dict[str, int]]:
   """Process WebRED split and updates relation vocabulary with new relations."""
 
   skipped = 0
@@ -268,7 +269,7 @@ def process_data(
   return processed_samples, relation_vocab
 
 
-def main(argv):
+def main(argv: Sequence[str]) -> None:
   if len(argv) > 1:
     raise app.UsageError('Too many command-line arguments.')
 

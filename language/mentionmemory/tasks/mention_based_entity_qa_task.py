@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains entity-answer question answering tasks via mention memory."""
 
-
+from typing import Any, Callable, Dict, Optional, Tuple
 
 import flax.linen as nn
 import jax
@@ -27,8 +27,8 @@ from language.mentionmemory.utils.custom_types import Array, MetricGroups  # pyl
 import ml_collections
 
 
-def get_predictions_max(attention_weights, memory_entity_ids,
-                        weights):
+def get_predictions_max(attention_weights: Array, memory_entity_ids: Array,
+                        weights: Array) -> Array:
   """Predict entity ID based on a memory with the largest attention weight."""
   # `stop_gradient` is a safety check so the model doesn't keep activations
   # around, which could be expensive.
@@ -43,8 +43,8 @@ def get_predictions_max(attention_weights, memory_entity_ids,
   return predictions
 
 
-def get_predictions_sum(attention_weights, memory_entity_ids,
-                        weights, entity_vocab_size):
+def get_predictions_sum(attention_weights: Array, memory_entity_ids: Array,
+                        weights: Array, entity_vocab_size: int) -> Array:
   """Get entity with the largest sum of attention weights over its mentions."""
   attention_weights = jax.lax.stop_gradient(attention_weights)
   memory_entity_ids = jax.lax.stop_gradient(memory_entity_ids)
@@ -75,8 +75,8 @@ class MentionMemoryQAModel(nn.Module):
         **self.encoder_config)
 
   def __call__(
-      self, batch,
-      deterministic):
+      self, batch: Dict[str, Array],
+      deterministic: bool) -> Tuple[Dict[str, Array], Dict[str, Array]]:
     _, loss_helpers, logging_helpers = self.encoder.forward(
         batch, deterministic)
 
@@ -92,8 +92,8 @@ class MentionBasedEntityQATask(entity_qa_task.EntityQATask):
 
   @classmethod
   def make_loss_fn(
-      cls, config
-  ):
+      cls, config: ml_collections.ConfigDict
+  ) -> Callable[..., Tuple[float, MetricGroups, Dict[str, Any]]]:
     """Creates task loss function.
 
     See BaseTask.
@@ -110,13 +110,13 @@ class MentionBasedEntityQATask(entity_qa_task.EntityQATask):
     """
 
     def loss_fn(
-        model_config,
-        model_params,
-        model_vars,  # pylint: disable=unused-argument
-        batch,
-        deterministic,
-        dropout_rng = None,
-    ):
+        model_config: ml_collections.FrozenConfigDict,
+        model_params: Dict[str, Any],
+        model_vars: Dict[str, Any],  # pylint: disable=unused-argument
+        batch: Dict[str, Any],
+        deterministic: bool,
+        dropout_rng: Optional[Dict[str, Array]] = None,
+    ) -> Tuple[float, MetricGroups, Dict[str, Any]]:
       """Task-specific loss function. See BaseTask."""
 
       variable_dict = {'params': model_params}

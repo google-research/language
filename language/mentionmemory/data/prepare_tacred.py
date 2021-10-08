@@ -16,7 +16,7 @@
 
 import json
 import os
-
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from absl import app
 from absl import flags
@@ -42,11 +42,11 @@ flags.DEFINE_list('split_file_names', ['train', 'dev', 'test'],
 
 
 def process_sample(
-    sample,
-    relation_vocab,
-    spacy_model,
-    tokenizer,
-):
+    sample: Dict[str, Any],
+    relation_vocab: Dict[str, int],
+    spacy_model: Any,
+    tokenizer: Any,
+) -> Tuple[Optional[Dict[str, Any]], Dict[str, int]]:
   """Processes Tacred sample and updates relation vocabulary.
 
   To process a raw Tacred example, we concatenate the token strings with spaces.
@@ -87,7 +87,7 @@ def process_sample(
   # Correct for added spaces from join
   word_char_offsets = word_char_offsets + np.arange(len(word_lens))
 
-  def get_char_span(start_word_idx, end_word_idx):
+  def get_char_span(start_word_idx: int, end_word_idx: int) -> Tuple[int, int]:
     start_char = word_char_offsets[start_word_idx]
     # Char span is inclusive
     end_char = word_char_offsets[end_word_idx] + word_lens[end_word_idx] - 1
@@ -100,9 +100,10 @@ def process_sample(
   obj_char_span = get_char_span(sample['obj_start'], sample['obj_end'])
   mention_char_spans.append(obj_char_span)
 
-  def overlaps(first_span, second_span):
+  def overlaps(first_span: Tuple[int, int], second_span: Tuple[int,
+                                                               int]) -> bool:
 
-    def point_inside_span(point, span):
+    def point_inside_span(point: int, span: Tuple[int, int]) -> bool:
       return span[0] >= point and point <= span[1]
 
     spans_overlap = (
@@ -196,11 +197,11 @@ def process_sample(
 
 
 def process_data(
-    raw_samples,
-    relation_vocab,
-    spacy_model,
-    tokenizer,
-):
+    raw_samples: List[Dict[str, Any]],
+    relation_vocab: Dict[str, int],
+    spacy_model: Any,
+    tokenizer: Any,
+) -> Tuple[List[Dict[str, Any]], Dict[str, int]]:
   """Process Tacred split and updates relation vocabulary with new relations."""
 
   skipped = 0
@@ -222,7 +223,7 @@ def process_data(
   return processed_samples, relation_vocab
 
 
-def main(argv):
+def main(argv: Sequence[str]) -> None:
   if len(argv) > 1:
     raise app.UsageError('Too many command-line arguments.')
 

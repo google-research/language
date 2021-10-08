@@ -19,7 +19,7 @@ import json
 import math
 import os
 import time
-
+from typing import Any, Mapping, Sequence, Text
 
 from absl import app
 from absl import flags
@@ -98,7 +98,7 @@ def get_num_total_memories(config):
   return num_total_memories
 
 
-def generate(config):
+def generate(config: ml_collections.ConfigDict):
   """Generates memories."""
   # Establish host information
   local_device_count = jax.local_device_count()
@@ -220,7 +220,7 @@ def generate(config):
       time.time() - start_time)
 
 
-def main(argv):
+def main(argv: Sequence[str]) -> None:
   if len(argv) > 1:
     raise app.UsageError('Too many command-line arguments.')
 
@@ -262,7 +262,7 @@ def main(argv):
   generate(ml_collections.ConfigDict(config))
 
 
-def validate_config_flags(flag_dict):
+def validate_config_flags(flag_dict: Mapping[Text, Any]) -> bool:
   return flag_dict['config'] is not None or flag_dict['config_file'] is not None
 
 

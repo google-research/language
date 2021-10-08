@@ -14,18 +14,18 @@
 # limitations under the License.
 """Contains utils for mention-related Jax computations."""
 
-
+from typing import Optional, Tuple
 import jax
 import jax.numpy as jnp
 
 from language.mentionmemory.utils.custom_types import Array
 
 
-def all_compare(xs, ys):
+def all_compare(xs: Array, ys: Array) -> Array:
   return jnp.expand_dims(xs, 1) == jnp.expand_dims(ys, 0)
 
 
-def all_compare_without_pad(xs, ys):
+def all_compare_without_pad(xs: Array, ys: Array) -> Array:
   """Performs all-to-all comparison of two 1D arrays ignoring pad values."""
   xs_expanded = jnp.expand_dims(xs, 1)
   ys_expanded = jnp.expand_dims(ys, 0)
@@ -35,8 +35,8 @@ def all_compare_without_pad(xs, ys):
   return same_ids
 
 
-def sum_by_batch_position(mention_batch_positions, values,
-                          batch_size):
+def sum_by_batch_position(mention_batch_positions: Array, values: Array,
+                          batch_size: int) -> Array:
   """Sum values per position in the batch."""
   position2item = (
       jnp.expand_dims(jnp.arange(batch_size), 1) == mention_batch_positions)
@@ -48,7 +48,7 @@ def sum_by_batch_position(mention_batch_positions, values,
   return values_sum_per_batch_position
 
 
-def get_device_id(axis_name):
+def get_device_id(axis_name: str) -> Optional[int]:
   try:
     return jax.lax.axis_index(axis_name)
   except NameError:
@@ -56,7 +56,7 @@ def get_device_id(axis_name):
 
 
 def get_globally_consistent_batch_positions(
-    mention_batch_positions, batch_size):
+    mention_batch_positions: Array, batch_size: int) -> Tuple[Array, Array]:
   """Adjust batch positions to be unique in the global batch.
 
   If the function is executed only on a single device (outside of `pmap`) then
@@ -91,7 +91,7 @@ def get_globally_consistent_batch_positions(
     return mention_batch_positions, mention_batch_positions
 
 
-def mask_duplicate_ids(batch_positions, ids):
+def mask_duplicate_ids(batch_positions: Array, ids: Array) -> Array:
   """Zero out duplicate items within the same batch position.
 
   The function is a variation of a `unique` function applied to ids array
@@ -116,8 +116,8 @@ def mask_duplicate_ids(batch_positions, ids):
   return ids
 
 
-def get_num_common_unique_items(batch_positions, ids,
-                                batch_size):
+def get_num_common_unique_items(batch_positions: Array, ids: Array,
+                                batch_size: int) -> Array:
   """Get the number of unique entity IDs shared between samples in the batch.
 
   The function produces two matrices `num_common_ids_between_samples` of shape

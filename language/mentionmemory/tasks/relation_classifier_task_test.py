@@ -17,7 +17,7 @@
 import copy
 import json
 import os
-
+from typing import Dict, Text
 
 from absl.testing import absltest
 from absl.testing import parameterized
@@ -118,7 +118,7 @@ class RelationClassifierTaskTest(parameterized.TestCase):
     self.assertSequenceEqual(expected, actual)
 
   def _gen_raw_sample(
-      self, config):
+      self, config: ml_collections.ConfigDict) -> Dict[Text, np.ndarray]:
     """Generate raw example."""
 
     features = {}
@@ -172,7 +172,7 @@ class RelationClassifierTaskTest(parameterized.TestCase):
     return features
 
   def _gen_raw_batch(
-      self, config):
+      self, config: ml_collections.ConfigDict) -> Dict[Text, tf.Tensor]:
     samples = [
         self._gen_raw_sample(config)
         for _ in range(config.per_device_batch_size)

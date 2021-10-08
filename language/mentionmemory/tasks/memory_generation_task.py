@@ -15,7 +15,7 @@
 """Contains memory generation task implementation and utilities."""
 
 import os
-
+from typing import Any, Callable, Dict, Optional, Tuple
 
 import flax.linen as nn
 import jax.numpy as jnp
@@ -50,8 +50,8 @@ class MemoryGenerationModel(nn.Module):
         self.encoder_name)(**self.encoder_config)
 
   def __call__(
-      self, batch,
-      deterministic):
+      self, batch: Dict[str, Array],
+      deterministic: bool) -> Tuple[Dict[str, Array], Dict[str, Array]]:
     _, loss_helpers, logging_helpers = self.encoder.forward(
         batch, deterministic)
 
@@ -74,15 +74,15 @@ class MemoryGenerationTask(mention_encoder_task.MentionEncoderTask):
   @classmethod
   def make_prediction_fn(
       cls,
-      config):
+      config: ml_collections.ConfigDict) -> Callable[..., Dict[str, Array]]:
     """Creates task prediction function for inference."""
 
     def predict_fn(
-        model_config,
-        model_params,
-        model_vars,
-        batch,
-    ):
+        model_config: ml_collections.FrozenConfigDict,
+        model_params: Dict[str, Any],
+        model_vars: Dict[str, Any],
+        batch: Dict[str, Any],
+    ) -> Dict[str, Array]:
       """Model-specific prediction function.
 
       Args:
@@ -107,8 +107,8 @@ class MemoryGenerationTask(mention_encoder_task.MentionEncoderTask):
 
   @staticmethod
   def make_preprocess_fn(
-      config
-  ):
+      config: ml_collections.ConfigDict
+  ) -> Callable[[Dict[str, tf.Tensor]], Dict[str, tf.Tensor]]:
     """Produces function to preprocess samples.
 
     See BaseTask.
@@ -127,7 +127,7 @@ class MemoryGenerationTask(mention_encoder_task.MentionEncoderTask):
 
     mention_preprocessing_fn = mention_encoder_task.MentionEncoderTask.make_preprocess_fn(config)  # pylint: disable=line-too-long
 
-    def preprocess_fn(example):
+    def preprocess_fn(example: Dict[str, tf.Tensor]) -> Dict[str, tf.Tensor]:
       """Performs preprocessing for individual sample."""
       new_example = mention_preprocessing_fn(example)
 
@@ -140,8 +140,8 @@ class MemoryGenerationTask(mention_encoder_task.MentionEncoderTask):
 
   @staticmethod
   def make_collater_fn(
-      config
-  ):
+      config: ml_collections.ConfigDict
+  ) -> Callable[[Dict[str, tf.Tensor]], Dict[str, tf.Tensor]]:
     """Produces function to preprocess batches.
 
     See BaseTask.
@@ -162,7 +162,7 @@ class MemoryGenerationTask(mention_encoder_task.MentionEncoderTask):
     bsz = config.per_device_batch_size
     max_mentions_per_sample = config.max_mentions_per_sample
 
-    def collater_fn(batch):
+    def collater_fn(batch: Dict[str, tf.Tensor]) -> Dict[str, tf.Tensor]:
       new_batch = mention_collater_fn(batch)
       # Only generate text identifiers and mention hashes for
       # the target (linked) mentions.
@@ -207,7 +207,7 @@ class MemoryGenerationTask(mention_encoder_task.MentionEncoderTask):
     return collater_fn
 
   @staticmethod
-  def dummy_input(config):
+  def dummy_input(config: ml_collections.ConfigDict) -> Dict[str, Any]:
     """Produces model-specific dummy input batch. See BaseTask."""
 
     dummy_input = mention_encoder_task.MentionEncoderTask.dummy_input(config)
@@ -224,7 +224,7 @@ class MemoryGenerationTask(mention_encoder_task.MentionEncoderTask):
     return dummy_input
 
   @staticmethod
-  def load_weights(config):
+  def load_weights(config: ml_collections.ConfigDict) -> Dict[str, Any]:
     """Load model weights."""
     encoder_name = config.model_config.encoder_name
     encoder_class = encoder_registry.get_registered_encoder(encoder_name)
@@ -239,8 +239,8 @@ class MemoryGenerationTask(mention_encoder_task.MentionEncoderTask):
 class MemorySaver:
   """Class that collect memories into numpy arrays and saves to files."""
 
-  def __init__(self, num_total_memories, memory_dim, max_length,
-               max_mentions_per_sample, memory_key_dim):
+  def __init__(self, num_total_memories: int, memory_dim: int, max_length: int,
+               max_mentions_per_sample: int, memory_key_dim: Optional[int]):
     self.num_total_memories = num_total_memories
     self.max_mentions_per_sample = max_mentions_per_sample
     self.memory_embeddings = np.zeros((self.num_total_memories, memory_dim),
@@ -263,7 +263,8 @@ class MemorySaver:
   def get_num_memories(self):
     return self.memory_index
 
-  def add_memories(self, batch, predictions):
+  def add_memories(self, batch: Dict[str, Array], predictions: Dict[str,
+                                                                    Array]):
     """Save generated memories in-memory storage."""
     mention_mask = batch['mention_target_weights'] > 0
     memory_index_end = min(self.num_total_memories,
@@ -311,11 +312,11 @@ class MemorySaver:
         indices, 1] = batch['mention_target_end_positions'][mention_index]
     self.memory_index = memory_index_end
 
-  def save(self, output_dir, num_shards, stride, offset,
-           shard_size_divisible):
+  def save(self, output_dir: str, num_shards: int, stride: int, offset: int,
+           shard_size_divisible: int):
     """Save generated memories into files."""
 
-    def save_sharded_array(array, filename):
+    def save_sharded_array(array: np.ndarray, filename: str):
       data_utils.save_sharded_array(array, os.path.join(output_dir,
                                                         filename), num_shards,
                                     stride, offset, shard_size_divisible)

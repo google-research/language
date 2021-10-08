@@ -14,7 +14,7 @@
 # limitations under the License.
 """Utilities for processing loss and metrics."""
 
-
+from typing import Any, Dict, Optional, Tuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -26,11 +26,11 @@ _BIG_NUMBER = 1e10
 
 
 def compute_weighted_cross_entropy(
-    scores,
-    targets,
-    weights,
-    inputs_are_prob = False,
-):
+    scores: Array,
+    targets: Array,
+    weights: Array,
+    inputs_are_prob: Optional[bool] = False,
+) -> Tuple[float, float]:
   """Compute weighted cross entropy and entropy for log probs and targets.
 
   Args:
@@ -62,8 +62,8 @@ def compute_weighted_cross_entropy(
   return loss.sum(), normalizing_factor
 
 
-def compute_weighted_accuracy(scores, targets,
-                              weights):
+def compute_weighted_accuracy(scores: Array, targets: Array,
+                              weights: Array) -> Tuple[float, float]:
   """Compute weighted accuracy for log probs and targets.
 
   Args:
@@ -85,8 +85,8 @@ def compute_weighted_accuracy(scores, targets,
 
 
 def compute_tp_fp_fn_weighted(
-    predictions, labels, weights,
-    ignore_class):
+    predictions: Array, labels: Array, weights: Array,
+    ignore_class: Optional[int]) -> Tuple[float, float, float]:
   """Compute true positives, false positives and false negatives.
 
   Args:
@@ -125,11 +125,11 @@ def compute_tp_fp_fn_weighted(
 
 
 def compute_loss_and_prob_from_probs_with_duplicates(
-    probs,
-    classes,
-    targets,
-    weights,
-):
+    probs: Array,
+    classes: Array,
+    targets: Array,
+    weights: Array,
+) -> Tuple[float, float, float]:
   """Compute weighted loss and avg correct probability given probs and targets.
 
   Args:
@@ -156,11 +156,11 @@ def compute_loss_and_prob_from_probs_with_duplicates(
 
 
 def compute_cross_entropy_loss_with_positives_and_negatives_masks(
-    scores,
-    positives,
-    negatives,
-    weights = None,
-):
+    scores: Array,
+    positives: Array,
+    negatives: Array,
+    weights: Optional[Array] = None,
+) -> Tuple[float, Dict[str, float], Tuple[Array, Array]]:
   """Compute (weighted) cross-entropy loss and accuracy-related metrics.
 
   The function computes cross entropy loss when there are potentially multiple
@@ -267,7 +267,7 @@ def compute_cross_entropy_loss_with_positives_and_negatives_masks(
   return loss, metrics, (correct_prediction, weights)
 
 
-def update_value_dtype(value):
+def update_value_dtype(value: Any) -> Any:
   """Convert value to more precise type."""
   if isinstance(value, jnp.ndarray):
     return value.astype(jnp.float32)
@@ -275,15 +275,15 @@ def update_value_dtype(value):
 
 
 def update_metrics_dtype(
-    metrics):
+    metrics: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
   """Convert metrics to more precise types."""
   return jax.tree_map(update_value_dtype, metrics)
 
 
 def process_metrics(
-    metrics,
-    prefix = None,
-):
+    metrics: Dict[str, Dict[str, Array]],
+    prefix: Optional[str] = None,
+) -> Dict[str, Union[float, int]]:
   """Flatten 2-level dictionary of metrics and divide values by denominator."""
   processed_metrics = {}
   for group_key, group_value in metrics.items():

@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains batch memory attention layer."""
 
-
+from typing import Dict, Optional, Tuple
 
 import flax.linen as nn
 import jax
@@ -81,17 +81,17 @@ class BatchMemoryAttentionLayer(nn.Module):
 
   def __call__(
       self,
-      encoding,
-      mention_batch_positions,
-      mention_start_positions,
-      mention_end_positions,
-      mention_mask,
-      memory_keys,
-      memory_values,
-      memory_mask,
-      memory_entity_ids,
-      deterministic,
-  ):
+      encoding: Array,
+      mention_batch_positions: Array,
+      mention_start_positions: Array,
+      mention_end_positions: Array,
+      mention_mask: Array,
+      memory_keys: Array,
+      memory_values: Array,
+      memory_mask: Array,
+      memory_entity_ids: Array,
+      deterministic: bool,
+  ) -> Tuple[Array, Dict[str, Array], Dict[str, Array]]:
     """Perform attention update over memory table.
 
     Args:

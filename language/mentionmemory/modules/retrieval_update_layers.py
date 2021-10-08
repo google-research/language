@@ -37,15 +37,15 @@ class RetrievalUpdateLayer(abc.ABC):
 
   def __call__(
       self,
-      encoded_input,
-      retrieval_values,
-      retrieval_scores,
-      mention_batch_positions,
-      mention_start_positions,
-      mention_end_positions,
-      mention_mask,
-      deterministic,
-  ):
+      encoded_input: Array,
+      retrieval_values: Array,
+      retrieval_scores: Array,
+      mention_batch_positions: Array,
+      mention_start_positions: Array,
+      mention_end_positions: Array,
+      mention_mask: Array,
+      deterministic: bool,
+  ) -> Array:
     """Incorporates retrieval into input.
 
     Args:
@@ -85,15 +85,15 @@ class AdditiveUpdate(nn.Module, RetrievalUpdateLayer):
 
   def __call__(
       self,
-      encoded_input,
-      retrieval_values,
-      retrieval_scores,
-      mention_batch_positions,
-      mention_start_positions,
-      mention_end_positions,
-      mention_mask,
-      deterministic,
-  ):
+      encoded_input: Array,
+      retrieval_values: Array,
+      retrieval_scores: Array,
+      mention_batch_positions: Array,
+      mention_start_positions: Array,
+      mention_end_positions: Array,
+      mention_mask: Array,
+      deterministic: bool,
+  ) -> Array:
 
     weighted_values = jnp.einsum('qk,qkd->qd', retrieval_scores,
                                  retrieval_values)
@@ -117,15 +117,15 @@ class DummyUpdate(nn.Module, RetrievalUpdateLayer):
 
   def __call__(
       self,
-      encoded_input,
-      retrieval_values,
-      retrieval_scores,
-      mention_batch_positions,
-      mention_start_positions,
-      mention_end_positions,
-      mention_mask,
-      deterministic,
-  ):
+      encoded_input: Array,
+      retrieval_values: Array,
+      retrieval_scores: Array,
+      mention_batch_positions: Array,
+      mention_start_positions: Array,
+      mention_end_positions: Array,
+      mention_mask: Array,
+      deterministic: bool,
+  ) -> Array:
     return encoded_input
 
 
@@ -200,15 +200,15 @@ class ConcatMLPUpdate(nn.Module, RetrievalUpdateLayer):
 
   def __call__(
       self,
-      encoded_input,
-      retrieval_values,
-      retrieval_scores,
-      mention_batch_positions,
-      mention_start_positions,
-      mention_end_positions,
-      mention_mask,
-      deterministic,
-  ):
+      encoded_input: Array,
+      retrieval_values: Array,
+      retrieval_scores: Array,
+      mention_batch_positions: Array,
+      mention_start_positions: Array,
+      mention_end_positions: Array,
+      mention_mask: Array,
+      deterministic: bool,
+  ) -> Array:
 
     # Generate mention values from input representation
     mention_start_encodings = jut.matmul_2d_index_select(

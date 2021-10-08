@@ -499,7 +499,7 @@ def input_fn(is_train, name, params):
   return dataset
 
 
-def get_predictor(model_dir):
+def get_predictor_for_model_fn(model_dir, model_function):
   """Build a predictor. Can't use SavedModel here due to the py_func."""
   with tf.io.gfile.GFile(os.path.join(model_dir, "params.json")) as f:
     params = json.load(f)
@@ -510,7 +510,7 @@ def get_predictor(model_dir):
   best_checkpoint = tf.io.gfile.glob(
       best_checkpoint_pattern)[0][:-len(".index")]
   serving_input_receiver = serving_fn()
-  estimator_spec = model_fn(
+  estimator_spec = model_function(
       features=serving_input_receiver.features,
       labels=None,
       mode=tf.estimator.ModeKeys.PREDICT,
@@ -525,3 +525,8 @@ def get_predictor(model_dir):
         estimator_spec.predictions, feed_dict={question_tensor: question})
 
   return _predict
+
+
+def get_predictor(model_dir):
+  """Build a ORQA predictor. Can't use SavedModel here due to the py_func."""
+  return get_predictor_for_model_fn(model_dir, model_fn)

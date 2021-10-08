@@ -15,7 +15,7 @@
 """Test utils."""
 
 import os
-
+from typing import Dict, Optional
 
 from absl.testing import parameterized
 from jax.lib import xla_bridge
@@ -25,21 +25,21 @@ import numpy as np
 class TestCase(parameterized.TestCase):
   """Custom test class containing additional useful utility methods."""
 
-  def assertArrayEqual(self, actual, expected):
+  def assertArrayEqual(self, actual: np.ndarray, expected: np.ndarray):
     actual = actual.ravel().tolist()
     expected = expected.ravel().tolist()
     self.assertSequenceEqual(actual, expected)
 
   def assertArrayAlmostEqual(self,
-                             actual,
-                             expected,
-                             places = 7):
+                             actual: np.ndarray,
+                             expected: np.ndarray,
+                             places: Optional[int] = 7):
     actual = actual.ravel().tolist()
     expected = expected.ravel().tolist()
     self.assertSequenceAlmostEqual(actual, expected, places=places)
 
 
-def force_multi_devices(num_cpu_devices):
+def force_multi_devices(num_cpu_devices: int):
   """Run with set number of CPU devices."""
   prev_xla_flags = os.getenv('XLA_FLAGS')
   flags_str = prev_xla_flags or ''
@@ -61,14 +61,14 @@ def tensor_to_numpy(tensor):
 
 
 def gen_mention_pretraining_sample(
-    text_length,
-    n_mentions,
-    n_linked_mentions,
-    max_length = 100,
-    vocab_size = 100,
-    entity_vocab_size = 1000,
-    mention_size = 2,
-):
+    text_length: int,
+    n_mentions: int,
+    n_linked_mentions: int,
+    max_length: int = 100,
+    vocab_size: int = 100,
+    entity_vocab_size: int = 1000,
+    mention_size: int = 2,
+) -> Dict[str, np.ndarray]:
   """Generate test raw decoded input for mention pre-training pipeline."""
 
   text_pad_shape = (0, max_length - text_length)

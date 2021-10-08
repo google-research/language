@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains task with base methods for downstream eval for a mention encoder."""
 
-
+from typing import Any, Callable, Dict
 
 from language.mentionmemory.encoders import encoder_registry
 from language.mentionmemory.tasks import base_task
@@ -25,7 +25,7 @@ class DownstreamEncoderTask(base_task.BaseTask):
   """Task with base methods for downstream evaluations for a mention encoder."""
 
   @classmethod
-  def load_weights(cls, config):
+  def load_weights(cls, config: ml_collections.ConfigDict) -> Dict[str, Any]:
     """Load model weights from file.
 
     We assume that `encoder_name` is specified in the config.
@@ -49,8 +49,8 @@ class DownstreamEncoderTask(base_task.BaseTask):
   @classmethod
   def make_output_postprocess_fn(
       cls,
-      config  # pylint: disable=unused-argument
-  ):
+      config: ml_collections.ConfigDict  # pylint: disable=unused-argument
+  ) -> Callable[[Dict[str, Any], Dict[str, Any]], Dict[str, Any]]:
     """Postprocess task samples (input and output). See BaseTask."""
 
     base_postprocess_fn = base_task.BaseTask.make_output_postprocess_fn(config)
@@ -59,8 +59,8 @@ class DownstreamEncoderTask(base_task.BaseTask):
     encoder_class = encoder_registry.get_registered_encoder(encoder_name)
     encoder_postprocess_fn = encoder_class.make_output_postprocess_fn(config)
 
-    def postprocess_fn(batch,
-                       auxiliary_output):
+    def postprocess_fn(batch: Dict[str, Any],
+                       auxiliary_output: Dict[str, Any]) -> Dict[str, Any]:
       """Function that prepares model's input and output for serialization."""
 
       new_auxiliary_output = {}
@@ -73,7 +73,7 @@ class DownstreamEncoderTask(base_task.BaseTask):
     return postprocess_fn
 
   @classmethod
-  def get_auxiliary_output(cls, loss_helpers):
+  def get_auxiliary_output(cls, loss_helpers: Dict[str, Any]) -> Dict[str, Any]:
     """Extract features from `loss_helpers` to be used as `auxiliary_output`."""
     auxiliary_output = {}
 

@@ -14,26 +14,26 @@
 # limitations under the License.
 """Contains utils for masking passages."""
 
-
+from typing import Dict, Optional
 
 from language.mentionmemory.utils import default_values
 import numpy as np
 import tensorflow.compat.v2 as tf
 
 
-def non_zero_1d(tensor):
+def non_zero_1d(tensor: tf.Tensor):
   """Return positions of non-zero elements in the input 1D tensor."""
   return tf.squeeze(tf.cast(tf.where(tf.not_equal(tensor, 0)), tensor.dtype), 1)
 
 
-def sparse_to_dense_1d(sparse_values, seq_length):
+def sparse_to_dense_1d(sparse_values: tf.Tensor, seq_length: int):
   """Convert sparse tensor ([0, 1, 4]) to dense tensor ([1, 1, 0, 0, 1])."""
   updates = tf.fill(tf.shape(sparse_values), value=1)
   updates = tf.cast(updates, sparse_values.dtype)
   return tf.scatter_nd(tf.expand_dims(sparse_values, 1), updates, [seq_length])
 
 
-def random_choice_1d(num_values, num_to_sample):
+def random_choice_1d(num_values: tf.Tensor, num_to_sample: tf.Tensor):
   """Samples num_to_sample elements from [0; num_values) without replacement."""
   num_to_sample = tf.minimum(num_to_sample, num_values)
   _, sampled_spans = tf.math.top_k(
@@ -42,8 +42,8 @@ def random_choice_1d(num_values, num_to_sample):
 
 
 def get_dense_is_inside_for_dense_spans(
-    dense_start_positions,
-    dense_end_positions):
+    dense_start_positions: tf.Tensor,
+    dense_end_positions: tf.Tensor) -> tf.Tensor:
   """Dense mask whether position is inside span given dense starts / ends."""
   # `tf.cumsum(dense_start_positions)[i]` computes how many spans start before
   # or on the i-th position.
@@ -60,9 +60,9 @@ def get_dense_is_inside_for_dense_spans(
   return is_inside_span
 
 
-def get_dense_is_inside_for_sparse_spans(sparse_start_positions,
-                                         sparse_end_positions,
-                                         seq_length):
+def get_dense_is_inside_for_sparse_spans(sparse_start_positions: tf.Tensor,
+                                         sparse_end_positions: tf.Tensor,
+                                         seq_length: int) -> tf.Tensor:
   """Dense mask whether position is inside span given sparse starts / ends."""
   dense_start_positions = sparse_to_dense_1d(sparse_start_positions, seq_length)
   dense_end_positions = sparse_to_dense_1d(sparse_end_positions, seq_length)
@@ -70,9 +70,9 @@ def get_dense_is_inside_for_sparse_spans(sparse_start_positions,
                                              dense_end_positions)
 
 
-def dynamic_padding_1d(tensor,
-                       length,
-                       padding_token_id = 0):
+def dynamic_padding_1d(tensor: tf.Tensor,
+                       length: int,
+                       padding_token_id: int = 0) -> tf.Tensor:
   """Padds or truncates 1D tensor to a specified length."""
   length_to_pad = length - tf.shape(tensor)[0]
   length_to_pad_or_zero = tf.maximum(length_to_pad, 0)
@@ -91,8 +91,8 @@ def dynamic_padding_1d(tensor,
 
 
 def mask_tokens_by_spans(
-    text_ids, start_positions, end_positions,
-    mask_rate, num_positions_to_mask):
+    text_ids: tf.Tensor, start_positions: tf.Tensor, end_positions: tf.Tensor,
+    mask_rate: float, num_positions_to_mask: tf.Tensor) -> Dict[str, tf.Tensor]:
   """Mask `mask_rate` fraction of spans."""
   # Compute the number of spans to sample
   num_spans = tf.shape(start_positions)[0]
@@ -122,18 +122,18 @@ def mask_tokens_by_spans(
 
 
 def mask_mentions_and_tokens_tf(
-    text_ids,
-    text_mask,
-    dense_span_starts,
-    dense_span_ends,
-    non_mention_mask_rate,
-    mention_mask_rate,
-    max_mlm_targets,
-    mask_token_id,
-    vocab_size,
-    random_replacement_prob = 0.1,
-    identity_replacement_prob = 0.1,
-):
+    text_ids: tf.Tensor,
+    text_mask: tf.Tensor,
+    dense_span_starts: tf.Tensor,
+    dense_span_ends: tf.Tensor,
+    non_mention_mask_rate: float,
+    mention_mask_rate: float,
+    max_mlm_targets: int,
+    mask_token_id: int,
+    vocab_size: int,
+    random_replacement_prob: float = 0.1,
+    identity_replacement_prob: float = 0.1,
+) -> Dict[str, tf.Tensor]:
   """Randomly masks whole mentions and random tokens up to a maximum.
 
   First, mentions are masked according to mention mask rate. If a mention is
@@ -242,15 +242,15 @@ def mask_mentions_and_tokens_tf(
 
 
 def mask_mentions_and_tokens(
-    text_ids,
-    text_mask,
-    mention_start_positions,
-    mention_end_positions,
-    mask_rate,
-    mention_mask_rate,
-    max_mlm_targets,
-    mask_token_id,
-):
+    text_ids: np.ndarray,
+    text_mask: np.ndarray,
+    mention_start_positions: np.ndarray,
+    mention_end_positions: np.ndarray,
+    mask_rate: float,
+    mention_mask_rate: float,
+    max_mlm_targets: int,
+    mask_token_id: int,
+) -> Dict[str, np.ndarray]:
   """Randomly masks whole mentions and random tokens up to a maximum.
 
   First, mentions are masked according to mention mask rate. If a mention is
@@ -355,8 +355,8 @@ def mask_mentions_and_tokens(
   }
 
 
-def get_dense_span_ends_from_starts(dense_span_starts,
-                                    dense_span_ends):
+def get_dense_span_ends_from_starts(dense_span_starts: tf.Tensor,
+                                    dense_span_ends: tf.Tensor) -> tf.Tensor:
   """For every mention start positions finds the corresponding end position."""
   seq_len = tf.shape(dense_span_starts)[0]
   start_pos = tf.cast(tf.where(tf.equal(dense_span_starts, 1)), tf.int32)
@@ -373,13 +373,13 @@ def _flatten(tensor):
 
 
 def prepare_mention_target_features(
-    mention_batch_positions,
-    mention_start_positions,
-    mention_end_positions,
-    mention_mask,
-    mention_target_weights,
-    mention_target_indices,
-):
+    mention_batch_positions: tf.Tensor,
+    mention_start_positions: tf.Tensor,
+    mention_end_positions: tf.Tensor,
+    mention_mask: tf.Tensor,
+    mention_target_weights: tf.Tensor,
+    mention_target_indices: tf.Tensor,
+) -> Dict[str, tf.Tensor]:
   """Produce mention target features based on batchwise mention features."""
   mention_target_weights = mention_target_weights * tf.gather(
       mention_mask, mention_target_indices)
@@ -398,14 +398,14 @@ def prepare_mention_target_features(
 
 
 def process_batchwise_mention_targets(
-    dense_span_starts,
-    dense_span_ends,
-    dense_mention_ids,
-    dense_linked_mention_mask,
-    dense_is_masked,
-    max_mentions,
-    max_mention_targets,
-):
+    dense_span_starts: tf.Tensor,
+    dense_span_ends: tf.Tensor,
+    dense_mention_ids: tf.Tensor,
+    dense_linked_mention_mask: tf.Tensor,
+    dense_is_masked: tf.Tensor,
+    max_mentions: int,
+    max_mention_targets: int,
+) -> Dict[str, tf.Tensor]:
   """Processes mention targets and subsamples/pads as necessary.
 
   This function does two things. First, it selects which mentions to mark as
@@ -505,8 +505,8 @@ def process_batchwise_mention_targets(
   return features
 
 
-def _batched_range(batch_size, length, axis,
-                   dtype):
+def _batched_range(batch_size: int, length: int, axis: int,
+                   dtype: tf.dtypes.DType) -> tf.Tensor:
   """Produces multiple tf.range stacked along the `axis` `batch_size` times."""
   if axis == 0:
     repeats = [batch_size, 1]
@@ -517,24 +517,24 @@ def _batched_range(batch_size, length, axis,
   return tf.tile(tf.expand_dims(tf.range(length, dtype=dtype), axis), repeats)
 
 
-def _get_2d_index(x, y):
+def _get_2d_index(x: tf.Tensor, y: tf.Tensor) -> tf.Tensor:
   """Generates 2D index given separate arrays for each coordinate."""
   # Index is always int32
   return tf.cast(tf.stack([x, y], axis=1), tf.int32)
 
 
 def compute_positions_shift_with_entity_tokens(
-    mention_mask,
-    mention_batch_positions,
-    mention_start_positions,
-    mention_end_positions,
-    batch_size,
-    old_length,
-):
+    mention_mask: tf.Tensor,
+    mention_batch_positions: tf.Tensor,
+    mention_start_positions: tf.Tensor,
+    mention_end_positions: tf.Tensor,
+    batch_size: int,
+    old_length: int,
+) -> tf.Tensor:
   """Computes the new position for every position in the old sequence."""
   old_shape = (batch_size, old_length)
 
-  def get_positions_shift(positions, exclusive):
+  def get_positions_shift(positions: tf.Tensor, exclusive: bool) -> tf.Tensor:
     index_2d = _get_2d_index(mention_batch_positions, positions)
     return tf.cumsum(
         tf.scatter_nd(index_2d, mention_mask, old_shape),
@@ -555,14 +555,14 @@ def compute_positions_shift_with_entity_tokens(
 
 
 def compute_which_mentions_fit_with_entity_tokens(
-    mention_mask,
-    mention_batch_positions,
-    mention_start_positions,
-    mention_end_positions,
-    batch_size,
-    old_length,
-    new_length,
-):
+    mention_mask: tf.Tensor,
+    mention_batch_positions: tf.Tensor,
+    mention_start_positions: tf.Tensor,
+    mention_end_positions: tf.Tensor,
+    batch_size: int,
+    old_length: int,
+    new_length: int,
+) -> tf.Tensor:
   """Computes a mask for which mentions will fit after adding entity tokens."""
 
   positions = compute_positions_shift_with_entity_tokens(
@@ -583,18 +583,18 @@ def compute_which_mentions_fit_with_entity_tokens(
 
 
 def add_entity_tokens(
-    text_ids,
-    text_mask,
-    mention_mask,
-    mention_batch_positions,
-    mention_start_positions,
-    mention_end_positions,
-    new_length,
-    mlm_target_positions = None,
-    mlm_target_weights = None,
-    entity_start_token_id = default_values.ENTITY_START_TOKEN,
-    entity_end_token_id = default_values.ENTITY_END_TOKEN,
-):
+    text_ids: tf.Tensor,
+    text_mask: tf.Tensor,
+    mention_mask: tf.Tensor,
+    mention_batch_positions: tf.Tensor,
+    mention_start_positions: tf.Tensor,
+    mention_end_positions: tf.Tensor,
+    new_length: int,
+    mlm_target_positions: Optional[tf.Tensor] = None,
+    mlm_target_weights: Optional[tf.Tensor] = None,
+    entity_start_token_id: int = default_values.ENTITY_START_TOKEN,
+    entity_end_token_id: int = default_values.ENTITY_END_TOKEN,
+) -> Dict[str, tf.Tensor]:
   """Adds entity start / end tokens around mentions.
 
   Inserts `entity_start_token_id` and `entity_end_token_id` tokens around each
@@ -655,10 +655,10 @@ def add_entity_tokens(
       new_mention_mask, mention_batch_positions, mention_start_positions,
       mention_end_positions, batch_size, old_length)
 
-  def get_2d_index(positions):
+  def get_2d_index(positions: tf.Tensor) -> tf.Tensor:
     return _get_2d_index(mention_batch_positions, positions)
 
-  def get_new_positions(old_positions):
+  def get_new_positions(old_positions: tf.Tensor) -> tf.Tensor:
     index_2d = get_2d_index(old_positions)
     return tf.gather_nd(positions, index_2d)
 
@@ -733,12 +733,12 @@ def add_entity_tokens(
   return features
 
 
-def text_hash(text):
+def text_hash(text: np.ndarray) -> np.ndarray:
   """Given 1D integer array with token IDs produces integer hash."""
   return np.polyval(text, 100003)
 
 
-def text_hash_tf(text, seq_length):
+def text_hash_tf(text: tf.Tensor, seq_length: int) -> tf.Tensor:
   """Given 1D integer array with token IDs produces integer hash."""
   return tf.squeeze(
       tf.math.polyval(
@@ -746,7 +746,7 @@ def text_hash_tf(text, seq_length):
           tf.constant(100003, dtype=text.dtype)), 0)
 
 
-def modified_cantor_pairing(a, b):
+def modified_cantor_pairing(a: tf.Tensor, b: tf.Tensor) -> tf.Tensor:
   """Given integer tensors a and b, produces tensor of hashes."""
   # https://en.wikipedia.org/wiki/Pairing_function#Cantor_pairing_function
   # The function produces a modification of the original function making it

@@ -16,7 +16,7 @@
 
 import json
 import os
-
+from typing import Any, Mapping, Sequence, Text
 
 from absl import app
 from absl import flags
@@ -47,11 +47,11 @@ flags.DEFINE_integer("num_train_steps", None, "Number of training steps")
 flags.DEFINE_integer("warmup_steps", None, "Number of warmup training steps")
 
 
-def validate_config_flags(flag_dict):
+def validate_config_flags(flag_dict: Mapping[Text, Any]) -> bool:
   return flag_dict["config"] is not None or flag_dict["config_file"] is not None
 
 
-def main(argv):
+def main(argv: Sequence[str]) -> None:
   if len(argv) > 1:
     raise app.UsageError("Too many command-line arguments.")
 

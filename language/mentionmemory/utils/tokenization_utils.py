@@ -14,7 +14,7 @@
 # limitations under the License.
 """Tokenizer utils."""
 
-
+from typing import AnyStr, List, Tuple
 
 from absl import logging
 from typing_extensions import Protocol
@@ -28,7 +28,7 @@ class TokenConverter(Protocol):
   TokenConverter.
   """
 
-  def convert_tokens_to_ids(self, tokens):
+  def convert_tokens_to_ids(self, tokens: List[str]) -> List[int]:
     """Converts a list of string tokens to a list of vocab identifiers."""
     pass
 
@@ -39,14 +39,14 @@ class Tokenizer(TokenConverter, Protocol):
   This encapsulates the core methods needed from BERT's tokenizer.
   """
 
-  def tokenize(self, text):
+  def tokenize(self, text: AnyStr) -> List[str]:
     """Tokenizes a string (in raw bytes) return a list of string tokens."""
     pass
 
 
 def convert_tokens_to_ids_and_pad(
-    word_pieces, max_length,
-    token_converter):
+    word_pieces: List[str], max_length: int,
+    token_converter: TokenConverter) -> Tuple[List[int], List[int]]:
   """Converts the input tokens to padded ids and mask.
 
   Args:
@@ -75,13 +75,13 @@ def convert_tokens_to_ids_and_pad(
 
 
 def tokenize_with_mention_spans(
-    tokenizer,
-    sentence,
-    spans,
-    max_length,
-    add_bert_tokens = True,
-    allow_truncated_spans = False
-):
+    tokenizer: Tokenizer,
+    sentence: str,
+    spans: List[Tuple[int, int]],
+    max_length: int,
+    add_bert_tokens: bool = True,
+    allow_truncated_spans: bool = False
+) -> Tuple[List[str], List[int], List[int], List[Tuple[int, int]], List[int]]:
   """Tokenizes and resolves byte-offsets to word-offsets.
 
   Given a sentence and a set of inclusive byte-offset spans, applies a BERT

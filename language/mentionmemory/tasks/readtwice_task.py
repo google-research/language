@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains ReadTwice task."""
 
-
+from typing import Any, Callable, Dict, Optional, Tuple
 
 import flax.linen as nn
 import jax.numpy as jnp
@@ -73,8 +73,8 @@ class ReadTwiceTask(mention_encoder_task.MentionEncoderTask):
 
   @classmethod
   def make_loss_fn(
-      cls, config
-  ):
+      cls, config: ml_collections.ConfigDict
+  ) -> Callable[..., Tuple[float, MetricGroups, Dict[str, Any]]]:
     """Creates task loss function.
 
     See BaseTask.
@@ -123,13 +123,13 @@ class ReadTwiceTask(mention_encoder_task.MentionEncoderTask):
     mtb_score_mode = config.get('mtb_score_mode', 'dot')
 
     def loss_fn(
-        model_config,
-        model_params,
-        model_vars,
-        batch,
-        deterministic,
-        dropout_rng = None,
-    ):
+        model_config: ml_collections.FrozenConfigDict,
+        model_params: Dict[str, Any],
+        model_vars: Dict[str, Any],
+        batch: Dict[str, Any],
+        deterministic: bool,
+        dropout_rng: Optional[Dict[str, Array]] = None,
+    ) -> Tuple[float, MetricGroups, Dict[str, Any]]:
       """Model-specific loss function. See BaseTask."""
 
       variable_dict = {'params': model_params}

@@ -53,8 +53,8 @@ class AttentionBlock(nn.Module):
     self.dropout = nn.Dropout(self.dropout_rate)
     self.layer_norm = nn.LayerNorm(epsilon=self.layer_norm_epsilon)
 
-  def __call__(self, encoding, attention_mask,
-               deterministic):
+  def __call__(self, encoding: Array, attention_mask: Array,
+               deterministic: bool) -> Array:
     """Self attention layer forward.
 
     Args:

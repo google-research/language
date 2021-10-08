@@ -15,7 +15,7 @@
 """Tests for data utils."""
 
 import itertools
-
+from typing import Dict, List
 
 from absl.testing import absltest
 from absl.testing import parameterized
@@ -94,7 +94,7 @@ class MentionPreprocessUtilsTest(tf.test.TestCase, test_utils.TestCase):
   mask_token_id = 200
   vocab_size = 100
 
-  def _gen_input(self, text_len, n_mentions):
+  def _gen_input(self, text_len: int, n_mentions: int):
     """Generate synthetic inputs to test masking."""
     text_ids = np.pad(
         np.random.randint(1, self.vocab_size, size=text_len),
@@ -240,10 +240,10 @@ class MentionPreprocessUtilsTest(tf.test.TestCase, test_utils.TestCase):
   @parameterized.parameters(_get_test_mask_mentions_and_tokens_iterable())
   def test_mask_mentions_and_tokens(
       self,
-      non_mention_mask_rate,
-      mention_mask_rate,
-      text_len,
-      n_mentions,
+      non_mention_mask_rate: float,
+      mention_mask_rate: float,
+      text_len: int,
+      n_mentions: int,
   ):
     """Test masking for correctness and consistency."""
 
@@ -289,10 +289,10 @@ class MentionPreprocessUtilsTest(tf.test.TestCase, test_utils.TestCase):
   @parameterized.parameters(_get_test_mask_mentions_and_tokens_iterable())
   def test_mask_mentions_and_tokens_numpy(
       self,
-      mask_rate,
-      mention_mask_rate,
-      text_len,
-      n_mentions,
+      mask_rate: float,
+      mention_mask_rate: float,
+      text_len: int,
+      n_mentions: int,
   ):
     """Test masking for correctness and consistency."""
 
@@ -334,9 +334,9 @@ class MentionPreprocessUtilsTest(tf.test.TestCase, test_utils.TestCase):
       ([1, 1, 0], [1, 0, 1], [0, 2, 0]),
       ([1, 1, 0, 1, 0, 0, 1, 0, 0], [1, 0, 1, 0, 0, 1, 0, 1, 0
                                     ], [0, 2, 0, 5, 0, 0, 7, 0, 0]))
-  def test_get_dense_span_ends_from_starts(self, dense_span_starts,
-                                           dense_span_ends,
-                                           expected):
+  def test_get_dense_span_ends_from_starts(self, dense_span_starts: List[int],
+                                           dense_span_ends: List[int],
+                                           expected: List[int]):
     dense_span_starts_tf = tf.compat.v1.placeholder_with_default(
         np.array(dense_span_starts).astype(np.int32), shape=[None])
     dense_span_ends_tf = tf.compat.v1.placeholder_with_default(
@@ -351,11 +351,11 @@ class MentionPreprocessUtilsTest(tf.test.TestCase, test_utils.TestCase):
       _get_test_process_batchwise_mention_targets_iterable())
   def test_process_batchwise_mention_targets(
       self,
-      batch_size,
-      text_len,
-      n_mentions,
-      max_mentions,
-      max_mention_targets,
+      batch_size: int,
+      text_len: int,
+      n_mentions: int,
+      max_mentions: int,
+      max_mention_targets: int,
   ):
     """Test batchwise mention processing for correctness and consistency."""
     max_mention_targets = min(max_mention_targets, max_mentions)
@@ -376,7 +376,7 @@ class MentionPreprocessUtilsTest(tf.test.TestCase, test_utils.TestCase):
       dense_mention_mask_list.append(input_features['dense_mention_mask'])
       dense_is_masked_list.append(input_features['dense_is_masked'])
 
-    def placeholder(array):
+    def placeholder(array: np.ndarray) -> tf.Tensor:
       return tf.compat.v1.placeholder_with_default(
           array.astype(np.int32), shape=[None])
 
@@ -485,10 +485,10 @@ class MentionPreprocessUtilsTest(tf.test.TestCase, test_utils.TestCase):
         np.all(actual_dict_np['mention_target_end_positions'] == expected))
 
   def _gen_batch_for_test_add_entity_tokens(
-      self, batch_size, min_length, max_length, vocab_size,
-      max_mentions_per_sample, n_mentions, p_mention_to_pad,
-      min_mlm_targets, max_mlm_targets,
-      masked_token_id):
+      self, batch_size: int, min_length: int, max_length: int, vocab_size: int,
+      max_mentions_per_sample: int, n_mentions: int, p_mention_to_pad: float,
+      min_mlm_targets: int, max_mlm_targets: int,
+      masked_token_id: int) -> Dict[str, np.ndarray]:
     """Generate batch with batchwise mentions to test `add_entity_tokens`."""
 
     features = {}

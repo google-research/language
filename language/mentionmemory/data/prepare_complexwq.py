@@ -16,7 +16,7 @@
 
 import json
 import os
-
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from absl import app
 from absl import flags
@@ -42,10 +42,10 @@ flags.DEFINE_integer('max_mentions', 48, 'max nr of mentions')
 
 
 def process_sample(
-    sample,
-    spacy_model,
-    tokenizer,
-):
+    sample: Dict[str, Any],
+    spacy_model: Any,
+    tokenizer: Any,
+) -> Optional[Dict[str, Any]]:
   """Processes CWQ sample.
 
   To process a raw CWQ example, we first strip special tokens and convert tokens
@@ -146,10 +146,10 @@ def process_sample(
 
 
 def process_data(
-    raw_samples,
-    spacy_model,
-    tokenizer,
-):
+    raw_samples: List[Dict[str, Any]],
+    spacy_model: Any,
+    tokenizer: Any,
+) -> Tuple[List[Dict[str, Any]], int]:
   """Process CWQ split."""
 
   processed_samples = []
@@ -164,7 +164,7 @@ def process_data(
   return processed_samples, skipped
 
 
-def main(argv):
+def main(argv: Sequence[str]) -> None:
   if len(argv) > 1:
     raise app.UsageError('Too many command-line arguments.')
 

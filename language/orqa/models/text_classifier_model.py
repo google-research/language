@@ -173,7 +173,7 @@ def model_fn(features, labels, mode, params):
       mode=mode,
       loss=loss,
       train_op=train_op,
-      predictions=predictions,
+      predictions={"answer": predictions},
       eval_metric_ops=eval_metric_ops)
 
 
@@ -200,3 +200,8 @@ def input_fn(is_train, name, params):
   dataset = dataset.map(_extract_labels)
   dataset = dataset.prefetch(10)
   return dataset
+
+
+def get_predictor(model_dir):
+  """Build a text classifier predictor. See orqa_model for details."""
+  return orqa_model.get_predictor_for_model_fn(model_dir, model_fn)

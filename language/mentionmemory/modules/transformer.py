@@ -14,7 +14,7 @@
 # limitations under the License.
 """Modules for Transformer encoder and layers."""
 
-
+from typing import Callable
 
 import flax.linen as nn
 
@@ -70,10 +70,10 @@ class TransformerLayer(nn.Module):
 
   def __call__(
       self,
-      encoding,
-      attention_mask,
-      deterministic,
-  ):
+      encoding: Array,
+      attention_mask: Array,
+      deterministic: bool,
+  ) -> Array:
     """Transformer layer forward.
 
     Args:
@@ -106,12 +106,12 @@ class LayerSequence(nn.Module):
   """
 
   num_layers: int
-  layer_factory: Callable[Ellipsis, nn.Module]
+  layer_factory: Callable[..., nn.Module]
 
   def setup(self):
     self.layers = [self.layer_factory() for _ in range(self.num_layers)]
 
-  def __call__(self, encoding, *args, **kwargs):
+  def __call__(self, encoding: Array, *args, **kwargs):
     for layer in self.layers:
       encoding = layer(encoding, *args, **kwargs)
     return encoding
@@ -163,10 +163,10 @@ class TransformerBlock(nn.Module):
 
   def __call__(
       self,
-      encoding,
-      attention_mask,
-      deterministic,
-  ):
+      encoding: Array,
+      attention_mask: Array,
+      deterministic: bool,
+  ) -> Array:
     """Transformer layer forward.
 
     Args:

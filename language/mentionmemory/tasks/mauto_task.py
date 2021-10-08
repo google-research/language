@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains mention auto-encoder task."""
 
-
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from absl import logging
 import flax.linen as nn
@@ -54,8 +54,8 @@ class MautoModel(nn.Module):
     )
 
   def __call__(
-      self, batch,
-      deterministic):
+      self, batch: Dict[str, Array],
+      deterministic: bool) -> Tuple[Dict[str, Array], Dict[str, Array]]:
     encoded_input, loss_helpers, logging_helpers = self.encoder.forward(
         batch, deterministic)
 
@@ -76,8 +76,8 @@ class MautoTask(mention_encoder_task.MentionEncoderTask):
 
   @classmethod
   def make_loss_fn(
-      cls, config
-  ):
+      cls, config: ml_collections.ConfigDict
+  ) -> Callable[..., Tuple[float, MetricGroups, Dict[str, Any]]]:
     """Creates task loss function."""
 
     mlm_weight = config.mlm_weight
@@ -85,13 +85,13 @@ class MautoTask(mention_encoder_task.MentionEncoderTask):
     coref_res_mode = config.get('coref_res_mode', 'dot')
 
     def loss_fn(
-        model_config,
-        model_params,
-        model_vars,
-        batch,
-        deterministic,
-        dropout_rng = None,
-    ):
+        model_config: ml_collections.FrozenConfigDict,
+        model_params: Dict[str, Any],
+        model_vars: Dict[str, Any],
+        batch: Dict[str, Any],
+        deterministic: bool,
+        dropout_rng: Optional[Dict[str, Array]] = None,
+    ) -> Tuple[float, MetricGroups, Dict[str, Any]]:
       """Model-specific loss function. See BaseTask."""
 
       variable_dict = {'params': model_params}
@@ -160,14 +160,14 @@ class MautoTask(mention_encoder_task.MentionEncoderTask):
 
   @staticmethod
   def make_preprocess_fn(
-      config
-  ):
+      config: ml_collections.ConfigDict
+  ) -> Callable[[Dict[str, tf.Tensor]], Dict[str, tf.Tensor]]:
     """Produces function to preprocess samples. See BaseTask."""
     max_length = config.model_config.encoder_config.max_length
 
     mention_preprocessing_fn = mention_encoder_task.MentionEncoderTask.make_preprocess_fn(config)  # pylint: disable=line-too-long
 
-    def preprocess_fn(example):
+    def preprocess_fn(example: Dict[str, tf.Tensor]) -> Dict[str, tf.Tensor]:
       """Performs preprocessing for individual sample."""
       new_example = mention_preprocessing_fn(example)
 
@@ -180,8 +180,8 @@ class MautoTask(mention_encoder_task.MentionEncoderTask):
 
   @staticmethod
   def make_collater_fn(
-      config
-  ):
+      config: ml_collections.ConfigDict
+  ) -> Callable[[Dict[str, tf.Tensor]], Dict[str, tf.Tensor]]:
     """Produces function to preprocess batches.
 
     For a selected subset of mentions in the batch, we retrieve the
@@ -231,7 +231,7 @@ class MautoTask(mention_encoder_task.MentionEncoderTask):
           stride=config.memory_reduction,
           offset=0)
 
-    def collater_fn(batch):
+    def collater_fn(batch: Dict[str, tf.Tensor]) -> Dict[str, tf.Tensor]:
       batch = mm_collater_fn(batch)
 
       retrieve_masked = config.get('retrieve_masked', False)
@@ -318,7 +318,7 @@ class MautoTask(mention_encoder_task.MentionEncoderTask):
     return collater_fn
 
   @staticmethod
-  def dummy_input(config):
+  def dummy_input(config: ml_collections.ConfigDict) -> Dict[str, Any]:
     """Produces model-specific dummy input batch. See BaseTask."""
 
     dummy_input = mention_memory_task.MentionMemoryTask.dummy_input(config)

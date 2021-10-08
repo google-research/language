@@ -14,7 +14,7 @@
 # limitations under the License.
 """Ultra Fine Entity Typing mention classification task."""
 
-
+from typing import Any, Callable, Dict, Optional, Text, Tuple
 
 import flax.linen as nn
 import jax
@@ -35,23 +35,23 @@ ULTRA_FINE_CLASSES_END = NUM_CLASSES
 _SMALL_NUMBER = 1e-10
 
 
-def get_weight_per_group(labels, group_start,
-                         group_end):
+def get_weight_per_group(labels: Array, group_start: int,
+                         group_end: int) -> Array:
   """Computes which samples have at least one labels within a group."""
   label_per_group_exists = labels[:, group_start:group_end].sum(1) > 0
   label_per_group_exists = label_per_group_exists.astype(jnp.float32)
   return label_per_group_exists
 
 
-def get_loss_per_group(loss_per_label, weight_per_group,
-                       group_start, group_end):
+def get_loss_per_group(loss_per_label: Array, weight_per_group: Array,
+                       group_start: int, group_end: int) -> Array:
   """Computes loss per sample within a group of labels."""
   loss_per_group = loss_per_label[:, group_start:group_end].sum(1)
   loss_per_group *= weight_per_group
   return loss_per_group
 
 
-def get_predictions(logit_per_label):
+def get_predictions(logit_per_label: Array) -> Array:
   """Prediction according to https://www.aclweb.org/anthology/P18-1009.pdf."""
   num_labels = logit_per_label.shape[1]
   # Independent (per-label) predictions
@@ -68,7 +68,7 @@ def get_predictions(logit_per_label):
   return final_predictions
 
 
-def get_mrr(labels, logits):
+def get_mrr(labels: Array, logits: Array) -> Array:
   """Mean reciprocal rank in https://www.aclweb.org/anthology/P18-1009.pdf."""
   labels_exists = labels.sum(axis=-1) > 0
   labels_exists = labels_exists.astype(jnp.float32)
@@ -83,8 +83,8 @@ def get_mrr(labels, logits):
   }
 
 
-def get_positives_negatives(metric_name, labels, predictions,
-                            group_start, group_end):
+def get_positives_negatives(metric_name: str, labels: Array, predictions: Array,
+                            group_start: int, group_end: int) -> MetricGroups:
   """Computes metrics over precision and recall for a specific groups."""
   tp = jnp.logical_and(labels[:, group_start:group_end] == 1,
                        predictions[:, group_start:group_end] == 1).sum(-1)
@@ -108,8 +108,8 @@ def get_positives_negatives(metric_name, labels, predictions,
   }
 
 
-def get_prediction_recall_metrics(labels,
-                                  predictions):
+def get_prediction_recall_metrics(labels: Array,
+                                  predictions: Array) -> MetricGroups:
   """Computes metrics over precision and recall over different groups."""
   metrics = {}
   metrics.update(
@@ -126,7 +126,7 @@ def get_prediction_recall_metrics(labels,
   return metrics
 
 
-def get_eval_metrics(labels, logits):
+def get_eval_metrics(labels: Array, logits: Array) -> MetricGroups:
   predictions = get_predictions(logits)
   metrics = get_prediction_recall_metrics(labels, predictions)
   metrics['agg_mrr'] = get_mrr(labels, logits)
@@ -143,14 +143,14 @@ class UltraFineEntityTypingTask(mention_classifier_task.MentionClassifierTask):
 
   @classmethod
   def build_model(cls,
-                  model_config):
+                  model_config: ml_collections.FrozenConfigDict) -> nn.Module:
     """Builds model by instantiating flax module associated with task."""
     return cls.model_class(num_classes=NUM_CLASSES, **model_config)
 
   @classmethod
   def make_loss_fn(
-      cls, config
-  ):
+      cls, config: ml_collections.ConfigDict
+  ) -> Callable[..., Tuple[float, MetricGroups, Dict[str, Any]]]:
     """Creates loss function for Ultra Fine Entity Typing training.
 
     TODO(urikz): Write detailed description.
@@ -165,13 +165,13 @@ class UltraFineEntityTypingTask(mention_classifier_task.MentionClassifierTask):
     """
 
     def loss_fn(
-        model_config,
-        model_params,
-        model_vars,
-        batch,
-        deterministic,
-        dropout_rng = None,
-    ):
+        model_config: ml_collections.FrozenConfigDict,
+        model_params: Dict[Text, Any],
+        model_vars: Dict[Text, Any],
+        batch: Dict[Text, Any],
+        deterministic: bool,
+        dropout_rng: Optional[Dict[Text, Array]] = None,
+    ) -> Tuple[float, MetricGroups, Dict[str, Any]]:
       """Loss function used by Ultra Fine Entity Typing task. See BaseTask."""
 
       variable_dict = {'params': model_params}

@@ -14,7 +14,7 @@
 # limitations under the License.
 """Contains Jax utils."""
 
-
+from typing import Tuple
 
 import jax
 import jax.numpy as jnp
@@ -24,7 +24,7 @@ from language.mentionmemory.utils.custom_types import Array
 _SMALL = 1e-8
 
 
-def matmul_slice(array, indices):
+def matmul_slice(array: Array, indices: Array) -> Array:
   """Convenience function for indexing that differs along first dimension.
 
   The function supports batched and not-batched input:
@@ -59,7 +59,7 @@ def matmul_slice(array, indices):
   return value
 
 
-def matmul_2d_index_select(array, indices):
+def matmul_2d_index_select(array: Array, indices: Tuple[Array, Array]) -> Array:
   """Function subselects an array with 2D index using matrix multiplication.
 
   Args:
@@ -79,7 +79,7 @@ def matmul_2d_index_select(array, indices):
   return value
 
 
-def matmul_index_add(array, indices, values):
+def matmul_index_add(array: Array, indices: Array, values: Array) -> Array:
   """Convenience function for index add that differs along first dimension.
 
   Args:
@@ -97,8 +97,8 @@ def matmul_index_add(array, indices, values):
   return added_array
 
 
-def matmul_2d_index_add(array, indices,
-                        values):
+def matmul_2d_index_add(array: Array, indices: Tuple[Array, Array],
+                        values: Array) -> Array:
   """Convenience function for 2D index add.
 
   Args:
@@ -122,18 +122,18 @@ def matmul_2d_index_add(array, indices,
 
 
 @jax.vmap
-def vmap_slice(array, indices):
+def vmap_slice(array: Array, indices: Array) -> Array:
   """Convenience function for indexing that differs along first dimension ."""
   return array[indices]
 
 
 @jax.vmap
-def vmap_index_add(array, indices, values):
+def vmap_index_add(array: Array, indices: Array, values: Array) -> Array:
   """Convenience function for index add that differs along first dimension."""
   return jax.ops.index_add(array, indices, values)
 
 
-def cosine_similarity(a, b):
+def cosine_similarity(a: Array, b: Array) -> Array:
   """Computes batched cosine similarity between two 2D arrays."""
   a_norm = jnp.linalg.norm(a, axis=-1)
   b_norm = jnp.linalg.norm(b, axis=-1)

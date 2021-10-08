@@ -17,8 +17,7 @@
 import json
 from absl import flags
 from absl import logging
-from language.orqa.models import orqa_model
-import six
+from language.orqa.models import text_classifier_model
 import tensorflow.compat.v1 as tf
 
 
@@ -28,20 +27,21 @@ flags.DEFINE_string("model_dir", None, "Model directory.")
 flags.DEFINE_string("dataset_path", None, "Data path.")
 flags.DEFINE_string("predictions_path", None,
                     "Path to file where predictions will be written")
+flags.DEFINE_string("question_key", "claim",
+                    "Feature name for the question in the input JSON data.")
 flags.DEFINE_boolean("print_prediction_samples", True,
                      "Whether to print a sample of the predictions.")
 
 
 def main(_):
-  predictor = orqa_model.get_predictor(FLAGS.model_dir)
+  predictor = text_classifier_model.get_predictor(FLAGS.model_dir)
   with tf.io.gfile.GFile(FLAGS.predictions_path, "w") as predictions_file:
     with tf.io.gfile.GFile(FLAGS.dataset_path) as dataset_file:
       for i, line in enumerate(dataset_file):
         example = json.loads(line)
-        question = example["question"]
+        question = example[FLAGS.question_key]
         predictions = predictor(question)
-        predicted_answer = six.ensure_text(
-            predictions["answer"], errors="ignore")
+        predicted_answer = predictions["answer"].tolist()
         example["prediction"] = predicted_answer
         predictions_file.write(json.dumps(example))
         predictions_file.write("\n")
