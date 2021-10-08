@@ -22,6 +22,7 @@ from language.mentionmemory.tasks import downstream_encoder_task
 from language.mentionmemory.tasks import task_registry
 from language.mentionmemory.utils import metric_utils
 from language.mentionmemory.utils.custom_types import Array, Dtype, MetricGroups  # pylint: disable=g-multiple-import
+import language.mentionmemory.utils.mention_preprocess_utils as mention_preprocess_utils
 import ml_collections
 import numpy as np
 import tensorflow.compat.v2 as tf
@@ -43,16 +44,22 @@ class TextClassifierModel(nn.Module):
     encoder_name: Name of encoder model to use to encode passage.
     encoder_config: Encoder hyperparameters.
     dtype: Precision of computation.
+    apply_mlp: If true, apply mlp before linear classifier.
   """
 
   vocab_size: int
   encoder_name: str
   encoder_config: ml_collections.FrozenConfigDict
   dtype: Dtype
+  apply_mlp: bool = False
 
   def setup(self):
     self.encoder = encoder_registry.get_registered_encoder(
         self.encoder_name)(**self.encoder_config)
+
+    if self.apply_mlp:
+      self.mlp = nn.Dense(self.encoder_config.hidden_size, self.dtype)
+      self.dropout = nn.Dropout(self.encoder_config.dropout_rate)
     self.linear_classifier = nn.Dense(self.vocab_size, dtype=self.dtype)
 
   def __call__(self, batch, deterministic):
@@ -60,6 +67,10 @@ class TextClassifierModel(nn.Module):
         batch, deterministic)
     cls_encoding = encoding[:, 0, Ellipsis]
 
+    if self.apply_mlp:
+      cls_encoding = self.mlp(cls_encoding)
+      cls_encoding = nn.tanh(cls_encoding)
+      cls_encoding = self.dropout(cls_encoding, deterministic=deterministic)
     classifier_logits = self.linear_classifier(cls_encoding)
     loss_helpers['classifier_logits'] = classifier_logits
 
@@ -107,13 +118,18 @@ class TextClassifier(downstream_encoder_task.DownstreamEncoderTask):
       loss_helpers, _ = cls.build_model(model_config).apply(
           variable_dict, batch, deterministic=deterministic, rngs=dropout_rng)
 
+      if 'sample_weights' in batch:
+        weights = batch['sample_weights']
+      else:
+        weights = jnp.ones_like(batch['classifier_target'])
+
       loss, denom = metric_utils.compute_weighted_cross_entropy(
           loss_helpers['classifier_logits'], batch['classifier_target'],
-          jnp.ones_like(batch['classifier_target']))
+          weights)
 
       acc, _ = metric_utils.compute_weighted_accuracy(
           loss_helpers['classifier_logits'], batch['classifier_target'],
-          jnp.ones_like(batch['classifier_target']))
+          weights)
 
       metrics = {
           'agg': {
@@ -174,7 +190,6 @@ class TextClassifier(downstream_encoder_task.DownstreamEncoderTask):
     """
     max_sample_mentions = config.max_sample_mentions
     encoder_config = config.model_config.encoder_config
-    max_length = encoder_config.max_length
     bsz = config.per_device_batch_size
     max_batch_mentions = config.max_mentions * bsz
     n_candidate_mentions = max_sample_mentions * bsz
@@ -190,6 +205,7 @@ class TextClassifier(downstream_encoder_task.DownstreamEncoderTask):
       sampled_indices = tf.math.top_k(
           sample_scores, max_batch_mentions, sorted=False).indices
 
+      dtype = batch['mention_start_positions'].dtype
       mention_mask = tf.gather(mention_mask, sampled_indices)
       mention_start_positions = tf.gather(
           tf.reshape(batch['mention_start_positions'], [n_candidate_mentions]),
@@ -199,7 +215,8 @@ class TextClassifier(downstream_encoder_task.DownstreamEncoderTask):
           sampled_indices)
 
       mention_batch_positions = tf.gather(
-          tf.repeat(tf.range(bsz), max_sample_mentions), sampled_indices)
+          tf.repeat(tf.range(bsz, dtype=dtype), max_sample_mentions),
+          sampled_indices)
 
       new_batch['text_ids'] = batch['text_ids']
       new_batch['text_mask'] = batch['text_mask']
@@ -210,7 +227,24 @@ class TextClassifier(downstream_encoder_task.DownstreamEncoderTask):
       new_batch['mention_end_positions'] = mention_end_positions
       new_batch['mention_batch_positions'] = mention_batch_positions
 
-      new_batch['segment_ids'] = tf.zeros_like(batch['text_ids'])
+      if config.get('max_length_with_entity_tokens') is not None:
+        batch_with_entity_tokens = mention_preprocess_utils.add_entity_tokens(
+            text_ids=new_batch['text_ids'],
+            text_mask=new_batch['text_mask'],
+            mention_mask=new_batch['mention_mask'],
+            mention_batch_positions=new_batch['mention_batch_positions'],
+            mention_start_positions=new_batch['mention_start_positions'],
+            mention_end_positions=new_batch['mention_end_positions'],
+            new_length=config.max_length_with_entity_tokens,
+        )
+        # Update `text_ids`, `text_mask`, `mention_mask`, `mention_*_positions`
+        new_batch.update(batch_with_entity_tokens)
+        # Update `max_length`
+        max_length = config.max_length_with_entity_tokens
+      else:
+        max_length = encoder_config.max_length
+
+      new_batch['segment_ids'] = tf.zeros_like(new_batch['text_ids'])
 
       position_ids = tf.expand_dims(tf.range(max_length), axis=0)
       new_batch['position_ids'] = tf.tile(position_ids, (bsz, 1))
@@ -247,13 +281,17 @@ class TextClassifier(downstream_encoder_task.DownstreamEncoderTask):
   def dummy_input(config):
     """Produces model-specific dummy input batch. See BaseTask."""
 
-    encoder_config = config.model_config.encoder_config
+    if config.get('max_length_with_entity_tokens') is not None:
+      max_length = config.max_length_with_entity_tokens
+    else:
+      max_length = config.model_config.encoder_config.max_length
+
     bsz = config.per_device_batch_size
-    text_shape = (bsz, encoder_config.max_length)
+    text_shape = (bsz, max_length)
     mention_shape = (config.max_mentions)
     int_type = jnp.int32
 
-    position_ids = np.arange(encoder_config.max_length)
+    position_ids = np.arange(max_length)
     position_ids = np.tile(position_ids, (bsz, 1))
 
     dummy_input = {

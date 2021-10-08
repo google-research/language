@@ -22,8 +22,13 @@ kernel_init = initializers.truncated_normal(stddev=0.02)
 bias_init = nn.initializers.zeros
 layer_norm_epsilon = 1e-12
 
+CLS_TOKEN = 101
+SEP_TOKEN = 102
+MASK_TOKEN = 103
 ENTITY_START_TOKEN = 1
 ENTITY_END_TOKEN = 2
 
 # Value typically used to prevent division by zero.
 SMALL_NUMBER = 1e-8
+
+LARGE_NUMBER = 1e10

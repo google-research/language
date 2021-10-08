@@ -18,11 +18,12 @@
 # Block of imports needed to allow different tasks to get registered
 # with task registry.
 from language.mentionmemory.tasks import eae_task
+from language.mentionmemory.tasks import embedding_based_entity_qa_task
 from language.mentionmemory.tasks import example_task
 from language.mentionmemory.tasks import mauto_task
+from language.mentionmemory.tasks import mention_based_entity_qa_task
 from language.mentionmemory.tasks import mention_memory_task
 from language.mentionmemory.tasks import readtwice_task
 from language.mentionmemory.tasks import relation_classifier_task
 from language.mentionmemory.tasks import text_classifier
 from language.mentionmemory.tasks import ultra_fine_entity_typing_task
-# pylint: enable=unused-import

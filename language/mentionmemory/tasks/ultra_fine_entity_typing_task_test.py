@@ -53,7 +53,6 @@ class UltraFineEntityTypingMetricsTest(test_utils.TestCase):
     # for the dataset and files description.
     # Model predictions are downloaded from
     # http://nlp.cs.washington.edu/entity_type/model/best_model.tar.gz
-
     vocab_path = self._get_test_data_path('types.txt')
     with tf.io.gfile.GFile(vocab_path, 'r') as vocab_file:
       self.label_vocab = {

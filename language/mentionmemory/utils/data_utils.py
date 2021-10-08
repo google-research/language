@@ -110,9 +110,9 @@ def _get_input_output_names(
       all features and their types returned by the function.
   """
   if isinstance(patterns, list):
-    input_files = sorted(tf.io.gfile.glob(patterns[0]))
+    input_files = tf.io.gfile.glob(patterns[0])
   else:
-    input_files = sorted(tf.io.gfile.glob(patterns))
+    input_files = tf.io.gfile.glob(patterns)
   first_record = next(iter(tf.data.TFRecordDataset(input_files[0])))
   first_example = decode_fn(first_record)
   input_names = list(first_example.keys())
@@ -350,7 +350,7 @@ def load_sharded_array(
   Returns:
     Loaded and concatenated array.
   """
-  paths = sorted(tf.io.gfile.glob(pattern))
+  paths = tf.io.gfile.glob(pattern)
   array_list = []
   for path in paths[offset::stride]:
     logging.info('Loading %s on to process %d', path, jax.process_index())
@@ -429,5 +429,7 @@ def save_samples_to_json(features,
     path = os.path.join(config.model_dir, 'samples',
                         'step_%d.process_%d.json' % (step, process_index))
     tf.io.gfile.makedirs(os.path.dirname(path))
-    with tf.io.gfile.GFile(path, 'wb') as fp:
-      json.dump(features, fp)
+    with tf.io.gfile.GFile(path, 'ab') as fp:
+      for batch in features:
+        json.dump(batch, fp)
+        fp.write('\n')

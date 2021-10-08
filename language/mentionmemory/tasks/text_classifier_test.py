@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for text classifier model."""
+
+import copy
 import json
 
 
@@ -62,6 +64,7 @@ class TextClassifierTest(test_utils.TestCase):
       'samples_per_example': 1,
       'max_sample_mentions': 24,
       'max_mentions': 10,
+      'max_length_with_entity_tokens': 150,
   }
 
   def setUp(self):
@@ -105,6 +108,7 @@ class TextClassifierTest(test_utils.TestCase):
         self.max_length // MENTION_SIZE, size=n_mentions,
         replace=False) * MENTION_SIZE
     mention_start_positions.sort()
+    mention_start_positions = mention_start_positions.astype(np.int64)
     mention_end_positions = mention_start_positions + MENTION_SIZE - 1
     mention_mask = np.ones_like(mention_start_positions)
 
@@ -139,14 +143,30 @@ class TextClassifierTest(test_utils.TestCase):
 
     return raw_batch
 
-  @parameterized.parameters([0, 1, 10, 24, 30])
-  def test_loss_fn(self, n_mentions):
+  @parameterized.parameters(
+      {'n_mentions': 0},
+      {'n_mentions': 1},
+      {'n_mentions': 10},
+      {'n_mentions': 24},
+      {'n_mentions': 30},
+      {
+          'n_mentions': 0,
+          'apply_mlp': True
+      },
+      {
+          'n_mentions': 24,
+          'apply_mlp': True
+      },
+  )
+  def test_loss_fn(self, n_mentions, apply_mlp=False):
     """Test loss function runs and produces expected values."""
+    config = copy.deepcopy(self.config)
+    config['model_config']['apply_mlp'] = apply_mlp
     raw_batch = self._gen_raw_batch(n_mentions)
     batch = self.collater_fn(raw_batch)
     batch = jax.tree_map(np.asarray, batch)
 
-    loss_fn = text_classifier.TextClassifier.make_loss_fn(self.config)
+    loss_fn = text_classifier.TextClassifier.make_loss_fn(config)
     _, metrics, auxiliary_output = loss_fn(
         model_config=self.model_config,
         model_params=self.init_parameters['params'],
@@ -155,7 +175,7 @@ class TextClassifierTest(test_utils.TestCase):
         deterministic=True)
 
     self.assertEqual(metrics['agg']['denominator'],
-                     self.config.per_device_batch_size)
+                     config.per_device_batch_size)
     features = self.postprocess_fn(batch, auxiliary_output)
     # Check features are JSON-serializable
     json.dumps(features)

@@ -31,3 +31,5 @@ python -m language.mentionmemory.utils.data_utils_test
 ```
 
 When running the unit tests and all python commands mentioned later, the current working directory must the root the git project.
+
+## Pre-trained models.

@@ -23,6 +23,7 @@ from language.mentionmemory.modules import mention_losses
 from language.mentionmemory.modules import mlm_layer
 from language.mentionmemory.tasks import mention_encoder_task
 from language.mentionmemory.tasks import task_registry
+from language.mentionmemory.utils import default_values
 from language.mentionmemory.utils import jax_utils as jut
 from language.mentionmemory.utils import metric_utils
 from language.mentionmemory.utils.custom_types import Array, MetricGroups  # pylint: disable=g-multiple-import
@@ -96,6 +97,7 @@ class MentionMemoryTask(mention_encoder_task.MentionEncoderTask):
 
     mlm_weight = config.mlm_weight
     el_im_weight = config.el_im_weight
+    el_second_im_weight = config.get('el_second_im_weight', 0)
     coref_res_weight = config.get('coref_res_weight', 0)
     coref_res_mode = config.get('coref_res_mode', 'dot')
     mtb_im_weight = config.get('mtb_im_weight', 0)
@@ -104,6 +106,7 @@ class MentionMemoryTask(mention_encoder_task.MentionEncoderTask):
     same_passage_weight = config.get('same_passage_weight', 0)
     same_entity_set_retrieval_weight = config.get(
         'same_entity_set_retrieval_weight', 0)
+    el_final_weight = config.get('el_final_weight', 0)
 
     def loss_fn(
         model_config,
@@ -125,12 +128,10 @@ class MentionMemoryTask(mention_encoder_task.MentionEncoderTask):
           variable_dict, batch, deterministic=deterministic, rngs=dropout_rng)
 
       mlm_logits = loss_helpers['mlm_logits']
-      memory_attention_weights = loss_helpers['memory_attention_weights']
-      memory_entity_ids = loss_helpers['top_entity_ids']
       mlm_target_is_mention = batch['mlm_target_is_mention']
       mlm_target_is_not_mention = 1 - batch['mlm_target_is_mention']
       mention_target_is_masked = batch['mention_target_is_masked']
-
+      mention_target_is_not_masked = 1 - mention_target_is_masked
       mlm_loss, mlm_denom = metric_utils.compute_weighted_cross_entropy(
           mlm_logits, batch['mlm_target_ids'], batch['mlm_target_weights'])
       correct_mask = jnp.equal(
@@ -143,19 +144,7 @@ class MentionMemoryTask(mention_encoder_task.MentionEncoderTask):
       mlm_non_mention_acc = (correct_mask * mlm_target_is_not_mention).sum()
       mlm_non_mention_denom = (batch['mlm_target_weights'] *
                                mlm_target_is_not_mention).sum()
-
-      target_mentions_memory_attention_weights = jut.matmul_slice(
-          memory_attention_weights, batch['mention_target_indices'])
-
-      intermediate_entity_ids = jut.matmul_slice(
-          memory_entity_ids, batch['mention_target_indices'])
-
-      el_loss_intermediate, same_entity_avg_prob, el_im_denom = metric_utils.compute_loss_and_prob_from_probs_with_duplicates(
-          target_mentions_memory_attention_weights, intermediate_entity_ids,
-          mention_target_ids, batch['mention_target_weights'])
-
       loss = mlm_weight * mlm_loss / mlm_denom
-      loss += el_im_weight * el_loss_intermediate / el_im_denom
 
       metrics = {
           'mlm': {
@@ -171,12 +160,35 @@ class MentionMemoryTask(mention_encoder_task.MentionEncoderTask):
               'acc': mlm_non_mention_acc,
               'denominator': mlm_non_mention_denom,
           },
-          'el_intermediate': {
-              'loss': el_loss_intermediate,
-              'same_entity_avg_prob': same_entity_avg_prob,
-              'denominator': el_im_denom,
-          },
       }
+
+      def process_el_im_loss(loss, weight, prefix=''):
+        memory_attention_weights = loss_helpers[prefix +
+                                                'memory_attention_weights']
+        memory_entity_ids = loss_helpers[prefix + 'top_entity_ids']
+
+        target_mentions_memory_attention_weights = jut.matmul_slice(
+            memory_attention_weights, batch['mention_target_indices'])
+
+        intermediate_entity_ids = jut.matmul_slice(
+            memory_entity_ids, batch['mention_target_indices'])
+
+        el_loss_intermediate, same_entity_avg_prob, el_im_denom = metric_utils.compute_loss_and_prob_from_probs_with_duplicates(
+            target_mentions_memory_attention_weights, intermediate_entity_ids,
+            mention_target_ids, batch['mention_target_weights'])
+
+        if weight > 0:
+          loss += weight * el_loss_intermediate / el_im_denom
+        metrics[prefix + 'el_intermediate'] = {
+            'loss': el_loss_intermediate,
+            'same_entity_avg_prob': same_entity_avg_prob,
+            'denominator': el_im_denom,
+        }
+        return loss
+
+      loss = process_el_im_loss(loss, el_im_weight)
+      if 'second_memory_attention_weights' in loss_helpers:
+        loss = process_el_im_loss(loss, el_second_im_weight, 'second_')
 
       if coref_res_weight > 0:
         (coref_res_loss,
@@ -249,6 +261,43 @@ class MentionMemoryTask(mention_encoder_task.MentionEncoderTask):
             'denominator': same_entity_set_retrieval_denom,
         }
 
+      if el_final_weight > 0:
+        final_attention_weights = loss_helpers['final_memory_attention_weights']
+        final_memory_entity_ids = loss_helpers['final_top_entity_ids']
+
+        (el_loss_final, same_entity_avg_prob_final, el_loss_denom
+        ) = metric_utils.compute_loss_and_prob_from_probs_with_duplicates(
+            final_attention_weights, final_memory_entity_ids,
+            mention_target_ids, batch['mention_target_weights'])
+
+        (_, same_entity_avg_prob_final_masked, el_loss_denom_masked
+        ) = metric_utils.compute_loss_and_prob_from_probs_with_duplicates(
+            final_attention_weights, final_memory_entity_ids,
+            mention_target_ids,
+            batch['mention_target_weights'] * mention_target_is_masked)
+
+        (_, same_entity_avg_prob_final_not_masked, el_loss_denom_not_masked
+        ) = metric_utils.compute_loss_and_prob_from_probs_with_duplicates(
+            final_attention_weights, final_memory_entity_ids,
+            mention_target_ids,
+            batch['mention_target_weights'] * mention_target_is_not_masked)
+
+        metrics['el_final'] = {
+            'loss': el_loss_final,
+            'same_entity_avg_prob': same_entity_avg_prob_final,
+            'denominator': el_loss_denom,
+        }
+        metrics['el_final_masked'] = {
+            'same_entity_avg_prob': same_entity_avg_prob_final_masked,
+            'denominator': el_loss_denom_masked,
+        }
+        metrics['el_final_not_masked'] = {
+            'same_entity_avg_prob': same_entity_avg_prob_final_not_masked,
+            'denominator': el_loss_denom_not_masked,
+        }
+        loss += el_final_weight * el_loss_final / (
+            el_loss_denom + default_values.SMALL_NUMBER)
+
       metrics['agg'] = {
           'loss': loss,
           'denominator': 1.0,
@@ -260,10 +309,22 @@ class MentionMemoryTask(mention_encoder_task.MentionEncoderTask):
             'denominator': batch['mention_mask'].sum(),
         }
 
+      if 'second_n_disallowed' in logging_helpers:
+        metrics['second_n_disallowed'] = {
+            'per_mention': logging_helpers['second_n_disallowed'],
+            'denominator': batch['mention_mask'].sum(),
+        }
+
       auxiliary_output = {
           'top_entity_ids': loss_helpers['top_entity_ids'],
           'top_memory_ids': loss_helpers['top_memory_ids'],
       }
+
+      if 'second_top_entity_ids' in loss_helpers:
+        auxiliary_output['second_top_entity_ids'] = loss_helpers[
+            'second_top_entity_ids']
+        auxiliary_output['second_top_memory_ids'] = loss_helpers[
+            'second_top_memory_ids']
 
       return loss, metrics, auxiliary_output
 

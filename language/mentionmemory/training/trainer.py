@@ -93,7 +93,7 @@ def evaluate(
 
   logging.info('Performing evaluation.')
   eval_metrics = []
-  first_batch_output = None
+  eval_auxiliary = []
   for batch in eval_data:
     batch = jax.tree_map(jnp.asarray, batch)
     metrics, auxiliary_output = eval_step_fn(
@@ -102,13 +102,12 @@ def evaluate(
         batch,
     )
     eval_metrics.append(metrics)
-    if first_batch_output is None:
-      first_batch_output = (jax.device_get(batch),
-                            jax.device_get(auxiliary_output))
+    batch_auxiliary = (jax.device_get(batch), jax.device_get(auxiliary_output))
+    eval_auxiliary.append(batch_auxiliary)
   eval_metrics = common_utils.get_metrics(eval_metrics)
   eval_metrics_sums = jax.tree_map(jnp.sum, eval_metrics)
   eval_summary = metric_utils.process_metrics(eval_metrics_sums, prefix='eval')
-  return eval_summary, first_batch_output
+  return eval_summary, eval_auxiliary
 
 
 def train_step(
@@ -280,6 +279,12 @@ def train(config):
   )
   train_iter = iter(train_data)
 
+  pad_eval = config.get('pad_eval', False)
+  if pad_eval:
+    logging.info('Eval data is padded such that none of samples are dropped.')
+  else:
+    logging.warn('Eval data is NOT padded -- some samples might be dropped.')
+
   eval_data = data_utils.load_multi_dataset(
       datasets_config=config.eval_data,
       name_to_features=name_to_features,
@@ -291,6 +296,7 @@ def train(config):
       host_count=host_count,
       host_id=host_id,
       seed=config.seed,
+      pad_eval=pad_eval,
   )
   eval_data = list(eval_data)
   logging.info('Loaded %d samples for evaluation.', len(eval_data))
@@ -367,7 +373,7 @@ def train(config):
           train_metrics = []
 
           with report_progress.timed('eval'):
-            eval_results, first_batch_output = evaluate(
+            eval_results, eval_auxiliary = evaluate(
                 eval_step_fn=p_eval_step,
                 train_state=train_state,
                 model_vars=model_vars,
@@ -377,9 +383,13 @@ def train(config):
 
             if config.get('save_samples_every_steps') is not None:
               with report_progress.timed('save_samples'):
-                batch, auxiliary_output = first_batch_output
-                data_utils.save_samples_to_json(
-                    postprocessing_fn(batch, auxiliary_output), config, step)
+                if config.get('save_first_batch_only', 'True'):
+                  postprocessing_input = [eval_auxiliary[0]]
+                eval_processed = [
+                    postprocessing_fn(batch, auxiliary_output)
+                    for batch, auxiliary_output in eval_auxiliary
+                ]
+                data_utils.save_samples_to_json(eval_processed, config, step)
 
       # Save a checkpoint on one host after every checkpoint_freq steps.
       save_checkpoint = (
@@ -392,6 +402,8 @@ def train(config):
               config.model_dir,
               jax_utils.unreplicate(train_state),
               step,
+              keep=config.get('keep_checkpoints', 1),
+              keep_every_n_steps=config.get('keep_checkpoint_every_steps'),
           )
 
       save_model = (

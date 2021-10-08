@@ -114,6 +114,8 @@ def gen_mention_pretraining_sample(
   for idx, position_slice in enumerate(linked_mention_position_slices):
     dense_mention_ids[position_slice] = linked_mention_ids[idx]
 
+  dense_answer_mask = np.ones_like(dense_mention_mask)
+
   raw_example = {
       'text_ids': text_ids,
       'text_mask': text_mask,
@@ -121,5 +123,6 @@ def gen_mention_pretraining_sample(
       'dense_span_ends': dense_span_ends,
       'dense_mention_mask': dense_mention_mask,
       'dense_mention_ids': dense_mention_ids,
+      'dense_answer_mask': dense_answer_mask,
   }
   return raw_example

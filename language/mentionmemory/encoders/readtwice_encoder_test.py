@@ -47,6 +47,7 @@ class ReadTwiceEncoderTest(parameterized.TestCase):
       'num_attention_heads': 2,
       'num_initial_layers': 1,
       'num_initial_layers_second': 2,
+      'num_intermediate_layers_second': 1,
       'num_final_layers': 2,
       'num_final_layers_second': 1,
       'dropout_rate': 0.1,
@@ -82,10 +83,17 @@ class ReadTwiceEncoderTest(parameterized.TestCase):
       'k_top': 2,
   }, {
       'k_top': 2,
-      'shared_initial_encoder': True,
+      'num_intermediate_layers': 1,
   }, {
       'k_top': 2,
-      'shared_final_encoder': True,
+      'shared_initial_encoder': False,
+  }, {
+      'k_top': 2,
+      'shared_final_encoder': False,
+  }, {
+      'k_top': 2,
+      'num_intermediate_layers': 1,
+      'shared_intermediate_encoder': False,
   }, {
       'k_top': 2,
       'no_retrieval': True,
@@ -94,7 +102,10 @@ class ReadTwiceEncoderTest(parameterized.TestCase):
       'no_retrieval_for_masked_mentions': True,
   }, {
       'k_top': None,
-      'same_passage_retrieval': True,
+      'same_passage_retrieval_policy': 'disallow',
+  }, {
+      'k_top': None,
+      'same_passage_retrieval_policy': 'only',
   }, {
       'k_top': None,
       'extract_unlinked_mentions': True,
@@ -105,10 +116,12 @@ class ReadTwiceEncoderTest(parameterized.TestCase):
   def test_model_shape(
       self,
       k_top,
-      shared_initial_encoder=False,
-      shared_final_encoder=False,
+      num_intermediate_layers=None,
+      shared_initial_encoder=True,
+      shared_intermediate_encoder=True,
+      shared_final_encoder=True,
       no_retrieval=False,
-      same_passage_retrieval=False,
+      same_passage_retrieval_policy='allow',
       extract_unlinked_mentions=False,
       no_retrieval_for_masked_mentions=False,
   ):
@@ -116,10 +129,13 @@ class ReadTwiceEncoderTest(parameterized.TestCase):
     config = copy.deepcopy(self.config)
     encoder_config = copy.deepcopy(self.encoder_config)
     encoder_config['k_top'] = k_top
+    encoder_config['num_intermediate_layers'] = num_intermediate_layers
     encoder_config['shared_initial_encoder'] = shared_initial_encoder
+    encoder_config['shared_intermediate_encoder'] = shared_intermediate_encoder
     encoder_config['shared_final_encoder'] = shared_final_encoder
     encoder_config['no_retrieval'] = no_retrieval
-    encoder_config['same_passage_retrieval'] = same_passage_retrieval
+    encoder_config[
+        'same_passage_retrieval_policy'] = same_passage_retrieval_policy
     encoder_config['extract_unlinked_mentions'] = extract_unlinked_mentions
     encoder_config[
         'no_retrieval_for_masked_mentions'] = no_retrieval_for_masked_mentions

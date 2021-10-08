@@ -48,6 +48,9 @@ class ReadTwiceTaskTest(test_utils.TestCase):
       'num_attention_heads': 2,
       'num_initial_layers': 1,
       'num_final_layers': 1,
+      'num_initial_layers_second': 1,
+      'num_intermediate_layers_second': 1,
+      'num_final_layers_second': 1,
       'dropout_rate': 0.1,
   }
 
@@ -81,54 +84,94 @@ class ReadTwiceTaskTest(test_utils.TestCase):
   n_mentions = 5
   n_linked_mentions = 3
 
-  @parameterized.parameters({
-      'k_top': None,
-  }, {
-      'k_top': 2,
-  }, {
-      'k_top': 2,
-      'shared_initial_encoder': True,
-  }, {
-      'k_top': 2,
-      'shared_final_encoder': True,
-  }, {
-      'k_top': 2,
-      'no_retrieval': True,
-  }, {
-      'k_top': None,
-      'same_passage_retrieval': True,
-  }, {
-      'k_top': None,
-      'extract_unlinked_mentions': True,
-  }, {
-      'k_top': None,
-      'max_length_with_entity_tokens': 192,
-  })
+  @parameterized.parameters(
+      {
+          'k_top': None,
+      },
+      {
+          'k_top': 2,
+      },
+      {
+          'k_top': 2,
+          'num_intermediate_layers': 1,
+      },
+      {
+          'k_top': 2,
+          'shared_initial_encoder': False,
+      },
+      {
+          'k_top': 2,
+          'shared_final_encoder': False,
+      },
+      {
+          'k_top': 2,
+          'num_intermediate_layers': 1,
+          'shared_intermediate_encoder': False,
+      },
+      {
+          'k_top': 2,
+          'no_retrieval': True,
+      },
+      {
+          'k_top': 2,
+          'no_retrieval_for_masked_mentions': True,
+      },
+      {
+          'k_top': None,
+          'same_passage_retrieval_policy': 'disallow',
+      },
+      {
+          'k_top': None,
+          'same_passage_retrieval_policy': 'only',
+      },
+      {
+          'k_top': None,
+          'no_retrieval_for_masked_mentions': True,
+      },
+      {
+          'k_top': None,
+          'num_intermediate_layers': 1,
+          'same_passage_retrieval_policy': 'disallow',
+      },
+      {
+          'k_top': None,
+          'num_intermediate_layers': 1,
+          'same_passage_retrieval_policy': 'disallow',
+          'shared_intermediate_encoder': False,
+      },
+  )
   def test_loss_fn(
       self,
       k_top,
-      shared_initial_encoder=False,
-      shared_final_encoder=False,
+      num_intermediate_layers=None,
+      shared_initial_encoder=True,
+      shared_intermediate_encoder=True,
+      shared_final_encoder=True,
       no_retrieval=False,
-      same_passage_retrieval=False,
+      same_passage_retrieval_policy='allow',
       extract_unlinked_mentions=False,
-      max_length_with_entity_tokens=None,
+      no_retrieval_for_masked_mentions=False,
   ):
     """Test loss function runs and produces expected values."""
     config = copy.deepcopy(self.config)
     encoder_config = copy.deepcopy(self.encoder_config)
     encoder_config['k_top'] = k_top
+    encoder_config['num_intermediate_layers'] = num_intermediate_layers
     encoder_config['shared_initial_encoder'] = shared_initial_encoder
+    encoder_config['shared_intermediate_encoder'] = shared_intermediate_encoder
     encoder_config['shared_final_encoder'] = shared_final_encoder
     encoder_config['no_retrieval'] = no_retrieval
-    encoder_config['same_passage_retrieval'] = same_passage_retrieval
+    encoder_config[
+        'same_passage_retrieval_policy'] = same_passage_retrieval_policy
     encoder_config['extract_unlinked_mentions'] = extract_unlinked_mentions
-    config['max_length_with_entity_tokens'] = max_length_with_entity_tokens
+    encoder_config[
+        'no_retrieval_for_masked_mentions'] = no_retrieval_for_masked_mentions
     config['model_config']['encoder_config'] = encoder_config
-
     if no_retrieval:
       config['el_im_weight'] = 0
-    config = ml_collections.FrozenConfigDict(self.config)
+    if num_intermediate_layers is not None:
+      config['second_el_im_weight'] = 0.1
+    config = ml_collections.FrozenConfigDict(config)
 
     model_config = config.model_config
     encoder_config = model_config.encoder_config
@@ -211,6 +254,9 @@ class ReadTwiceTaskTest(test_utils.TestCase):
       expected_same_entity_denom = np_batch['mention_target_weights'].sum()
       self.assertEqual(metrics['el_intermediate']['denominator'],
                        expected_same_entity_denom)
+      if num_intermediate_layers is not None:
+        self.assertEqual(metrics['second_el_intermediate']['denominator'],
+                         expected_same_entity_denom)
 
     # coref losses
     expected_coref_denom = np_batch['mention_target_weights'].sum()

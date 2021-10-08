@@ -81,11 +81,15 @@ class DownstreamEncoderTask(base_task.BaseTask):
     # memory information if it exists in the `loss_helper`.
     # This extra information would allow us to manually analyze models
     # performance on the task.
-    if 'top_entity_ids' in loss_helpers:
-      auxiliary_output['top_entity_ids'] = loss_helpers['top_entity_ids']
-    if 'top_memory_ids' in loss_helpers:
-      auxiliary_output['top_memory_ids'] = loss_helpers['top_memory_ids']
-    if 'memory_attention_weights' in loss_helpers:
-      auxiliary_output['memory_attention_weights'] = loss_helpers[
-          'memory_attention_weights']
+
+    def add_memory_auxiliary_output(prefix=''):
+      keys = ('top_entity_ids', 'top_memory_ids', 'memory_attention_weights')
+      for key in keys:
+        full_key = prefix + key
+        if full_key in loss_helpers:
+          auxiliary_output[full_key] = loss_helpers[full_key]
+
+    add_memory_auxiliary_output()
+    add_memory_auxiliary_output('second_')
+
     return auxiliary_output

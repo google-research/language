@@ -12,10 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Prepare TACRED dataset for evaluation."""
+"""Prepare WebRED dataset for evaluation."""
 
 import json
 import os
+import re
 
 
 from absl import app
@@ -35,10 +36,9 @@ flags.DEFINE_string('save_dir', None, 'save directory')
 flags.DEFINE_string('data_dir', None, 'Directory where raw data is located.')
 flags.DEFINE_string('vocab_path', None, 'Path to tokenizer vocabulary')
 flags.DEFINE_integer('max_length', 128, 'max nr of tokens')
-flags.DEFINE_integer('max_mentions', 32, 'max nr of mentions')
+flags.DEFINE_integer('max_mentions', 48, 'max nr of mentions')
 
-flags.DEFINE_list('split_file_names', ['train', 'dev', 'test'],
-                  'List of split file names.')
+NO_RELATION = 'no_relation'
 
 
 def process_sample(
@@ -47,58 +47,106 @@ def process_sample(
     spacy_model,
     tokenizer,
 ):
-  """Processes Tacred sample and updates relation vocabulary.
+  """Processes WebRED sample and updates relation vocabulary.
 
-  To process a raw Tacred example, we concatenate the token strings with spaces.
-  The resulting text is parsed with a spacy model to find mention spans, and
-  then tokenized with a BERT tokenizer. If necessary, we override some spacy
-  mentions with the subj and obj Tacred mentions.
+  To process a raw WebRED example, we first extract subj and obj and remove the
+  annotations from the text. The resulting text is parsed with a spacy model to
+  find mention spans, and then tokenized with a BERT tokenizer. If necessary, we
+  override some spacy mentions with the subj and obj WebRED mentions.
 
   Args:
-    sample: raw Tacred sample. Needs to contain following fields: token, list of
+    sample: raw WebRED sample. Needs to contain following fields: token, list of
       token strings. relation, string describing relation between subj and obj.
-      subj_start, subj_end, obj_start, obj_end, starting and ending token
-      indices for subj and obj (inclusive).
     relation_vocab: dictionary mapping relation strings to integer labels.
     spacy_model: spacy model used to detect mentions.
     tokenizer: BERT tokenizer.
 
   Returns:
-    Processed Tacred sample and updated relation vocabulary.
+    Processed WebRED sample and updated relation vocabulary.
   """
 
   processed_sample = {}
 
-  relation = sample['relation']
+  if sample['num_pos_raters'] < 2:
+    relation = NO_RELATION
+  else:
+    relation = sample['relation']
   if relation not in relation_vocab:
     relation_vocab[relation] = len(relation_vocab)
   label = relation_vocab[relation]
   processed_sample['target'] = [label]
 
-  words = sample['token']
-  text = ' '.join(words)
+  text = sample['annotated_text']
+
+  # Remove subj and obj annotations from text and store position
+  def find_span(input_text, pattern,
+                prefix_len):
+    """Find span corresponding to actual subj or obj strings."""
+    match = pattern.search(input_text)
+    span_start = match.start() + prefix_len + 1
+    # We want inclusive spans, hence -2 instead of -1
+    span_end = match.end() - 2
+    return (span_start, span_end)
+
+  def replace_and_adjust(
+      input_text, match, prefix_len,
+      inverted_mapping):
+    """Remove subj/obj annotations and adjust token mapping accordingly."""
+
+    original_span_start = match.start() + prefix_len + 1
+    original_span_end = match.end() - 1
+    actual_string = input_text[original_span_start:original_span_end]
+    new_text = input_text[:match.start()] + actual_string + input_text[match
+                                                                       .end():]
+
+    # Inverted mapping maps from remaining tokens to positions in original text
+    new_inverted_mapping = np.zeros(len(new_text), dtype=np.int32)
+    new_inverted_mapping[:match.start()] = inverted_mapping[:match.start()]
+
+    new_span_start = match.start()
+    new_span_end = match.start() + len(actual_string)
+    new_inverted_mapping[new_span_start:new_span_end] = inverted_mapping[
+        original_span_start:original_span_end]
+    new_inverted_mapping[new_span_end:] = inverted_mapping[original_span_end +
+                                                           1:]
+
+    return new_text, new_inverted_mapping
+
+  inverted_mapping = np.arange(len(text))
+  subj_pattern = re.compile('SUBJ{[^}]+}')
+  subj_span = find_span(text, subj_pattern, len('SUBJ'))
+  obj_pattern = re.compile('OBJ{[^}]+}')
+  obj_span = find_span(text, obj_pattern, len('OBJ'))
+
+  # Remove subj/obj annotations from text
+  while True:
+    subj_match = subj_pattern.search(text)
+    if subj_match is None:
+      break
+    text, inverted_mapping = replace_and_adjust(text, subj_match, len('SUBJ'),
+                                                inverted_mapping)
+
+  while True:
+    obj_match = obj_pattern.search(text)
+    if obj_match is None:
+      break
+    text, inverted_mapping = replace_and_adjust(text, obj_match, len('OBJ'),
+                                                inverted_mapping)
+
+  # Adjust spans for removed tokens
+  mapping = np.zeros(len(sample['annotated_text']), dtype=np.int32) - 1
+  mapping[inverted_mapping] = np.arange(len(inverted_mapping))
+  subj_span = (mapping[subj_span[0]], mapping[subj_span[1]])
+  assert subj_span[0] != -1 and subj_span[1] != -1
+  obj_span = (mapping[obj_span[0]], mapping[obj_span[1]])
+  assert obj_span[0] != -1 and obj_span[1] != -1
+
   parsed_text = spacy_model(text)
 
   # We use spacy to parse text, identify noun chunks
   mention_char_spans = []
-  # Compute subj and obj character spans
-  word_lens = np.array([len(word) for word in words])
-  word_char_offsets = np.cumsum(word_lens) - word_lens
-  # Correct for added spaces from join
-  word_char_offsets = word_char_offsets + np.arange(len(word_lens))
-
-  def get_char_span(start_word_idx, end_word_idx):
-    start_char = word_char_offsets[start_word_idx]
-    # Char span is inclusive
-    end_char = word_char_offsets[end_word_idx] + word_lens[end_word_idx] - 1
-    assert text[start_char:end_char + 1] == ' '.join(
-        words[start_word_idx:end_word_idx + 1])
-    return (start_char, end_char)
-
-  subj_char_span = get_char_span(sample['subj_start'], sample['subj_end'])
-  mention_char_spans.append(subj_char_span)
-  obj_char_span = get_char_span(sample['obj_start'], sample['obj_end'])
-  mention_char_spans.append(obj_char_span)
+  mention_char_spans.append(subj_span)
+  mention_char_spans.append(obj_span)
 
   def overlaps(first_span, second_span):
 
@@ -122,8 +170,7 @@ def process_sample(
     # mention annotation disagrees with tacred annotation, we want to favor
     # tacred.
 
-    if not overlaps(char_span, subj_char_span) and not overlaps(
-        char_span, obj_char_span):
+    if not overlaps(char_span, subj_span) and not overlaps(char_span, obj_span):
       mention_char_spans.append(char_span)
 
   # Sort spans by start char
@@ -162,11 +209,14 @@ def process_sample(
       obj_index not in reverse_span_indices):
     return None, relation_vocab
 
-  final_subj_index = reverse_span_indices[subj_index]
-  final_obj_index = reverse_span_indices[obj_index]
+  subj_index = reverse_span_indices[subj_index]
+  obj_index = reverse_span_indices[obj_index]
 
-  processed_sample['subject_mention_indices'] = final_subj_index
-  processed_sample['object_mention_indices'] = final_obj_index
+  # Make sure we don't discard subj or obj
+  assert max(subj_index, obj_index) < FLAGS.max_mentions
+
+  processed_sample['subject_mention_indices'] = [subj_index]
+  processed_sample['object_mention_indices'] = [obj_index]
 
   mention_spans = np.array(mention_spans)
   mention_start_positions = mention_spans[:, 0]
@@ -174,10 +224,6 @@ def process_sample(
 
   mention_start_positions = mention_start_positions[:FLAGS.max_mentions]
   mention_end_positions = mention_end_positions[:FLAGS.max_mentions]
-
-  # We should not be truncating subject or object mentions
-  assert final_subj_index < FLAGS.max_mentions
-  assert final_obj_index < FLAGS.max_mentions
 
   mention_pad_shape = (0, FLAGS.max_mentions - len(mention_start_positions))
 
@@ -201,7 +247,7 @@ def process_data(
     spacy_model,
     tokenizer,
 ):
-  """Process Tacred split and updates relation vocabulary with new relations."""
+  """Process WebRED split and updates relation vocabulary with new relations."""
 
   skipped = 0
   processed_samples = []
@@ -233,14 +279,34 @@ def main(argv):
   if spacy_model is None:
     spacy_model = spacy.load('en_core_web_md')
 
+  def get_feature(sample, feature_name, idx=0):
+    feature = sample.features.feature[feature_name]
+    return getattr(feature, feature.WhichOneof('kind')).value[idx]
+
+  path = os.path.join(FLAGS.data_dir, 'webred_21.tfrecord')
+  samples = []
+  dataset = tf.data.TFRecordDataset(path)
+  for raw_sample in dataset:
+    sample = {}
+    example = tf.train.Example()
+    example.ParseFromString(raw_sample.numpy())
+    sample['annotated_text'] = get_feature(example, 'sentence').decode('utf-8')
+    sample['relation'] = get_feature(example, 'relation_name').decode('utf-8')
+    sample['num_pos_raters'] = get_feature(example, 'num_pos_raters')
+    samples.append(sample)
+
+  np.random.seed(0)
+  shuffled_indices = np.random.permutation(len(samples))
+  shuffled_samples = [samples[idx] for idx in shuffled_indices]
   raw_data = {}
-  for split_file_name in FLAGS.split_file_names:
-    path = os.path.join(FLAGS.data_dir, split_file_name + '.json')
-    with tf.io.gfile.GFile(path, 'rb') as data_file:
-      raw_data[split_file_name] = json.load(data_file)
+  eval_split_size = int(0.1 * len(samples))
+  raw_data['test'] = shuffled_samples[:eval_split_size]
+  raw_data['dev'] = shuffled_samples[eval_split_size:2 * eval_split_size]
+  raw_data['train'] = shuffled_samples[2 * eval_split_size:]
 
   processed_data = {}
   relation_vocab = {}
+
   for split_name, split_data in raw_data.items():
     logging.info('Processing %s split', split_name)
     processed_split_data, relation_vocab = process_data(split_data,

@@ -184,20 +184,27 @@ class RelationClassifierTaskTest(parameterized.TestCase):
     return features
 
   @parameterized.parameters([
-      (1, 2, 2),
-      (2, 2, 2),
-      (2, 3, 2),
-      (5, 10, 2),
-      (5, 10, 7),
-      (10, 20, 10),
+      (1, 2, 2, None),
+      (1, 2, 2, 150),
+      (2, 2, 2, None),
+      (2, 2, 2, 150),
+      (2, 3, 2, None),
+      (2, 3, 2, 150),
+      (5, 10, 2, None),
+      (5, 10, 2, 150),
+      (5, 10, 7, None),
+      (5, 10, 7, 150),
+      (10, 20, 10, None),
+      (10, 20, 10, 170),
   ])
   def test_loss_fn(self, per_device_batch_size, max_mentions_per_sample,
-                   max_mentions):
+                   max_mentions, max_length_with_entity_tokens):
     """Test loss function runs and produces expected values."""
     config = copy.deepcopy(self.config)
     config['per_device_batch_size'] = per_device_batch_size
     config['max_mentions_per_sample'] = max_mentions_per_sample
     config['max_mentions'] = max_mentions
+    config['max_length_with_entity_tokens'] = max_length_with_entity_tokens
     config = ml_collections.ConfigDict(config)
 
     raw_batch = self._gen_raw_batch(config)
@@ -219,17 +226,21 @@ class RelationClassifierTaskTest(parameterized.TestCase):
         batch['mention_target_batch_positions'],
         np.repeat(np.arange(config.per_device_batch_size), [2]))
 
-    for index in range(config.per_device_batch_size):
-      subj_index = raw_batch['subject_mention_indices'][index]
-      obj_index = raw_batch['object_mention_indices'][index]
-      self.assertEqual(batch['mention_target_start_positions'][2 * index],
-                       raw_batch['mention_start_positions'][index, subj_index])
-      self.assertEqual(batch['mention_target_end_positions'][2 * index],
-                       raw_batch['mention_end_positions'][index, subj_index])
-      self.assertEqual(batch['mention_target_start_positions'][2 * index + 1],
-                       raw_batch['mention_start_positions'][index, obj_index])
-      self.assertEqual(batch['mention_target_end_positions'][2 * index + 1],
-                       raw_batch['mention_end_positions'][index, obj_index])
+    # Check start / end positions are correctly preserved if entity tokens
+    # are not used. Otherwise, positions might change.
+    if max_length_with_entity_tokens is None:
+      for index in range(config.per_device_batch_size):
+        subj_index = raw_batch['subject_mention_indices'][index]
+        obj_index = raw_batch['object_mention_indices'][index]
+        self.assertEqual(
+            batch['mention_target_start_positions'][2 * index],
+            raw_batch['mention_start_positions'][index, subj_index])
+        self.assertEqual(batch['mention_target_end_positions'][2 * index],
+                         raw_batch['mention_end_positions'][index, subj_index])
+        self.assertEqual(batch['mention_target_start_positions'][2 * index + 1],
+                         raw_batch['mention_start_positions'][index, obj_index])
+        self.assertEqual(batch['mention_target_end_positions'][2 * index + 1],
+                         raw_batch['mention_end_positions'][index, obj_index])
     expected_mention_target_indices = np.arange(config.per_device_batch_size *
                                                 2)
     self.assertArrayEqual(batch['mention_target_indices'],

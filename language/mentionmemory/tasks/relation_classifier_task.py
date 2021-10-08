@@ -193,7 +193,6 @@ class RelationClassifierTask(downstream_encoder_task.DownstreamEncoderTask):
       collater function.
     """
     encoder_config = config.model_config.encoder_config
-    max_length = encoder_config.max_length
     bsz = config.per_device_batch_size
     max_batch_mentions = config.max_mentions * bsz
     n_candidate_mentions = config.max_mentions_per_sample * bsz
@@ -272,6 +271,7 @@ class RelationClassifierTask(downstream_encoder_task.DownstreamEncoderTask):
       sampled_indices = mention_preprocess_utils.dynamic_padding_1d(
           sampled_indices, max_batch_mentions)
 
+      dtype = batch['mention_start_positions'].dtype
       mention_mask = tf.reshape(batch['mention_mask'], [n_candidate_mentions])
       new_batch['mention_mask'] = tf.gather(mention_mask, sampled_indices)
       new_batch['mention_start_positions'] = tf.gather(
@@ -281,12 +281,29 @@ class RelationClassifierTask(downstream_encoder_task.DownstreamEncoderTask):
           tf.reshape(batch['mention_end_positions'], [n_candidate_mentions]),
           sampled_indices)
       new_batch['mention_batch_positions'] = tf.gather(
-          tf.repeat(tf.range(bsz), config.max_mentions_per_sample),
+          tf.repeat(tf.range(bsz, dtype=dtype), config.max_mentions_per_sample),
           sampled_indices)
 
-      new_batch['mention_target_indices'] = tf.range(2 * bsz)
-      new_batch['mention_subject_indices'] = tf.range(bsz) * 2
-      new_batch['mention_object_indices'] = tf.range(bsz) * 2 + 1
+      new_batch['mention_target_indices'] = tf.range(2 * bsz, dtype=dtype)
+      new_batch['mention_subject_indices'] = tf.range(bsz, dtype=dtype) * 2
+      new_batch['mention_object_indices'] = tf.range(bsz, dtype=dtype) * 2 + 1
+
+      if config.get('max_length_with_entity_tokens') is not None:
+        batch_with_entity_tokens = mention_preprocess_utils.add_entity_tokens(
+            text_ids=new_batch['text_ids'],
+            text_mask=new_batch['text_mask'],
+            mention_mask=new_batch['mention_mask'],
+            mention_batch_positions=new_batch['mention_batch_positions'],
+            mention_start_positions=new_batch['mention_start_positions'],
+            mention_end_positions=new_batch['mention_end_positions'],
+            new_length=config.max_length_with_entity_tokens,
+        )
+        # Update `text_ids`, `text_mask`, `mention_mask`, `mention_*_positions`
+        new_batch.update(batch_with_entity_tokens)
+        # Update `max_length`
+        max_length = config.max_length_with_entity_tokens
+      else:
+        max_length = encoder_config.max_length
 
       new_batch['mention_target_batch_positions'] = tf.gather(
           new_batch['mention_batch_positions'],
@@ -302,7 +319,7 @@ class RelationClassifierTask(downstream_encoder_task.DownstreamEncoderTask):
       # Fake IDs -- some encoders (ReadTwice) need them
       new_batch['mention_target_ids'] = tf.zeros(2 * bsz)
 
-      new_batch['segment_ids'] = tf.zeros_like(batch['text_ids'])
+      new_batch['segment_ids'] = tf.zeros_like(new_batch['text_ids'])
 
       position_ids = tf.expand_dims(tf.range(max_length), axis=0)
       new_batch['position_ids'] = tf.tile(position_ids, (bsz, 1))
@@ -343,14 +360,18 @@ class RelationClassifierTask(downstream_encoder_task.DownstreamEncoderTask):
   def dummy_input(config):
     """Produces model-specific dummy input batch. See BaseTask for details."""
 
-    encoder_config = config.model_config.encoder_config
+    if config.get('max_length_with_entity_tokens') is not None:
+      max_length = config.max_length_with_entity_tokens
+    else:
+      max_length = config.model_config.encoder_config.max_length
+
     bsz = config.per_device_batch_size
-    text_shape = (bsz, encoder_config.max_length)
+    text_shape = (bsz, max_length)
     mention_shape = (config.max_mentions)
     mention_target_shape = (2 * bsz)
     int_type = jnp.int32
 
-    position_ids = np.arange(encoder_config.max_length)
+    position_ids = np.arange(max_length)
     position_ids = np.tile(position_ids, (bsz, 1))
 
     dummy_input = {

@@ -205,13 +205,14 @@ class BaseTask():
       """Function that prepares model's input and output for serialization."""
 
       features = {}
-
       for dict_of_features in [batch, auxiliary_output]:
         for key, value in dict_of_features.items():
-          if isinstance(value, Array) and value.dtype == jnp.bfloat16:
+          convert_to_list = (
+              isinstance(value, Array) or isinstance(value, np.ndarray))
+          if convert_to_list and value.dtype == jnp.bfloat16:
             # bfloat16 is not JSON serializable => convert to float32.
             features[key] = value.astype(jnp.float32).tolist()
-          elif isinstance(value, Array) or isinstance(value, np.ndarray):
+          elif convert_to_list:
             # Cannot serialize numpy / jax arrays to json => convert to list.
             features[key] = value.tolist()
           else:

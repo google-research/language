@@ -56,6 +56,7 @@ class TrainerTest(absltest.TestCase):
         'load_weights': None,
         'checkpoint_every_steps': 5,
         'save_every_steps': None,
+        'save_samples_every_steps': 1,
         'eval_every_steps': 1,
         'num_eval_steps': 5,
         'ignore_k_nans': 2,

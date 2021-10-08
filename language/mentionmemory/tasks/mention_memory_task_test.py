@@ -64,6 +64,9 @@ class MentionMemoryTaskTest(test_utils.TestCase):
       'num_final_layers': 1,
       'dropout_rate': 0.1,
       'n_memory_text_entities': 2,
+      'final_k_top_device': 2,
+      'final_k_top_post_selection': None,
+      'final_splits': 2,
   }
 
   model_config = {
@@ -74,7 +77,6 @@ class MentionMemoryTaskTest(test_utils.TestCase):
       'model_config': model_config,
       'seed': 0,
       'per_device_batch_size': 5,
-      'samples_per_example': 1,
       'mask_rate': 0.2,
       'mention_mask_rate': 0.2,
       'mlm_weight': 0.5,
@@ -87,8 +89,10 @@ class MentionMemoryTaskTest(test_utils.TestCase):
       'max_mention_targets': 4,
       'max_mlm_targets': 5,
       'max_mentions': 6,
+      'save_k_retrieval': None,
       'same_entity_set_retrieval_weight': 0.05,
       'same_entity_set_target_threshold': 2,
+      'el_final_weight': 0.05,
       'memory_reduction': 1,
       'memory_prop': None
   }
@@ -177,8 +181,6 @@ class MentionMemoryTaskTest(test_utils.TestCase):
 
     memory_text_entities = jax.device_put_sharded(
         list(memory_text_entities), self.devices)
-    postprocess_fn = mention_memory_task.MentionMemoryTask.make_output_postprocess_fn(
-        config)
 
     initial_variables = jax.pmap(
         model.init, 'batch', static_broadcasted_argnums=2)(
@@ -260,33 +262,57 @@ class MentionMemoryTaskTest(test_utils.TestCase):
       self.assertArrayEqual(np.array(features[key]), batch[key])
 
     n_mentions_per_device = (config.per_device_batch_size * config.max_mentions)
-    k_top_final = (
-        encoder_config.k_top_post_selection or
-        encoder_config.k_top_device * self.n_devices)
+    if config.save_k_retrieval is not None:
+      k_top_saved = min(config.save_k_retrieval,
+                        encoder_config.k_top_post_selection)
+    else:
+      k_top_saved = (
+          encoder_config.k_top_post_selection or
+          encoder_config.k_top_device * self.n_devices)
     self.assertSequenceEqual(
         np.array(features['memory_text']).shape, [
-            self.n_devices, n_mentions_per_device, k_top_final,
+            self.n_devices, n_mentions_per_device, k_top_saved,
             self.memory_text_length
         ])
     self.assertSequenceEqual(
         np.array(features['memory_positions']).shape,
-        [self.n_devices, n_mentions_per_device, k_top_final, 2])
+        [self.n_devices, n_mentions_per_device, k_top_saved, 2])
+
+    if encoder_config.get('num_intermediate_layers') is not None:
+      self.assertSequenceEqual(
+          np.array(features['second_memory_text']).shape, [
+              self.n_devices, n_mentions_per_device, k_top_saved,
+              self.memory_text_length
+          ])
+      self.assertSequenceEqual(
+          np.array(features['second_memory_positions']).shape,
+          [self.n_devices, n_mentions_per_device, k_top_saved, 2])
 
     return batch, initial_variables, metrics
 
   @parameterized.parameters(
-      (False),
-      (True),
+      {},
+      {'separate_memory_values': True},
+      {'num_intermediate_layers': 1},
+      {
+          'num_intermediate_layers': 1,
+          'el_second_im_weight': 0.1
+      },
   )
   def test_loss_fn(
       self,
-      separate_memory_values,
+      separate_memory_values=False,
+      num_intermediate_layers=None,
+      el_second_im_weight=0.0,
   ):
     """Test loss function runs and produces expected values."""
     config = copy.deepcopy(self.config)
     config['model_config']['encoder_config'][
         'separate_memory_values'] = separate_memory_values
-    self.run_model(config, 1000)
+    config['model_config']['encoder_config'][
+        'num_intermediate_layers'] = num_intermediate_layers
+    config['el_second_im_weight'] = el_second_im_weight
+    self.run_model(config, entity_vocab_size=1000)
 
   @parameterized.parameters(
       (1, 120),
@@ -340,7 +366,7 @@ class MentionMemoryTaskTest(test_utils.TestCase):
         sample_weights = mention_target_weights[mention_target_batch_positions
                                                 == batch_index]
         sample_ids = sample_ids[sample_weights > 0]
-        sample_ids = set([x for x in sample_ids.tolist() if x != 0])
+        sample_ids = set([x for x in sample_ids if x != 0])
 
         for m_index in range(n_mentions_per_local_batch):
           if mention_batch_positions[m_index] != batch_index:
@@ -351,7 +377,7 @@ class MentionMemoryTaskTest(test_utils.TestCase):
           n_correct_retrievals, n_incorrect_retrievals = 0, 0
           for r_index in range(n_retrievals):
             common_ids = set(
-                memory_text_entities[r_index].tolist()).intersection(sample_ids)
+                memory_text_entities[r_index]).intersection(sample_ids)
             num_commons[m_index, r_index] = len(common_ids)
             if len(common_ids) >= config.same_entity_set_target_threshold:
               n_correct_retrievals += 1

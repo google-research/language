@@ -116,7 +116,7 @@ class RetrievalUpdateLayerTest(parameterized.TestCase):
 
     # Check input was not changed where it should not be
     all_indices = set(
-        itertools.product(np.arange(self.bsz), np.arange(self.seq_len)))
+        itertools.product(jnp.arange(self.bsz), jnp.arange(self.seq_len)))
     start_indices = set(
         zip(self.mention_batch_positions, self.mention_start_positions))
     non_start_indices = all_indices.difference(start_indices)

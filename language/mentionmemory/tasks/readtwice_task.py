@@ -98,6 +98,7 @@ class ReadTwiceTask(mention_encoder_task.MentionEncoderTask):
     mlm_weight = config.mlm_weight
     mlm_first_weight = config.mlm_first_weight
     el_im_weight = config.el_im_weight
+    second_el_im_weight = config.get('second_el_im_weight', 0)
     no_retrieval = config.model_config.encoder_config.get('no_retrieval', False)
 
     mention_type_dict = {
@@ -205,9 +206,19 @@ class ReadTwiceTask(mention_encoder_task.MentionEncoderTask):
         loss += mlm_first_weight * mlm_loss_first / (
             mlm_denom + default_values.SMALL_NUMBER)
 
-      if not no_retrieval:
-        memory_entity_ids = loss_helpers['top_entity_ids']
-        memory_attention_weights = loss_helpers['memory_attention_weights']
+      def apply_same_entity_retrieval_loss(loss,
+                                           metrics,
+                                           loss_weight,
+                                           prefix=''):
+        if prefix + 'top_entity_ids' not in loss_helpers:
+          if loss_weight > 0:
+            raise KeyError('%s not found in loss helpers' % prefix +
+                           'top_entity_ids')
+          else:
+            return loss, metrics
+        memory_entity_ids = loss_helpers[prefix + 'top_entity_ids']
+        memory_attention_weights = loss_helpers[prefix +
+                                                'memory_attention_weights']
         intermediate_entity_probs = jut.matmul_slice(
             memory_attention_weights, batch['mention_target_indices'])
 
@@ -217,14 +228,22 @@ class ReadTwiceTask(mention_encoder_task.MentionEncoderTask):
         el_loss_intermediate, same_entity_avg_prob, el_im_denom = metric_utils.compute_loss_and_prob_from_probs_with_duplicates(
             intermediate_entity_probs, intermediate_entity_ids,
             batch['mention_target_ids'], batch['mention_target_weights'])
-        metrics['el_intermediate'] = {
+        metrics[prefix + 'el_intermediate'] = {
             'loss': el_loss_intermediate,
             'same_entity_avg_prob': same_entity_avg_prob,
             'denominator': el_im_denom,
         }
-        if el_im_weight > 0:
-          loss += el_im_weight * el_loss_intermediate / (
+        if loss_weight > 0:
+          loss += loss_weight * el_loss_intermediate / (
               el_im_denom + default_values.SMALL_NUMBER)
+
+        return loss, metrics
+
+      if not no_retrieval:
+        loss, metrics = apply_same_entity_retrieval_loss(
+            loss, metrics, el_im_weight)
+        loss, metrics = apply_same_entity_retrieval_loss(
+            loss, metrics, second_el_im_weight, 'second_')
 
       batch_size = batch['text_ids'].shape[0]
       mention_target_ids = batch['mention_target_ids']

@@ -18,80 +18,11 @@
 import jax
 import jax.numpy as jnp
 
+from language.mentionmemory.utils import mention_utils
 from language.mentionmemory.utils import metric_utils
 from language.mentionmemory.utils.custom_types import Array
 
 _SMALL_NUMBER = 1e-5
-
-
-def _all_compare(xs, ys):
-  return jnp.expand_dims(xs, 1) == jnp.expand_dims(ys, 0)
-
-
-def _all_compare_without_pad(xs, ys):
-  """Performs all-to-all comparison of two 1D arrays ignoring pad values."""
-  xs_expanded = jnp.expand_dims(xs, 1)
-  ys_expanded = jnp.expand_dims(ys, 0)
-  same_ids = xs_expanded == ys_expanded
-  same_ids = jnp.logical_and(same_ids, xs_expanded != 0)
-  same_ids = jnp.logical_and(same_ids, ys_expanded != 0)
-  return same_ids
-
-
-def sum_by_batch_position(mention_batch_positions, values,
-                          batch_size):
-  """Sum values per position in the batch."""
-  position2item = (
-      jnp.expand_dims(jnp.arange(batch_size), 1) == mention_batch_positions)
-  position2item = position2item.astype(jnp.int32)
-
-  # [batch_size, ...]
-  values_sum_per_batch_position = jnp.einsum('bm,m...->b...', position2item,
-                                             values)
-  return values_sum_per_batch_position
-
-
-def _get_device_id(axis_name):
-  try:
-    return jax.lax.axis_index(axis_name)
-  except NameError:
-    return None
-
-
-def get_globally_consistent_batch_positions(
-    mention_batch_positions, batch_size):
-  """Adjust batch positions to be unique in the global batch.
-
-  If the function is executed only on a single device (outside of `pmap`) then
-  the results is just `mention_batch_positions`. Otherwise, the function
-  returns mention_batch_positions for the first device, mention_batch_positions
-  + batch size for the second device, 2*batch_size + mention_batch_positions for
-  third, etc. The method returns local and global mention_batch_positions with
-  adjusted batch positions.
-
-  For example, let batch size be 3. There are two devices with
-  mention_batch_positions equal to [0, 1, 2] on the first device
-  and [2, 0, 0] on the second device. Then the function
-  returns [0, 1, 2], [0, 1, 2, 5, 3, 3] on the first device
-  and [5, 3, 3], [0, 1, 2, 5, 3, 3] on the second device.
-
-  Args:
-    mention_batch_positions: position of a mention in its batch.
-    batch_size: batch size per device.
-
-  Returns:
-    Local mention_batch_positions and global mention_batch_positions with
-    globally consistent IDs.
-  """
-  device_id = _get_device_id('batch')
-  if device_id is not None:
-    mention_batch_positions = mention_batch_positions + batch_size * device_id
-    all_mention_batch_positions = jax.lax.all_gather(mention_batch_positions,
-                                                     'batch')
-    all_mention_batch_positions = all_mention_batch_positions.reshape([-1])
-    return mention_batch_positions, all_mention_batch_positions
-  else:
-    return mention_batch_positions, mention_batch_positions
 
 
 def build_coref_positive_negative_mask(mention_batch_positions,
@@ -127,10 +58,11 @@ def build_coref_positive_negative_mask(mention_batch_positions,
   Returns:
     Positive and negative masks.
   """
-  same_passage_mask = _all_compare(mention_batch_positions,
-                                   all_mention_batch_positions)
+  same_passage_mask = mention_utils.all_compare(mention_batch_positions,
+                                                all_mention_batch_positions)
   not_same_passage_mask = jnp.logical_not(same_passage_mask)
-  same_entity_mask = _all_compare(mention_target_ids, all_mention_target_ids)
+  same_entity_mask = mention_utils.all_compare(mention_target_ids,
+                                               all_mention_target_ids)
   not_same_entity_mask = jnp.logical_not(same_entity_mask)
   # Mask rows where base mention is PAD. In other words, none of the mentions
   # are positive or negative examples for PAD mentions.
@@ -147,112 +79,6 @@ def build_coref_positive_negative_mask(mention_batch_positions,
   negative_mask = jnp.logical_and(negative_mask, not_pad_mask)
   negative_mask = jnp.logical_and(negative_mask, not_pad_all_mask)
   return positive_mask, negative_mask
-
-
-def mask_duplicate_ids(batch_positions, ids):
-  """Zero out duplicate items within the same batch position.
-
-  The function is a variation of a `unique` function applied to ids array
-  batch_position-wise. The difference with a `np.unique` is that instead of
-  discarding repeated elements (ids), the function makes them 0. For example,
-  if `batch_positions` is [1, 1, 1, 2, 2] and `ids` is [1, 1, 2, 2, 2] then
-  the output is [1, 0, 2, 2, 0].
-
-  Args:
-    batch_positions: position of a mention in its batch.
-    ids: IDs of mentions in the batch.
-
-  Returns:
-    A modified version of `ids` where all duplicate IDs in the same batch
-    position are set to zero.
-  """
-  same_position = _all_compare(batch_positions, batch_positions)
-  same_ids = _all_compare(ids, ids)
-  same_ids = jnp.logical_and(same_ids, same_position)
-  item_is_not_duplicate = jnp.tril(same_ids).sum(axis=-1) <= 1
-  ids = ids * item_is_not_duplicate
-  return ids
-
-
-def get_num_common_unique_items(batch_positions, ids,
-                                batch_size):
-  """Get the number of unique entity IDs shared between samples in the batch.
-
-  The function produces two matrices `num_common_ids_between_samples` of shape
-  [batch_size, batch_size * n_devices] and `num_common_ids_between_mentions` of
-  shape [n_mentions, n_mentions * n_devices]. The first matrix is the number
-  of unique entity IDs that exists in both sample A and sample B. The second
-  matrix is similar, but is indexed with respect to individual mentions --
-  how many unique entity IDs exists for a sample that contains mention A and
-  a sample that contains mention B.
-
-  More formally, let `all_ids` be IDs concatenated from all devices and
-  `global_batch_position` be global batch positions produced by the
-  `get_globally_consistent_batch_positions` method.
-
-  `num_common_ids_between_samples[i, j] = k` <=> The number of unique IDs in the
-  intersection of ids[batch_positions == i] and
-  all_ids[global_batch_position == j] is k.
-
-  `num_common_ids_between_mentions[i, j] = k` <=> If b_i is a batch position
-  corresponding to a local mention i and b_j is a global batch position
-  corresponding to a global mention j then
-  num_common_ids_between_samples[b_i, b_j] = k
-
-  Args:
-    batch_positions: position of a mention in its batch.
-    ids: IDs of mentions in the batch.
-    batch_size: batch size per device.
-
-  Returns:
-    Matrices with the number of unique common elements between a row in local
-    batch and a row in global batch. Shapes are
-    [batch_size, n_devices * batch_size] between samples in a batch and
-    [n_mentions, n_devices * n_mentions] between mentions in a batch.
-  """
-  ids = mask_duplicate_ids(batch_positions, ids)
-
-  device_id = _get_device_id('batch')
-  if device_id is not None:
-    all_ids = jax.lax.all_gather(ids, 'batch')
-    n_devices = all_ids.shape[0]
-    all_ids = all_ids.reshape([-1])
-  else:
-    n_devices = 1
-    all_ids = ids
-
-  # [n_mentions, n_global_mentions]
-  same_ids = _all_compare_without_pad(ids, all_ids)
-  same_ids = same_ids.astype(jnp.int32)
-
-  (_, global_batch_positions) = get_globally_consistent_batch_positions(
-      batch_positions, batch_size)
-
-  # [batch_size, n_mentions]
-  position2item = (
-      jnp.expand_dims(jnp.arange(batch_size), 1) == batch_positions)
-  position2item = position2item.astype(jnp.int32)
-
-  # [global_batch_size, n_global_mentions]
-  item2global_position = (
-      jnp.expand_dims(jnp.arange(n_devices * batch_size),
-                      1) == global_batch_positions)
-  item2global_position = item2global_position.astype(jnp.int32)
-
-  # [batch_size, n_global_mentions]
-  num_common_ids_between_samples = sum_by_batch_position(
-      batch_positions, same_ids, batch_size)
-
-  # [batch_size, global_batch_size]
-  num_common_ids_between_samples = jnp.einsum('bn,gn->bg',
-                                              num_common_ids_between_samples,
-                                              item2global_position)
-  num_common_ids_between_mentions = jnp.einsum('bm,bg->mg', position2item,
-                                               num_common_ids_between_samples)
-  num_common_ids_between_mentions = jnp.einsum('gn,mg->mn',
-                                               item2global_position,
-                                               num_common_ids_between_mentions)
-  return num_common_ids_between_samples, num_common_ids_between_mentions
 
 
 def build_mtb_positive_negative_mask(mention_batch_positions,
@@ -309,10 +135,11 @@ def build_mtb_positive_negative_mask(mention_batch_positions,
   Returns:
     Positive_mask, hard_negative_mask and negative_mask.
   """
-  same_passage = _all_compare(mention_batch_positions,
-                              all_mention_batch_positions)
+  same_passage = mention_utils.all_compare(mention_batch_positions,
+                                           all_mention_batch_positions)
   not_same_passage_mask = jnp.logical_not(same_passage)
-  same_entity_mask = _all_compare(mention_target_ids, all_mention_target_ids)
+  same_entity_mask = mention_utils.all_compare(mention_target_ids,
+                                               all_mention_target_ids)
   not_same_entity_mask = jnp.logical_not(same_entity_mask)
   not_pad = jnp.expand_dims(mention_target_ids, 1) > 0
   not_pad_all = jnp.expand_dims(all_mention_target_ids, 0) > 0
@@ -336,7 +163,7 @@ def get_all_encodings_and_target_ids(
     mention_encodings, mention_target_ids):
   """Gather encodings and IDs from all devices."""
   hidden_dim = mention_encodings.shape[-1]
-  device_id = _get_device_id('batch')
+  device_id = mention_utils.get_device_id('batch')
   if device_id is not None:
     all_mention_encodings = jax.lax.all_gather(mention_encodings, 'batch')
     all_mention_encodings = all_mention_encodings.reshape([-1, hidden_dim])
@@ -381,9 +208,9 @@ def coreference_resolution_loss(
   all_mention_encodings, all_mention_target_ids = get_all_encodings_and_target_ids(
       mention_encodings, mention_target_ids)
 
-  (local_mention_batch_positions,
-   global_mention_batch_positions) = get_globally_consistent_batch_positions(
-       mention_batch_positions, batch_size)
+  (local_mention_batch_positions, global_mention_batch_positions
+  ) = mention_utils.get_globally_consistent_batch_positions(
+      mention_batch_positions, batch_size)
 
   positive_mask, negative_mask = build_coref_positive_negative_mask(
       local_mention_batch_positions, global_mention_batch_positions,
@@ -497,13 +324,12 @@ def mtb_loss(
   all_mention_encodings, all_mention_target_ids = get_all_encodings_and_target_ids(
       mention_encodings, mention_target_ids)
 
-  (local_mention_batch_positions,
-   global_mention_batch_positions) = get_globally_consistent_batch_positions(
-       mention_batch_positions, batch_size)
+  (local_mention_batch_positions, global_mention_batch_positions
+  ) = mention_utils.get_globally_consistent_batch_positions(
+      mention_batch_positions, batch_size)
 
-  _, num_common_items = get_num_common_unique_items(mention_batch_positions,
-                                                    mention_target_ids,
-                                                    batch_size)
+  _, num_common_items = mention_utils.get_num_common_unique_items(
+      mention_batch_positions, mention_target_ids, batch_size)
 
   (positive_mask, hard_negative_mask,
    negative_mask) = build_mtb_positive_negative_mask(
@@ -690,15 +516,15 @@ def get_batch_and_retrievals_entity_overlap(
   # [n_target_mentions]
   mention_target_ids = mention_target_ids * mention_target_weights
   # [n_target_mentions]
-  batch_ids = mask_duplicate_ids(mention_target_batch_positions,
-                                 mention_target_ids)
+  batch_ids = mention_utils.mask_duplicate_ids(mention_target_batch_positions,
+                                               mention_target_ids)
 
   # Step 2: compare all entities in the batch against all entities in the
   # retrieval result.
   memory_text_entities = memory_text_entities.reshape(
       [n_retrievals * n_memory_text_entities])
   # [n_target_mentions, n_mentions * k_top * n_memory_text_entities]
-  mention_id_in_retrieved_passages = _all_compare_without_pad(
+  mention_id_in_retrieved_passages = mention_utils.all_compare_without_pad(
       batch_ids, memory_text_entities)
   mention_id_in_retrieved_passages = mention_id_in_retrieved_passages.astype(
       jnp.int32)
@@ -710,7 +536,7 @@ def get_batch_and_retrievals_entity_overlap(
 
   # Step 4: sum up the comparison results by batch position
   # [batch_size, n_retrievals]
-  num_common_ids_between_samples = sum_by_batch_position(
+  num_common_ids_between_samples = mention_utils.sum_by_batch_position(
       mention_target_batch_positions, mention_id_in_retrieved_passages,
       batch_size)
 

@@ -57,6 +57,8 @@ class MentionMemoryEncoderTest(parameterized.TestCase):
       'num_final_layers': 1,
       'dropout_rate': 0.1,
       'n_memory_text_entities': 2,
+      'final_k_top_device': 2,
+      'final_splits': 2,
   }
 
   model_config = {
@@ -84,26 +86,27 @@ class MentionMemoryEncoderTest(parameterized.TestCase):
   n_devices = 4
   table_size = 1024
 
-  text_length = 128
+  text_length = 100
   n_mentions = 5
   n_linked_mentions = 3
 
   @parameterized.parameters(
-      (100, 5, 3, False),
-      (100, 5, 3, True),
+      {},
+      {'separate_memory_values': True},
+      {'num_intermediate_layers': 1},
   )
   def test_model_shape(
       self,
-      text_length,
-      n_mentions,
-      n_linked_mentions,
-      separate_memory_values,
+      separate_memory_values=False,
+      num_intermediate_layers=None,
   ):
     """Test loss function runs and produces expected values."""
     config = copy.deepcopy(self.config)
     config['model_config']['encoder_config'][
         'separate_memory_values'] = separate_memory_values
-    config = ml_collections.FrozenConfigDict(self.config)
+    config['model_config']['encoder_config'][
+        'num_intermediate_layers'] = num_intermediate_layers
+    config = ml_collections.FrozenConfigDict(config)
 
     model_config = config.model_config
     encoder_config = model_config.encoder_config
@@ -154,9 +157,9 @@ class MentionMemoryEncoderTest(parameterized.TestCase):
     }
 
     raw_example = test_utils.gen_mention_pretraining_sample(
-        text_length,
-        n_mentions,
-        n_linked_mentions,
+        self.text_length,
+        self.n_mentions,
+        self.n_linked_mentions,
         max_length=encoder_config.max_length)
     processed_example = preprocess_fn(raw_example)
     batch = {
@@ -197,11 +200,11 @@ class MentionMemoryEncoderTest(parameterized.TestCase):
                       config.per_device_batch_size, memory_size))
 
   @parameterized.parameters(
-      (False, False),
-      (True, False),
-      (False, True),
+      {},
+      {'separate_memory_values': True},
+      {'memory_only': True},
   )
-  def test_load_weights(self, separate_memory_values, memory_only):
+  def test_load_weights(self, separate_memory_values=False, memory_only=False):
     """Test saving and loading model recovers original parameters."""
 
     config = copy.deepcopy(self.config)
