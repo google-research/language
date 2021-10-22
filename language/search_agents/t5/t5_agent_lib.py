@@ -14,10 +14,10 @@
 # limitations under the License.
 """Utility functions for the T5 agent."""
 
+import dataclasses
 import re
 from typing import Dict, Sequence, Tuple
 
-import dataclasses
 from language.search_agents import environment_pb2
 from language.search_agents.muzero import types
 from language.search_agents.muzero import utils

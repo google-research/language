@@ -24,7 +24,7 @@ from seed_rl.common import parametric_distribution
 
 from muzero import actor
 from muzero import core as mzcore
-from muzero import learner
+from muzero import learner_flags
 
 
 @dataclasses.dataclass(frozen=True)
@@ -72,10 +72,11 @@ def muzeroconfig_from_flags(
       dirichlet_alpha=common_flags.DIRICHLET_ALPHA.value,
       root_exploration_fraction=common_flags.ROOT_EXPLORATION_FRACTION.value,
       num_simulations=common_flags.NUM_SIMULATIONS.value,
-      recurrent_inference_batch_size=learner.RECURRENT_INFERENCE_BATCH_SIZE
-      .value,
-      initial_inference_batch_size=learner.INITIAL_INFERENCE_BATCH_SIZE.value,
-      train_batch_size=learner.BATCH_SIZE.value,
+      recurrent_inference_batch_size=(
+          learner_flags.RECURRENT_INFERENCE_BATCH_SIZE.value),
+      initial_inference_batch_size=(
+          learner_flags.INITIAL_INFERENCE_BATCH_SIZE.value),
+      train_batch_size=learner_flags.BATCH_SIZE.value,
       # Not using time difference learning.
       td_steps=-1,
       num_unroll_steps=common_flags.NUM_UNROLL_STEPS.value,

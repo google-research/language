@@ -29,6 +29,8 @@ def multibootstrap(run_info,
                    labels,
                    score_fn,
                    paired_seeds = False,
+                   sample_seeds = True,
+                   sample_examples = True,
                    nboot = 500,
                    rng = np.random,
                    verbose = True,
@@ -50,6 +52,8 @@ def multibootstrap(run_info,
       seeds, and will use the same set of sampled seeds for both sides. If
       False, will sample seeds independently but will still use paired sets of
       examples.
+    sample_seeds: if True (default), bootstrap over seeds.
+    sample_examples: if True (default), bootstrap over examples.
     nboot: number of bootstrap samples to compute.
     rng: random number generator state, or an int to seed a new one.
     verbose: set to False to disable printing of intermediate info.
@@ -80,6 +84,8 @@ def multibootstrap(run_info,
         set(base_seed_to_row.keys()).intersection(expt_seed_to_row.keys()))
     if verbose:
       print(f'  Common seeds ({len(common_seeds)}): {str(common_seeds)}')
+      print(f'  Base: {len(run_info[~mask])} runs')
+      print(f'  Expt: {len(run_info[mask])} runs')
     # Warn if there are any seeds which don't overlap
     base_only_seeds = set(base_seed_to_row.keys()).difference(
         expt_seed_to_row.keys())
@@ -97,7 +103,9 @@ def multibootstrap(run_info,
     if verbose:
       print(f'Multibootstrap (unpaired) on {num_examples} examples')
       print(f'  Base seeds ({len(base_seeds)}): {str(base_seeds)}')
+      print(f'  Base: {len(run_info[~mask])} runs')
       print(f'  Expt seeds ({len(expt_seeds)}): {str(expt_seeds)}')
+      print(f'  Expt: {len(run_info[mask])} runs')
 
   def _score_seeds(seeds_to_rows, seeds,
                    row_score_fn):
@@ -113,19 +121,30 @@ def multibootstrap(run_info,
   bootstrap_samples = []
   for _ in progress_indicator(range(nboot)):
     # Sample seeds; we'll map these to row indices later.
-    if paired_seeds:
-      base_seed_sample = _bsample(common_seeds, rng)
-      expt_seed_sample = base_seed_sample
+    if sample_seeds:
+      if paired_seeds:
+        base_seed_sample = _bsample(common_seeds, rng)
+        expt_seed_sample = base_seed_sample
+      else:
+        base_seed_sample = _bsample(base_seeds, rng)
+        expt_seed_sample = _bsample(expt_seeds, rng)
     else:
-      base_seed_sample = _bsample(base_seeds, rng)
-      expt_seed_sample = _bsample(expt_seeds, rng)
+      if paired_seeds:
+        base_seed_sample = common_seeds
+        expt_seed_sample = common_seeds
+      else:
+        base_seed_sample = base_seeds
+        expt_seed_sample = expt_seeds
 
     # Sample examples and select columns
-    jj = rng.choice(num_examples, size=num_examples, replace=True)
-    selected_labels = labels[jj]
-    # pylint note: safe to close over jj, because this function is also
-    # redefined on every loop iteration.
-    score_row = lambda i: score_fn(selected_labels, preds[i, jj])  # pylint: disable=cell-var-from-loop
+    if sample_examples:
+      jj = rng.choice(num_examples, size=num_examples, replace=True)
+      selected_labels = labels[jj]
+      # pylint note: safe to close over jj, because this function is also
+      # redefined on every loop iteration.
+      score_row = lambda i: score_fn(selected_labels, preds[i, jj])  # pylint: disable=cell-var-from-loop
+    else:
+      score_row = lambda i: score_fn(labels, preds[i])  # pylint: disable=cell-var-from-loop
 
     # Select and score rows corresponding to selected seeds.
     base_score = _score_seeds(base_seed_to_row, base_seed_sample, score_row)
@@ -140,14 +159,9 @@ def multibootstrap(run_info,
 def report_ci(samples,
               c = 0.95,
               abs_threshold = None,
-              rel_threshold = None):
+              rel_threshold = None,
+              expect_negative_effect = False):
   """Report confidence interval and some other statistics from bootstrap samples.
-
-  Note: abs_threshold and rel_threshold assume the effect of the intervention
-  is positive; if this is not true you'll likely see a value close to zero.
-  If you want to compute something like E[L' <= L - delta], you can switch
-  base and expt in the input to this function using something like:
-    samples = [(b,a) for (a,b) in samples]
 
   Note: rel_threshold is a good approximation only if L is not close to 0.
 
@@ -160,6 +174,8 @@ def report_ci(samples,
       intervention has a relative effect of at least this threshold. For
       instance, rel_threshold=0.01 will give the estimated confidence that the
       intervention improves by 1% over the baseline.
+    expect_negative_effect: if True, assume the effect is negative and compute
+      p-values and thresholds for the hypothesis that E[L' - L] < 0.
 
   Returns:
     stats as a dict
@@ -182,17 +198,31 @@ def report_ci(samples,
   deltas = bdf.expt - bdf.base
   u = np.mean(deltas)
   umin, umax = np.quantile(deltas, quantiles)
-  pval = np.mean(deltas <= 0)
+  if expect_negative_effect:
+    pval = np.mean(deltas >= 0)
+  else:
+    pval = np.mean(deltas <= 0)
+  if pval == 0:
+    # Can't estimate p smaller than 1/(# samples)
+    pval = 1.0 / len(bdf)
   print(f"  E[L'-L] = {u:.3g} with {c:.0%} CI of ({umin:.3g} to {umax:.3g})"
         f'; p-value = {pval:.3g}')
   ret['delta'] = {'mean': u, 'low': umin, 'high': umax, 'p': pval}
 
   if rel_threshold:
-    pt = (deltas / bdf.base >= rel_threshold).mean()
-    print(f"  E[(L'-L)/L ≥ {rel_threshold:.3g}] = {pt:0.2f}")
+    if expect_negative_effect:
+      pt = (deltas / bdf.base <= -1 * rel_threshold).mean()
+      print(f"  E[(L'-L)/L ≤ {-1*rel_threshold:.3g}] = {pt:0.2f}")
+    else:
+      pt = (deltas / bdf.base >= rel_threshold).mean()
+      print(f"  E[(L'-L)/L ≥ {rel_threshold:.3g}] = {pt:0.2f}")
 
   if abs_threshold is not None:
-    pt = (deltas >= abs_threshold).mean()
-    print(f"  E[L' ≥ L + {abs_threshold:.3g}] = {pt:0.2f}")
+    if expect_negative_effect:
+      pt = (deltas <= -1 * abs_threshold).mean()
+      print(f"  E[L' ≤ L - {abs_threshold:.3g}] = {pt:0.2f}")
+    else:
+      pt = (deltas >= abs_threshold).mean()
+      print(f"  E[L' ≥ L + {abs_threshold:.3g}] = {pt:0.2f}")
 
   return ret

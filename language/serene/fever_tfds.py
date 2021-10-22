@@ -142,7 +142,7 @@ class ExtractEvidenceForClaim(beam.DoFn):
     self._matcher: Optional[text_matcher.TextMatcher] = None
     self._drqa_scrape_table: Optional[collections.ChainMap] = None
     self._lucene_scrape_table: Optional[collections.ChainMap] = None
-    self._name_to_scrape: Optional[Text, collections.ChainMap] = None
+    self._name_to_scrape: Optional[Text, collections.ChainMap] = None  # pytype: disable=invalid-annotation  # attribute-variable-annotations
     self._ukp_docs: Optional[Dict[int, types.Json]] = None
     self._claim_to_fold: Optional[Dict[int, Text]] = None
     self._n_missing_pages = beam.metrics.Metrics.counter(
@@ -174,8 +174,11 @@ class ExtractEvidenceForClaim(beam.DoFn):
         self._drqa_db_path)  # pylint: disable=unused-variable
     self._lucene_scrape_table = lucene_scrape_table
     self._name_to_scrape = {
-        constants.DRQA: self._drqa_scrape_table,
-        constants.LUCENE: self._lucene_scrape_table
+        constants.DRQA:
+            self._drqa_scrape_table,
+        constants.LUCENE:
+            self.
+            _lucene_scrape_table  # pytype: disable=annotation-type-mismatch  # attribute-variable-annotations
     }
 
     ukp_claim_docs = (

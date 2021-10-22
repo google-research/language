@@ -46,7 +46,7 @@ class ExtractSentences(beam.DoFn):
     Yields:
       An example for Tensorflow Datasets containing page, sentence, and text
     """
-    page: fever_pb2.WikipediaDump = self._db.get_page(wikipedia_url)
+    page: fever_pb2.WikipediaDump = self._db.get_page(wikipedia_url)  # pytype: disable=annotation-type-mismatch  # attribute-variable-annotations
     for sentence_id, sentence in page.sentences.items():
       if sentence_id <= self._max_sentence_id:
         key = f'{wikipedia_url}@@@{sentence_id}'

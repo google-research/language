@@ -1,0 +1,10 @@
+absl-py>=0.10.0
+clu>=0.0.3
+flax>=0.3.4
+jax>=0.2.14
+ml_collections>=0.1
+numpy>=1.16
+spacy>=3.1.2
+scikit-learn>=0.24.2
+scipy>=1.2.1
+tensorflow>=1.15.0

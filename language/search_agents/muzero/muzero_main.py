@@ -30,9 +30,8 @@ import tensorflow as tf
 
 from muzero import actor
 from muzero import learner
+from muzero import learner_flags
 
-
-flags.DEFINE_integer('log_frequency', 1, 'in number of training steps')
 
 FLAGS = flags.FLAGS
 
@@ -88,6 +87,7 @@ def main(argv):
         env_descriptor=env_descriptor,
         create_agent_fn=create_agent_fn,
         create_optimizer_fn=create_optimizer,
+        config=learner_flags.learner_config_from_flags(),
         mzconfig=mzconfig)
   else:
     raise ValueError('Unsupported run mode {}'.format(FLAGS.run_mode))

@@ -12,11 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# coding=utf-8
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 from language.boolq.utils import ops
 import tensorflow.compat.v1 as tf
 
@@ -26,23 +21,28 @@ class OpsTest(tf.test.TestCase):
   def test_lowercase(self):
     with self.test_session() as sess:
       test_str = [["Abc%@||", "DZ dzD", ""]]
-      self.assertEqual(
-          sess.run(ops.lowercase_op(tf.convert_to_tensor(test_str))).tolist(),
-          [[x.lower() for x in test_str[0]]])
+      self.assertEqual([
+          x.decode() for x in sess.run(
+              ops.lowercase_op(tf.convert_to_tensor(test_str))).tolist()[0]
+      ], [x.lower() for x in test_str[0]])
 
   def test_lowercase_unicode(self):
     with self.test_session() as sess:
       test_str = ["ŠČŽɬЩЮɦ"]
-      self.assertEqual(
-          sess.run(ops.lowercase_op(tf.convert_to_tensor(test_str))).tolist(),
-          [test_str[0].lower()])
+      self.assertEqual([
+          sess.run(ops.lowercase_op(
+              tf.convert_to_tensor(test_str))).tolist()[0].decode()
+      ], [test_str[0].lower()])
 
   def test_bucket_by_quantiles(self):
     with self.test_session() as sess:
       data = tf.data.Dataset.from_tensor_slices(list(range(10))).repeat()
-      data = data.apply(ops.bucket_by_quantiles(
-          len_fn=lambda x: x, batch_size=4, n_buckets=2,
-          hist_bounds=[2, 4, 6, 8]))
+      data = data.apply(
+          ops.bucket_by_quantiles(
+              len_fn=lambda x: x,
+              batch_size=4,
+              n_buckets=2,
+              hist_bounds=[2, 4, 6, 8]))
       it = data.make_initializable_iterator()
       sess.run(it.initializer)
       sess.run(tf.local_variables_initializer())
