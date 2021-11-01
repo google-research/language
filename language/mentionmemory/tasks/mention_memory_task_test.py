@@ -366,7 +366,7 @@ class MentionMemoryTaskTest(test_utils.TestCase):
         sample_weights = mention_target_weights[mention_target_batch_positions
                                                 == batch_index]
         sample_ids = sample_ids[sample_weights > 0]
-        sample_ids = set([x for x in sample_ids if x != 0])
+        sample_ids = set([x for x in sample_ids.tolist() if x != 0])
 
         for m_index in range(n_mentions_per_local_batch):
           if mention_batch_positions[m_index] != batch_index:
@@ -377,7 +377,7 @@ class MentionMemoryTaskTest(test_utils.TestCase):
           n_correct_retrievals, n_incorrect_retrievals = 0, 0
           for r_index in range(n_retrievals):
             common_ids = set(
-                memory_text_entities[r_index]).intersection(sample_ids)
+                memory_text_entities[r_index].tolist()).intersection(sample_ids)
             num_commons[m_index, r_index] = len(common_ids)
             if len(common_ids) >= config.same_entity_set_target_threshold:
               n_correct_retrievals += 1

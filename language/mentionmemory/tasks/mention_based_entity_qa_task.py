@@ -53,10 +53,9 @@ def get_predictions_sum(attention_weights: Array, memory_entity_ids: Array,
   n_mentions = attention_weights.shape[0]
   attention_weights_per_entity = jnp.zeros((n_mentions, entity_vocab_size),
                                            dtype=attention_weights.dtype)
-  attention_weights_per_entity = jax.ops.index_add(
-      attention_weights_per_entity,
-      (jnp.expand_dims(jnp.arange(n_mentions), 1), memory_entity_ids),
-      attention_weights)
+  attention_weights_per_entity = attention_weights_per_entity.at[
+      jnp.expand_dims(jnp.arange(n_mentions), 1),
+      memory_entity_ids].add(attention_weights)
   predictions = jnp.argmax(attention_weights_per_entity, axis=1)
   predictions = predictions * weights
   return predictions

@@ -625,11 +625,17 @@ class NeuralQueryContext(object):
   # Allow TF deserialization.
   @classmethod
   def from_config(cls, config):
+    """Recreate a NeuralQueryContext from a saved config."""
     if 'np_initval' in config:
       config['np_initval'] = {
           rel: NeuralQueryContext._dict_to_sparse(matrix_dict)
           for (rel, matrix_dict) in config['np_initval'].items()
       }
+    if 'symtab' in config:
+      symtab = dict()
+      for (k, v) in config['symtab']:
+        symtab[k] = symbol.create_from_dict(v)
+      config['symtab'] = symtab
     return cls(**config)
 
   # Basic API

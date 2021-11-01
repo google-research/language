@@ -26,7 +26,7 @@ from muzero import learner_flags
 from tensorflow.core.protobuf import trackable_object_graph_pb2  # pylint: disable=g-direct-tensorflow-import
 from official.modeling import activations
 from official.modeling import tf_utils
-from official.nlp import keras_nlp
+from official.nlp import modeling
 from official.nlp.bert import configs
 from official.nlp.modeling import layers
 
@@ -177,7 +177,7 @@ class TransformerEncoder(tf.keras.Model):
     word_embeddings = self._embedding_layer(word_ids)
 
     # Always uses dynamic slicing for simplicity.
-    self._position_embedding_layer = keras_nlp.layers.PositionEmbedding(
+    self._position_embedding_layer = modeling.layers.PositionEmbedding(
         initializer=initializer, max_length=max_sequence_length)
     position_embeddings = self._position_embedding_layer(word_embeddings)
     all_embeddings = [word_embeddings, position_embeddings]

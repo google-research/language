@@ -178,10 +178,11 @@ class MemoryAttentionLayerTest(parameterized.TestCase):
 
     # Check input was not changed where it should not be
     all_indices = set(
-        itertools.product(jnp.arange(self.bsz), jnp.arange(self.seq_len)))
+        itertools.product(np.arange(self.bsz), np.arange(self.seq_len)))
     # Note that mention positions is the same across all of the devices
     start_indices = set(
-        zip(mention_batch_positions[0], mention_start_positions[0]))
+        zip(mention_batch_positions[0].tolist(),
+            mention_start_positions[0].tolist()))
     non_start_indices = all_indices.difference(start_indices)
     non_start_indices_1, non_start_indices_2 = zip(*non_start_indices)
     non_start_indices_1 = jnp.asarray(non_start_indices_1)

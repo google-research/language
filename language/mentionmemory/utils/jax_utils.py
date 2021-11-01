@@ -130,7 +130,7 @@ def vmap_slice(array: Array, indices: Array) -> Array:
 @jax.vmap
 def vmap_index_add(array: Array, indices: Array, values: Array) -> Array:
   """Convenience function for index add that differs along first dimension."""
-  return jax.ops.index_add(array, indices, values)
+  return array.at[indices].add(values)
 
 
 def cosine_similarity(a: Array, b: Array) -> Array:
