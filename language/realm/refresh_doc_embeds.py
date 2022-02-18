@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Continuously refresh document embeddings."""
-
 import json
 import os
 import time

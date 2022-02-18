@@ -14,18 +14,18 @@
 # limitations under the License.
 """Utilities related to random sampling."""
 import random
+from typing import Any, Sequence
 
 
-
-def uniform_sample(pool, max_num_items):
+def uniform_sample(pool: Sequence[Any], max_num_items: int) -> Sequence[Any]:
   """Samples k items using uniform sampling without replacement."""
   pool = list(pool)
   random.shuffle(pool)
   return pool[:max_num_items]
 
 
-def geometric_sample(pool, max_num_items,
-                     sample_prob):
+def geometric_sample(pool: Sequence[Any], max_num_items: int,
+                     sample_prob: float) -> Sequence[Any]:
   """Samples k items using geometric sampling without replacement.
 
   At each step, item #i will be sampled with probability sample_prob^i (except

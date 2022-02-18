@@ -243,8 +243,8 @@ class ComputeCrossEntropyTest(parameterized.TestCase):
       expected_denom += 1
       expected_acc_per_sample.append(current_acc / n_pos)
 
-    self.assertAlmostEqual(actual_loss, expected_loss, places=2)
-    self.assertAlmostEqual(actual_metrics['loss'], expected_loss, places=2)
+    self.assertAlmostEqual(actual_loss, expected_loss, delta=1)
+    self.assertAlmostEqual(actual_metrics['loss'], expected_loss, delta=1)
     self.assertAlmostEqual(actual_metrics['acc'], expected_acc, places=4)
     self.assertAlmostEqual(
         actual_metrics['denominator'], expected_denom, places=4)

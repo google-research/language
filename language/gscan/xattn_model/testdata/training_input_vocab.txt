@@ -1,0 +1,50 @@
+{
+  "sos_token": "<SOS>",
+  "eos_token": "<EOS>",
+  "pad_token": "<PAD>",
+  "idx_to_word": [
+    "<PAD>",
+    "<SOS>",
+    "<EOS>",
+    "walk",
+    "to",
+    "a",
+    "red",
+    "circle",
+    "green",
+    "square",
+    "yellow",
+    "blue",
+    "big",
+    "small"
+  ],
+  "word_to_idx": {
+    "<PAD>": 0,
+    "<SOS>": 1,
+    "<EOS>": 2,
+    "walk": 3,
+    "to": 4,
+    "a": 5,
+    "red": 6,
+    "circle": 7,
+    "green": 8,
+    "square": 9,
+    "yellow": 10,
+    "blue": 11,
+    "big": 12,
+    "small": 13
+  },
+  "word_frequencies": {
+    "walk": 1531,
+    "to": 1531,
+    "a": 1531,
+    "red": 65,
+    "circle": 869,
+    "green": 146,
+    "square": 662,
+    "yellow": 78,
+    "blue": 140,
+    "big": 336,
+    "small": 289
+  }
+}

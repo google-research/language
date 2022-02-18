@@ -47,15 +47,15 @@ flags.DEFINE_integer("batch_size", 32, "Batch size for embedding queries.")
 flags.DEFINE_integer("log_every", 1000, "Log every this number of examples.")
 
 
-def _get_domain(ex):
+def _get_domain(ex: query_retrievers.Example) -> str:
   return ex["domain"]
 
 
-def _get_frame(ex):
+def _get_frame(ex: query_retrievers.Example) -> str:
   return top_utils.get_frame_top(ex["output_str"])
 
 
-def _get_intent(ex):
+def _get_intent(ex: query_retrievers.Example) -> str:
   return top_utils.get_frame_top(ex["output_str"]).split("-")[0]
 
 

@@ -17,7 +17,7 @@ import collections
 import dataclasses
 import functools
 import random
-
+from typing import Any, Dict, Iterable, Iterator, Sequence
 
 from absl import logging
 from language.casper.augment import casper_formatters
@@ -29,7 +29,7 @@ RawExample = data_types.RawExample
 AugmentedExample = data_types.AugmentedExample
 
 
-def _get_frame(funcall, funcall_format):
+def _get_frame(funcall: str, funcall_format: str) -> str:
   """Returns the frame (intent and slot labels) of the function call."""
   if funcall_format == "top":
     return top_utils.get_frame_top(funcall)
@@ -63,7 +63,7 @@ class ConverterConfig:
   sample_prob: float = 0.5
 
   @classmethod
-  def from_dict(cls, converter_kwargs):
+  def from_dict(cls, converter_kwargs: Dict[str, Any]) -> "ConverterConfig":
     """Constructs a ConverterConfig from the given dict."""
     # Make a copy
     converter_kwargs = dict(converter_kwargs)
@@ -91,9 +91,9 @@ class ConverterConfig:
 class BaseExampleConverter:
   """Abstract base class for example converters."""
 
-  def __init__(self, retrieval_index, funcall_format,
-               converter_config,
-               formatter_config):
+  def __init__(self, retrieval_index: Iterable[RawExample], funcall_format: str,
+               converter_config: ConverterConfig,
+               formatter_config: casper_formatters.FormatterConfig):
     """Constructs a new example converter.
 
     Args:
@@ -114,7 +114,7 @@ class BaseExampleConverter:
     # A Counter that can collect arbitrary statistics.
     self.stats = collections.Counter()
 
-  def _process_index(self, retrieval_index):
+  def _process_index(self, retrieval_index: Iterable[RawExample]) -> None:
     """Preprocesses the retrieval index."""
     self._hashed_id_to_exemplar = {}
     self._frame_to_hashed_ids = {}
@@ -140,7 +140,7 @@ class BaseExampleConverter:
     # List of frames (for sampling)
     self._all_frames = sorted(self._frame_to_hashed_ids)
 
-  def verify_exemplars(self, example):
+  def verify_exemplars(self, example: RawExample) -> None:
     """Filters out an example's exemplars that are not in the index.
 
     Args:
@@ -162,7 +162,7 @@ class BaseExampleConverter:
     example["exemplars"]["hashed_ids"] = filtered_hashed_ids
     example["exemplars"]["distances"] = filtered_distances
 
-  def convert(self, example):
+  def convert(self, example: RawExample) -> Iterator[AugmentedExample]:
     """Takes the retrieval results of an example and yields seq2seq examples.
 
     Args:
@@ -179,7 +179,7 @@ class BaseExampleConverter:
       input_str, output_str = self._augment_exemplars(example, exemplars)
       yield AugmentedExample(input_str, output_str)
 
-  def _select_exemplars(self, example):
+  def _select_exemplars(self, example: RawExample) -> Iterator[Sequence[str]]:
     """Selects lists of exemplars to be augmented to the given example.
 
     This method should be overridden.
@@ -197,7 +197,7 @@ class BaseExampleConverter:
 class QueryOnlyConverter(BaseExampleConverter):
   """Generates the example without using the retrievals."""
 
-  def _select_exemplars(self, example):
+  def _select_exemplars(self, example: RawExample) -> Iterator[Sequence[str]]:
     """Yields a single empty list (no exemplars)."""
     for _ in range(self._converter_config.num_samples):
       yield []
@@ -206,7 +206,7 @@ class QueryOnlyConverter(BaseExampleConverter):
 class AddTopKConverter(BaseExampleConverter):
   """Adds the top K exemplars to the input query."""
 
-  def _select_exemplars(self, example):
+  def _select_exemplars(self, example: RawExample) -> Iterator[Sequence[str]]:
     """Yields a single list containing the top `max_exemplars` exemplars."""
     exemplar_hashed_ids = example["exemplars"]["hashed_ids"]
     for _ in range(self._converter_config.num_samples):
@@ -216,7 +216,7 @@ class AddTopKConverter(BaseExampleConverter):
 class AddSampledKConverter(BaseExampleConverter):
   """Adds K sampled exemplars to the input query."""
 
-  def _select_exemplars(self, example):
+  def _select_exemplars(self, example: RawExample) -> Iterator[Sequence[str]]:
     """Yields `num_samples` lists with `max_exemplars` sampled exemplars."""
     sampler = self._converter_config.get_sampler()
     exemplar_hashed_ids = example["exemplars"]["hashed_ids"]
@@ -230,7 +230,7 @@ class AddOracleKConverter(AddSampledKConverter):
   Used for oracle and controllability experiments.
   """
 
-  def _select_exemplars(self, example):
+  def _select_exemplars(self, example: RawExample) -> Iterator[Sequence[str]]:
     """Yields `num_samples` lists with `max_exemplars` oracle exemplars."""
     self.stats["num_examples"] += 1
     gold_frame = _get_frame(example["output_str"], self._funcall_format)
@@ -271,7 +271,7 @@ class AddAdversarialKConverter(AddSampledKConverter):
   # Try finding an adversarial frame this number of times before giving up.
   _MAX_TRIALS = 100
 
-  def _select_exemplars(self, example):
+  def _select_exemplars(self, example: RawExample) -> Iterator[Sequence[str]]:
     """Yields `num_samples` lists with `max_exemplars` adversarial exemplars."""
     gold_frame = _get_frame(example["output_str"], self._funcall_format)
     sampler = self._converter_config.get_sampler()
@@ -302,9 +302,9 @@ _CONVERTERS = {
 }
 
 
-def get_converter(converter_name, retrieval_index,
-                  funcall_format, converter_kwargs,
-                  formatter_kwargs):
+def get_converter(converter_name: str, retrieval_index: Iterable[RawExample],
+                  funcall_format: str, converter_kwargs: Dict[str, Any],
+                  formatter_kwargs: Dict[str, Any]) -> BaseExampleConverter:
   """Returns an example converter with the specified name.
 
   Args:

@@ -16,7 +16,6 @@
 """Preprocessing servicer."""
 
 
-
 import grpc
 from grpc.framework.foundation import logging_pool
 from language.realm import preprocessing_pb2_grpc

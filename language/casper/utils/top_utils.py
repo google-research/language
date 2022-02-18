@@ -20,7 +20,7 @@ References:
 - MTOP: (Li et al., 2020) MTOP: A Comprehensive Multilingual Task-Oriented
   Semantic Parsing Benchmark
 """
-
+from typing import Optional, Union
 
 
 class TopLF:
@@ -39,7 +39,7 @@ class TopLF:
     self.name: str = content[0]
     self.args = content[1:]
 
-  def serialize(self):
+  def serialize(self) -> str:
     """Returns the string serialization of the logical form."""
     tokens = ["[" + self.name]
     for arg in self.args:
@@ -50,11 +50,11 @@ class TopLF:
     tokens.append("]")
     return " ".join(tokens)
 
-  def __repr__(self):
+  def __repr__(self) -> str:
     return "<TopLF {}>".format(self.serialize())
 
 
-def deserialize_top(serialized):
+def deserialize_top(serialized: str) -> Optional[TopLF]:
   """Deserializes the logical form string into a TopLF object.
 
   Args:
@@ -92,7 +92,7 @@ def deserialize_top(serialized):
     return None
 
 
-def get_frame_top(lf):
+def get_frame_top(lf: Union[TopLF, str]) -> str:
   """Gets the frame (listing intent and slot labels) of a TopLF.
 
   Nested slots will be represented with a dot notation (e.g.,
@@ -122,7 +122,7 @@ def get_frame_top(lf):
   return "-".join([lf.name] + sorted(args))
 
 
-def format_serialized(serialized):
+def format_serialized(serialized: str) -> str:
   """Formats the serialized logical form to reduce the number of tokens.
 
   The intent and slot labels are lower-cased and broken into words.
@@ -151,7 +151,7 @@ def format_serialized(serialized):
   return "".join(lf_toks).strip()
 
 
-def deformat_serialized(formatted):
+def deformat_serialized(formatted: str) -> str:
   """Undoes the process in format_serialized."""
   lf_toks = []
   in_label = False  # Whether we are processing the intent/slot label

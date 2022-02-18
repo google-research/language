@@ -14,7 +14,7 @@
 # limitations under the License.
 r"""Common data types."""
 import collections
-
+from typing import Any, Dict
 
 # Deserialized JSON
 RawExample = Dict[str, Any]

@@ -14,7 +14,6 @@
 # limitations under the License.
 r"""Implementation of the Retrieval Augmented Masked Language Model."""
 
-
 import collections
 
 

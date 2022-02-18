@@ -14,7 +14,7 @@
 # limitations under the License.
 r"""Evaluates retrieval results."""
 import json
-
+from typing import Iterable, Iterator, Set, Union
 
 from absl import app
 from absl import flags
@@ -38,14 +38,14 @@ flags.DEFINE_enum("funcall_format", "top", ["top"],
 Example = data_types.RawExample
 
 
-def _read_jsonl(filename):
+def _read_jsonl(filename: str) -> Iterator[Example]:
   """Yields entries from the JSONL file."""
   with tf.io.gfile.GFile(filename) as fin:
     for line in fin:
       yield json.loads(line)
 
 
-def _get_frame(funcall):
+def _get_frame(funcall: str) -> str:
   """Returns the frame string describing all intent and slot labels."""
   if FLAGS.funcall_format == "top":
     return top_utils.get_frame_top(funcall)
@@ -53,20 +53,20 @@ def _get_frame(funcall):
     raise ValueError(f"Unknown funcall_format: {FLAGS.funcall_format}")
 
 
-def _get_intent(frame):
+def _get_intent(frame: str) -> str:
   """Returns the top intent label."""
   return frame.split("-")[0]
 
 
-def _get_labels(frame):
+def _get_labels(frame: str) -> Set[str]:
   """Returns the set of all intent and slot labels."""
   for separator in ["-", ".", ","]:
     frame = frame.replace(separator, " ")
   return set(frame.strip().split())
 
 
-def _log_stats(stats_at_k,
-               total_count):
+def _log_stats(stats_at_k: Iterable[Union[int, float]],
+               total_count: int) -> None:
   """Logs the statistics as percentages of the total count."""
   logging.info(", ".join(
       "{:.1f}".format(value * 100. / total_count) for value in stats_at_k))

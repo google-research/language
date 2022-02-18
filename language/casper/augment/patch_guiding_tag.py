@@ -14,7 +14,7 @@
 # limitations under the License.
 r"""Add guiding tags to examples that fit the criteria."""
 import os
-
+from typing import Collection, Tuple
 
 from absl import app
 from absl import flags
@@ -36,13 +36,13 @@ GUIDING_TAG_BEFORE = " @@ "
 GUIDING_TAG_AFTER = " @@ PLATINUM "
 
 
-def _format_label(label):
+def _format_label(label: str) -> str:
   """Converts labels such as 'IN:SET_NAME' to 'IN set name ='."""
   return top_utils.format_serialized("[" + label).lstrip("[")
 
 
-def process_tsv(src_file, tgt_file,
-                affected_labels):
+def process_tsv(src_file: str, tgt_file: str,
+                affected_labels: Collection[str]) -> Tuple[int, int]:
   """Processes examples in the TSV file src_file and writes to tgt_file.
 
   Args:
@@ -68,8 +68,8 @@ def process_tsv(src_file, tgt_file,
   return num_affected, num_total
 
 
-def process_tfr(src_file, tgt_file,
-                affected_labels):
+def process_tfr(src_file: str, tgt_file: str,
+                affected_labels: Collection[str]) -> Tuple[int, int]:
   """Processes examples in the TFRecord file src_file and writes to tgt_file.
 
   Args:

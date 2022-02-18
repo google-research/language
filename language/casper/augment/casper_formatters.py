@@ -16,7 +16,7 @@
 import copy
 import dataclasses
 import random
-
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from language.casper.utils import data_types
 from language.casper.utils import top_constants
@@ -95,7 +95,7 @@ class FormatterConfig:
   orig_input_at_end: bool = False
 
   @classmethod
-  def from_dict(cls, converter_kwargs):
+  def from_dict(cls, converter_kwargs: Dict[str, Any]) -> "FormatterConfig":
     """Constructs a ConverterConfig from the given dict.
 
     Args:
@@ -123,7 +123,7 @@ class FormatterConfig:
     return config
 
 
-def preprocess_example(example, funcall_format):
+def preprocess_example(example: RawExample, funcall_format: str) -> RawExample:
   """Returns a preprocessed example according to the funcall format."""
   if funcall_format == "top":
     example = copy.deepcopy(example)
@@ -138,8 +138,8 @@ def preprocess_example(example, funcall_format):
     raise ValueError(f"Unknown funcall_format: {funcall_format}")
 
 
-def rename_top_lf_labels(lfs,
-                         label_map):
+def rename_top_lf_labels(lfs: Sequence[top_utils.TopLF],
+                         label_map: Dict[str, str]) -> None:
   """Rename the labels of the TopLFs in place.
 
   Args:
@@ -167,9 +167,9 @@ def rename_top_lf_labels(lfs,
 
 
 def anonymize_top_lf_labels(
-    lfs,
-    anonymized_labels = None,
-    anonymized_labels_type = None):
+    lfs: Sequence[top_utils.TopLF],
+    anonymized_labels: Optional[Sequence[str]] = None,
+    anonymized_labels_type: Optional[str] = None) -> None:
   """Anonymizes the intent/slot labels of the TopLFs in place.
 
   Args:
@@ -208,8 +208,8 @@ def anonymize_top_lf_labels(
           stack.append(child)
 
 
-def top_funcall_processor(exemplar_outputs, orig_output,
-                          config):
+def top_funcall_processor(exemplar_outputs: Sequence[str], orig_output: str,
+                          config: FormatterConfig) -> Tuple[Sequence[str], str]:
   """Returns the processed (exemplar_outputs, orig_output)."""
   # Convert to TopLF
   top_lfs = []
@@ -234,9 +234,9 @@ _FUNCALL_PROCESSOR = {
 }
 
 
-def format_prompt(orig_input, exemplar_inputs,
-                  exemplar_outputs,
-                  config):
+def format_prompt(orig_input: str, exemplar_inputs: Sequence[str],
+                  exemplar_outputs: Sequence[str],
+                  config: FormatterConfig) -> str:
   """Constructs a retrieval-augmented input string.
 
   Args:
@@ -260,9 +260,9 @@ def format_prompt(orig_input, exemplar_inputs,
   return config.exemplar_separator.join(input_parts)
 
 
-def augment_exemplars(example, exemplars,
-                      funcall_format,
-                      config):
+def augment_exemplars(example: RawExample, exemplars: Sequence[RawExample],
+                      funcall_format: str,
+                      config: FormatterConfig) -> Tuple[str, str]:
   """Generates (input, output) pair where the input is retrieval-augmented.
 
   Args:

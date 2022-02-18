@@ -16,7 +16,7 @@ r"""Helper methods for generating a retrieval-augmented dataset."""
 import json
 import os
 import random
-
+from typing import Iterable, Iterator, List, Optional, Sequence
 
 from absl import logging
 from language.casper.augment import casper_converters
@@ -28,7 +28,7 @@ RawExample = data_types.RawExample
 AugmentedExample = data_types.AugmentedExample
 
 
-def expand_path_patterns(path_patterns):
+def expand_path_patterns(path_patterns: Iterable[str]) -> Sequence[str]:
   """Expands the glob patterns in the given list."""
   paths = []
   for pattern in path_patterns:
@@ -36,11 +36,11 @@ def expand_path_patterns(path_patterns):
   return paths
 
 
-def _bytes_feature(value):
+def _bytes_feature(value: bytes) -> tf.train.Feature:
   return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 
-def _to_tf_example(example):
+def _to_tf_example(example: AugmentedExample) -> tf.train.Example:
   feature = {
       "inputs": _bytes_feature(example.inputs.encode()),
       "targets": _bytes_feature(example.targets.encode()),
@@ -49,7 +49,7 @@ def _to_tf_example(example):
   return tf_ex.SerializeToString()
 
 
-def read_orig_examples(data_paths):
+def read_orig_examples(data_paths: Iterable[str]) -> Iterator[RawExample]:
   """Reads and deserializes JSONLs from files."""
   source_files = expand_path_patterns(data_paths)
   for source_file in source_files:
@@ -59,10 +59,10 @@ def read_orig_examples(data_paths):
         yield json.loads(line)
 
 
-def write_examples(examples,
-                   base_path,
-                   file_format = "tfr",
-                   num_shards = None):
+def write_examples(examples: Sequence[AugmentedExample],
+                   base_path: str,
+                   file_format: str = "tfr",
+                   num_shards: Optional[int] = None) -> None:
   """Writes examples to sharded TSV or TFRecord files."""
   if not num_shards:
     # Automatically compute the number of shards
@@ -85,10 +85,10 @@ def write_examples(examples,
       raise ValueError("Unknown file format: {}".format(file_format))
 
 
-def create_augmented_examples(orig_examples,
-                              converter,
-                              split,
-                              log_every = 1000):
+def create_augmented_examples(orig_examples: Iterable[RawExample],
+                              converter: casper_converters.BaseExampleConverter,
+                              split: str,
+                              log_every: int = 1000) -> List[AugmentedExample]:
   """Creates AugmentedExamples from the raw JSONLs.
 
   Args:
@@ -110,17 +110,17 @@ def create_augmented_examples(orig_examples,
   return examples
 
 
-def generate_dataset(orig_train,
-                     orig_dev,
-                     orig_test,
-                     converter,
-                     output_dir,
-                     seed = 42,
-                     log_every = 1000,
-                     train_filename = "train",
-                     dev_filename = "dev",
-                     test_filename = "test",
-                     file_format = "tfr"):
+def generate_dataset(orig_train: Iterable[RawExample],
+                     orig_dev: Iterable[RawExample],
+                     orig_test: Iterable[RawExample],
+                     converter: casper_converters.BaseExampleConverter,
+                     output_dir: str,
+                     seed: int = 42,
+                     log_every: int = 1000,
+                     train_filename: Optional[str] = "train",
+                     dev_filename: Optional[str] = "dev",
+                     test_filename: Optional[str] = "test",
+                     file_format: str = "tfr") -> None:
   """Generates and writes retrieval-augmented dataset files.
 
   Args:

@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for language.common.layers.affine_transform."""
-from keras import keras_parameterized
-from keras import testing_utils
+from keras.testing_infra import test_combinations
+from keras.testing_infra import test_utils as keras_test_utils
 from keras.utils.generic_utils import CustomObjectScope
 
 from language.common.layers import affine_transform
@@ -24,8 +24,8 @@ import tensorflow as tf
 
 # This decorator runs the test in V1, V2-Eager, and V2-Functional mode. It
 # guarantees forward compatibility of this code for the V2 switchover.
-@keras_parameterized.run_all_keras_modes
-class AffineTransformTest(keras_parameterized.TestCase):
+@test_combinations.run_all_keras_modes
+class AffineTransformTest(test_combinations.TestCase):
 
   def test_layer_api_compatibility(self):
     input_array = tf.constant([[1.0, 2.0, 3.0], [1.0, 2.0, 3.0],
@@ -33,7 +33,7 @@ class AffineTransformTest(keras_parameterized.TestCase):
 
     cls = affine_transform.AffineTransform
     with CustomObjectScope({cls.__name__: cls}):
-      output = testing_utils.layer_test(
+      output = keras_test_utils.layer_test(
           cls,
           kwargs={
               'output_size': 1,

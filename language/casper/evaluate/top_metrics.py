@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 r"""Metrics for TOP and MTOP parses."""
-
+from typing import Dict, List
 
 from language.casper.utils import top_utils
 
@@ -22,7 +22,7 @@ def _safe_divide(x, y):
   return x / y if y != 0 else 0.0
 
 
-def top_metrics(targets, predictions):
+def top_metrics(targets: List[str], predictions: List[str]) -> Dict[str, float]:
   """Returns eval metrics for TOP and MTOP datasets."""
   num_correct = 0
   num_total = 0

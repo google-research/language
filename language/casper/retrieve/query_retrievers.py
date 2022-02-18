@@ -15,7 +15,7 @@
 """Utilities for caching query retrievals."""
 import dataclasses
 import json
-
+from typing import Any, Callable, Iterable, Iterator, List, Sequence, Union
 
 from absl import logging
 from language.casper.utils import data_types

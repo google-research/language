@@ -43,6 +43,11 @@ from absl import app
 from absl import flags
 import sacrebleu
 
+try:
+  import sacrebleu.tokenizers.tokenizer_13a  # pylint: disable=g-import-not-at-top
+except ImportError:
+  raise ValueError("Latest version of sacrebleu is missing.")
+
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string(
@@ -70,7 +75,7 @@ flags.DEFINE_float("lambda_weight", None,
 
 def _normalize_text(s):
   # pylint: disable=unnecessary-lambda
-  tokenize_fn = lambda x: sacrebleu.tokenizers.Tokenizer13a()(x)
+  tokenize_fn = lambda x: sacrebleu.tokenizers.tokenizer_13a.Tokenizer13a()(x)
   return tokenize_fn(s.strip().lower())
 
 

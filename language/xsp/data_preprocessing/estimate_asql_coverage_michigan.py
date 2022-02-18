@@ -39,7 +39,6 @@ Note that these estimates can be inexact for the following reasons:
 
 from __future__ import absolute_import
 from __future__ import division
-
 from __future__ import print_function
 
 import collections
