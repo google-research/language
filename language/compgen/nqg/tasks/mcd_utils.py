@@ -56,10 +56,31 @@ def measure_example_divergence(examples_1, examples_2, get_compounds_fn):
   return _compute_divergence(compounds_1, compounds_2)
 
 
+def _shifted_enumerate(items, start_idx):
+  """Yields (index, item) pairs starting from start_idx.
+
+  This function yields the same elements as `enumerate`, but starting from the
+  specified start_idx.
+
+  Examples:
+    With items = ['a', 'b', 'c'], if start_idx is 0, then this function yields
+    (0, 'a'), (1, 'b'), (2, 'c') (the same behavior as `enumerate`), but if
+    start_idx is 1, then this function yields (1, 'b'), (2, 'c'), (0, 'a').
+
+  Args:
+    items: The list of items to enumerate over.
+    start_idx: The index to start yielding at.
+  """
+  for idx in range(start_idx, start_idx + len(items)):
+    shifted_idx = idx % len(items)
+    item = items[shifted_idx]
+    yield shifted_idx, item
+
+
 def _get_mcd_idx_1(divergence, examples_1, compounds_1, compounds_2, atoms,
-                   get_compounds_fn, get_atoms_fn):
+                   get_compounds_fn, get_atoms_fn, start_idx):
   """Return index of example to swap from examples_1 to examples_2."""
-  for example_idx, example in enumerate(examples_1):
+  for example_idx, example in _shifted_enumerate(examples_1, start_idx):
     # Ensure example does not contain any atom that appears only once in
     # examples_1. Otherwise, we would violate the atom constraint.
     if _contains_atom(example, atoms, get_atoms_fn):
@@ -88,9 +109,9 @@ def _get_mcd_idx_1(divergence, examples_1, compounds_1, compounds_2, atoms,
 
 
 def _get_mcd_idx_2(divergence, examples_2, compounds_1, compounds_2,
-                   get_compounds_fn):
+                   get_compounds_fn, start_idx):
   """Return index of example to swap from examples_2 to examples_1."""
-  for example_idx, example in enumerate(examples_2):
+  for example_idx, example in _shifted_enumerate(examples_2, start_idx):
     # Compute the change in compound divergence from moving the example from
     # examples_2 to examples_1.
     # TODO(petershaw): This could potentially be computed more effeciently
@@ -114,6 +135,8 @@ def _get_mcd_idx_2(divergence, examples_2, compounds_1, compounds_2,
 def maximize_divergence(examples_1, examples_2, get_compounds_fn, get_atoms_fn,
                         max_iterations, max_divergence, min_atom_count):
   """Approx. maximizes compound divergence by iteratively swapping examples."""
+  start_idx_1 = 0
+  start_idx_2 = 0
   for iteration_num in range(max_iterations):
     atoms_1_single = _get_atoms_below_count(
         examples_1, get_atoms_fn, atom_count=min_atom_count)
@@ -141,7 +164,8 @@ def maximize_divergence(examples_1, examples_2, get_compounds_fn, get_atoms_fn,
         compounds_2,
         atoms_1_single,
         get_compounds_fn=get_compounds_fn,
-        get_atoms_fn=get_atoms_fn)
+        get_atoms_fn=get_atoms_fn,
+        start_idx=start_idx_1)
 
     if not example_1:
       print("Cannot find example_1 idx to swap.")
@@ -159,7 +183,8 @@ def maximize_divergence(examples_1, examples_2, get_compounds_fn, get_atoms_fn,
         examples_2,
         compounds_1,
         compounds_2,
-        get_compounds_fn=get_compounds_fn)
+        get_compounds_fn=get_compounds_fn,
+        start_idx=start_idx_2)
 
     if not example_2:
       print("Cannot find example_2 idx to swap.")
@@ -167,10 +192,14 @@ def maximize_divergence(examples_1, examples_2, get_compounds_fn, get_atoms_fn,
 
     # Swap the examples.
     print("Swapping %s and %s." % (example_1, example_2))
-    del examples_1[example_1_idx]
-    examples_1.append(example_2)
-    del examples_2[example_2_idx]
-    examples_2.append(example_1)
+    examples_1[example_1_idx] = example_2
+    examples_2[example_2_idx] = example_1
+
+    # If a swap happens, we continue the search from those indices in the next
+    # iteration, since the previously skipped examples might be less likely to
+    # increase divergence.
+    start_idx_1 = (example_1_idx + 1) % len(examples_1)
+    start_idx_2 = (example_2_idx + 1) % len(examples_2)
 
   print("Max iterations reached.")
 

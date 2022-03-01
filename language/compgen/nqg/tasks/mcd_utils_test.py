@@ -60,7 +60,7 @@ class McdUtilsTest(tf.test.TestCase):
         examples_in_1, examples_in_2, _get_compounds_fn, _get_atoms_fn)
     self.assertEqual(
         examples_out_1,
-        ["walk twice", "jump thrice", "look and walk", "jump and walk"])
+        ["jump and walk", "walk twice", "jump thrice", "look and walk"])
     self.assertEqual(examples_out_2,
                      ["walk thrice", "walk and jump", "jump twice"])
 
