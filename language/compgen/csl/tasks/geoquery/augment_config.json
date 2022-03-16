@@ -1,0 +1,8 @@
+{
+  "min_recursions": 1,
+  "max_recursions": 20,
+  "temperature": 1,
+  "nonterminal_bias": 0,
+  "max_single_nt_applications": 1
+}
+

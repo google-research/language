@@ -1,0 +1,13 @@
+{
+  "batch_size": 256,
+  "learning_rate": 0.05,
+  "training_steps": 2000,
+  "steps_per_iteration": 1,
+  "save_checkpoint_every": 64,
+  "num_lhs_emb": 300,
+  "num_rhs_emb": 500,
+  "max_num_numerator_nodes": 500,
+  "max_num_nts": 4,
+  "max_single_nt_applications": 1,
+  "num_types": 64
+}

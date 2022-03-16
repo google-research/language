@@ -61,6 +61,20 @@ def normalize_text(input_text):
   return text
 
 
+_TEXT_NORMALIZER_FN = normalize_text
+_WORD_TOKENIZER_FN = nltk.tokenize.word_tokenize
+
+
+def set_text_normalizer_fn(fn):
+  global _TEXT_NORMALIZER_FN
+  _TEXT_NORMALIZER_FN = fn
+
+
+def set_word_tokenizer_fn(fn):
+  global _WORD_TOKENIZER_FN
+  _WORD_TOKENIZER_FN = fn
+
+
 def get_sent(pred):
   if pred.category == 'DONE':
     return pred.decontextualized_sentence
@@ -171,11 +185,9 @@ def compute_raw_sari_score(original, pred, references):
   if not references:
     raise ValueError('Annotation cannot be empty.')
   # Tokenize.
-  tokenized_original = nltk.tokenize.word_tokenize(original)
-  tokenized_prediction = nltk.tokenize.word_tokenize(pred)
-  tokenized_references = [
-      nltk.tokenize.word_tokenize(annot) for annot in references
-  ]
+  tokenized_original = _WORD_TOKENIZER_FN(original)
+  tokenized_prediction = _WORD_TOKENIZER_FN(pred)
+  tokenized_references = [_WORD_TOKENIZER_FN(annot) for annot in references]
   # Create vocab.
   vocab = set(tokenized_prediction + tokenized_original)
   for tokenized_reference in tokenized_references:
@@ -269,13 +281,13 @@ def compute_sentence_generation_scores(original_sent_dict, reference_dict,
 
   for ex_id in list(reference_dict.keys()):
     normalized_others = [
-        normalize_text(annot) for annot in reference_dict[ex_id]
+        _TEXT_NORMALIZER_FN(annot) for annot in reference_dict[ex_id]
     ]
     orig_sent = original_sent_dict[ex_id]
     model_pred_sent = pred_dict[ex_id]
 
-    normalized_orig_sent = normalize_text(orig_sent)
-    normalized_pred_sent = normalize_text(model_pred_sent)
+    normalized_orig_sent = _TEXT_NORMALIZER_FN(orig_sent)
+    normalized_pred_sent = _TEXT_NORMALIZER_FN(model_pred_sent)
     is_changed = normalized_pred_sent != normalized_orig_sent
     is_matched = normalized_pred_sent in normalized_others
 

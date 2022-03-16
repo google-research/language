@@ -57,7 +57,7 @@ def main(unused_argv):
   # Swap examples to meet atom constraint and maximize compound divergence.
   get_atoms_fn = (
       tmcd_utils.get_example_atoms_with_num_arguments
-      if FLAGS.get_atoms_with_num_arguments else tmcd_utils.get_examples_atoms)
+      if FLAGS.get_atoms_with_num_arguments else tmcd_utils.get_example_atoms)
   examples_1, examples_2 = mcd_utils.swap_examples(
       examples_1,
       examples_2,
