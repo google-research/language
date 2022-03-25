@@ -28,6 +28,7 @@ from language.xsp.model import metrics
 from language.xsp.model import tpu_utils
 from language.xsp.model import transformer
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 
 def _compute_loss(logits, decode_steps, target_len, weights, output_vocab_size,
@@ -57,7 +58,7 @@ def build_model_fn(model_config,
     """Model function for use with tf.learn.Estimator."""
     del params  # unused. model_fn is batch-size agnostic.
 
-    is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+    is_training = (mode == tf_estimator.ModeKeys.TRAIN)
     pretrained_variable_names = None
     scaffold_fn = None
 
@@ -87,7 +88,7 @@ def build_model_fn(model_config,
       clean_output_mask = tf.convert_to_tensor(clean_output_mask_list)
 
     # For inference, just compute the inference predictions and return.
-    if mode == tf.estimator.ModeKeys.PREDICT:
+    if mode == tf_estimator.ModeKeys.PREDICT:
       predictions = transformer.infer(
           model_config,
           input_embeddings,
@@ -100,10 +101,10 @@ def build_model_fn(model_config,
           beam_size=beam_size)
 
       if use_tpu:
-        return tf.estimator.tpu.TPUEstimatorSpec(
+        return tf_estimator.tpu.TPUEstimatorSpec(
             mode=mode, predictions=predictions, scaffold_fn=scaffold_fn)
       else:
-        return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
+        return tf_estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
     with tpu_utils.rewire_summary_calls(use_tpu):
       # Get training predictions.
@@ -131,7 +132,7 @@ def build_model_fn(model_config,
       batch_loss = _compute_loss(logits, loss_decode_steps, target_len, weights,
                                  output_vocab_size, model_config)
 
-      if mode == tf.estimator.ModeKeys.TRAIN:
+      if mode == tf_estimator.ModeKeys.TRAIN:
         pretrained_variable_names, scaffold_fn = load_from_checkpoint.init_model_from_checkpoint(
             model_config.model_parameters.pretrained_bert_dir,
             use_tpu=use_tpu,
@@ -142,19 +143,19 @@ def build_model_fn(model_config,
             batch_loss, model_config, pretrained_variable_names, use_tpu)
 
         if use_tpu:
-          return tf.estimator.tpu.TPUEstimatorSpec(
+          return tf_estimator.tpu.TPUEstimatorSpec(
               mode=mode,
               loss=batch_loss,
               train_op=train_op,
               scaffold_fn=scaffold_fn)
         else:
-          return tf.estimator.EstimatorSpec(
+          return tf_estimator.EstimatorSpec(
               mode=mode, loss=batch_loss, train_op=train_op)
 
     eval_metrics = metrics.create_metrics_ops(
         labels=labels, predictions=predictions)
 
-    return tf.estimator.EstimatorSpec(
+    return tf_estimator.EstimatorSpec(
         mode=mode, loss=batch_loss, eval_metric_ops=eval_metrics)
 
   return model_fn

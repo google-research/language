@@ -31,6 +31,7 @@ from language.question_answering.decatt_docreader.utils import span_utils
 from six.moves import range
 from six.moves import zip
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 from tensorflow.contrib import data as contrib_data
 
 flags.DEFINE_string("embeddings_path", None, "Path to pretrained embeddings.")
@@ -73,7 +74,7 @@ def model_function(features, labels, mode, params, embeddings):
   """
   del params
 
-  if mode == tf.estimator.ModeKeys.PREDICT:
+  if mode == tf_estimator.ModeKeys.PREDICT:
     # Add a dummy batch dimension if we are exporting the predictor.
     features = {k: tf.expand_dims(v, 0) for k, v in features.items()}
 
@@ -90,7 +91,7 @@ def model_function(features, labels, mode, params, embeddings):
         num_filters=FLAGS.num_char_filters)
     concat_emb = tf.concat([word_emb, char_emb], -1)
 
-    if mode == tf.estimator.ModeKeys.TRAIN:
+    if mode == tf_estimator.ModeKeys.TRAIN:
       concat_emb = tf.nn.dropout(concat_emb, 1.0 - FLAGS.dropout_ratio)
     return concat_emb
 
@@ -112,9 +113,9 @@ def model_function(features, labels, mode, params, embeddings):
       num_layers=FLAGS.num_layers,
       dropout_ratio=FLAGS.dropout_ratio,
       mode=mode,
-      use_cudnn=False if mode == tf.estimator.ModeKeys.PREDICT else None)
+      use_cudnn=False if mode == tf_estimator.ModeKeys.PREDICT else None)
 
-  if mode != tf.estimator.ModeKeys.PREDICT:
+  if mode != tf_estimator.ModeKeys.PREDICT:
     # [batch_size]
     start_labels, end_labels = labels
 
@@ -142,7 +143,7 @@ def model_function(features, labels, mode, params, embeddings):
   else:
     loss = None
 
-  if mode == tf.estimator.ModeKeys.TRAIN:
+  if mode == tf_estimator.ModeKeys.TRAIN:
     optimizer = tf.train.AdamOptimizer()
     gradients, variables = list(zip(*optimizer.compute_gradients(loss)))
     gradients, _ = tf.clip_by_global_norm(gradients, 5.0)
@@ -168,11 +169,11 @@ def model_function(features, labels, mode, params, embeddings):
       end_idx=(end_predictions + 1),
       score=predicted_score)
 
-  if mode == tf.estimator.ModeKeys.PREDICT:
+  if mode == tf_estimator.ModeKeys.PREDICT:
     # Remove the dummy batch dimension if we are exporting the predictor.
     predictions = {k: tf.squeeze(v, 0) for k, v in predictions.items()}
 
-  if mode == tf.estimator.ModeKeys.EVAL:
+  if mode == tf_estimator.ModeKeys.EVAL:
     text_summary = get_text_summary(
         question=features["question"],
         context=features["context"],
@@ -190,7 +191,7 @@ def model_function(features, labels, mode, params, embeddings):
   else:
     eval_metric_ops = None
 
-  estimator_spec = tf.estimator.EstimatorSpec(
+  estimator_spec = tf_estimator.EstimatorSpec(
       mode=mode,
       loss=loss,
       predictions=predictions,
@@ -293,7 +294,7 @@ def serving_input_receiver_function(embeddings):
       question=tf.placeholder(dtype=tf.string, shape=[None], name="question"),
       context=tf.placeholder(dtype=tf.string, shape=[None], name="context"))
   features = preprocess_mapper(placeholders, embeddings.get_lookup_table())
-  return tf.estimator.export.ServingInputReceiver(features, placeholders)
+  return tf_estimator.export.ServingInputReceiver(features, placeholders)
 
 
 def compare_metrics(best_eval_result, current_eval_result):

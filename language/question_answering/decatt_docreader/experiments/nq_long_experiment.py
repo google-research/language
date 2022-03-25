@@ -21,13 +21,14 @@ from language.common.utils import experiment_utils
 from language.question_answering.decatt_docreader.models import nq_long_model
 
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 
 def main(_):
   model_function, train_input_fn, eval_input_fn, serving_input_receiver_fn = (
       nq_long_model.experiment_functions())
 
-  best_exporter = tf.estimator.BestExporter(
+  best_exporter = tf_estimator.BestExporter(
       name="best",
       serving_input_receiver_fn=serving_input_receiver_fn,
       event_file_pattern="eval_default/*.tfevents.*",

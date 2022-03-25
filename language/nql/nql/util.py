@@ -22,6 +22,7 @@ import time
 
 from absl import logging
 import nql
+from tensorflow import estimator as tf_estimator
 import tensorflow.compat.v2 as tf
 
 
@@ -197,17 +198,17 @@ class ModelBuilder(object):
       m.context = self.build_context(params=params)
 
       self.config_model_prediction(m, features, params=params)
-      if mode == tf.estimator.ModeKeys.PREDICT:
-        return tf.estimator.EstimatorSpec(mode=mode, predictions=m.predictions)
+      if mode == tf_estimator.ModeKeys.PREDICT:
+        return tf_estimator.EstimatorSpec(mode=mode, predictions=m.predictions)
 
       self.config_model_training(m, labels, params)
-      if mode == tf.estimator.ModeKeys.TRAIN:
-        return tf.estimator.EstimatorSpec(
+      if mode == tf_estimator.ModeKeys.TRAIN:
+        return tf_estimator.EstimatorSpec(
             mode=mode, train_op=m.train_op, loss=m.loss)
 
       self.config_model_evaluation(m, labels, params)
-      if mode == tf.estimator.ModeKeys.EVAL:
-        return tf.estimator.EstimatorSpec(
+      if mode == tf_estimator.ModeKeys.EVAL:
+        return tf_estimator.EstimatorSpec(
             mode=mode, loss=m.loss, eval_metric_ops=m.evaluations)
 
       raise ValueError('illegal mode %r' % mode)
@@ -225,7 +226,7 @@ class ModelBuilder(object):
     Returns:
       a tf.estimator.Estimator
     """
-    return tf.estimator.Estimator(
+    return tf_estimator.Estimator(
         model_fn=self.build_model_fn(), model_dir=model_dir, params=params)
 
   def check_model_completeness(self, model):

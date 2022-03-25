@@ -29,6 +29,7 @@ import json
 from language.capwap.utils import io_utils
 from language.capwap.utils import text_utils
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 KEYS = frozenset(
     {"question_id", "image_id", "beam_id", "context_inputs", "question_inputs"})
@@ -111,7 +112,7 @@ def preprocess_mapper(features, params, lookup_table):
 
 def get_dataset(params, mode, caption_file, qa_file, scratch_file, vocab):
   """Gets a tf.data.Dataset with RC data for eval. Processes data online."""
-  assert mode == tf.estimator.ModeKeys.PREDICT
+  assert mode == tf_estimator.ModeKeys.PREDICT
 
   # Create writer for temp tfrecord data.
   tf.logging.info("Converting examples to TFRecords...")

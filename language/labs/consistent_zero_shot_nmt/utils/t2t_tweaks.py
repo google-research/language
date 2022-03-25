@@ -28,6 +28,7 @@ from tensor2tensor.utils import decoding
 from tensor2tensor.utils import t2t_model
 from tensor2tensor.utils import trainer_lib
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 from tensorflow.contrib import learn as contrib_learn
 
 FLAGS = flags.FLAGS
@@ -171,10 +172,10 @@ def create_experiment(
   # Input fns from Problem
   problem = hparams.problem
   train_input_fn = problem.make_estimator_input_fn(
-      tf.estimator.ModeKeys.TRAIN, hparams,
+      tf_estimator.ModeKeys.TRAIN, hparams,
       dataset_kwargs={"max_records": FLAGS.train_data_size})
   eval_input_fn = problem.make_estimator_input_fn(
-      tf.estimator.ModeKeys.EVAL, hparams)
+      tf_estimator.ModeKeys.EVAL, hparams)
 
   # Export
   exporter = None
@@ -183,7 +184,7 @@ def create_experiment(
       metric = eval_early_stopping_metric or "loss"
       return current_eval_result[metric] < best_eval_result[metric]
 
-    exporter = tf.estimator.BestExporter(
+    exporter = tf_estimator.BestExporter(
         name="best",
         serving_input_receiver_fn=lambda: problem.serving_input_fn(hparams),
         compare_fn=compare_fn,
@@ -244,9 +245,9 @@ def create_experiment(
   eval_hooks = contrib_learn.monitors.replace_monitors_with_hooks(
       eval_hooks, estimator)
 
-  train_spec = tf.estimator.TrainSpec(
+  train_spec = tf_estimator.TrainSpec(
       train_input_fn, max_steps=train_steps, hooks=train_hooks)
-  eval_spec = tf.estimator.EvalSpec(
+  eval_spec = tf_estimator.EvalSpec(
       eval_input_fn,
       steps=eval_steps,
       hooks=eval_hooks,

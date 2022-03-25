@@ -27,6 +27,7 @@ from language.labs.consistent_zero_shot_nmt.utils import model_utils
 from tensor2tensor.data_generators import text_encoder
 from tensor2tensor.layers import common_layers
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 from tensorflow.contrib import seq2seq as contrib_seq2seq
 from tensorflow.contrib import training as contrib_training
 
@@ -174,13 +175,13 @@ class BasicRNNDecoder(base.AbstractNMTModule):
     # Continuous decoding.
     elif hparams.decoder_continuous:
       # Scheduled mixing.
-      if mode == tf.estimator.ModeKeys.TRAIN and hparams.scheduled_training:
+      if mode == tf_estimator.ModeKeys.TRAIN and hparams.scheduled_training:
         helper = helpers.ScheduledContinuousEmbeddingTrainingHelper(
             inputs=inputs,
             sequence_length=inputs_length,
             mixing_concentration=hparams.scheduled_mixing_concentration)
       # Pure continuous decoding (hard to train!).
-      elif mode == tf.estimator.ModeKeys.TRAIN:
+      elif mode == tf_estimator.ModeKeys.TRAIN:
         helper = helpers.ContinuousEmbeddingTrainingHelper(
             inputs=inputs,
             sequence_length=inputs_length)
@@ -191,7 +192,7 @@ class BasicRNNDecoder(base.AbstractNMTModule):
     # Standard decoding.
     else:
       # Scheduled sampling.
-      if mode == tf.estimator.ModeKeys.TRAIN and hparams.scheduled_training:
+      if mode == tf_estimator.ModeKeys.TRAIN and hparams.scheduled_training:
         helper = contrib_seq2seq.ScheduledEmbeddingTrainingHelper(
             inputs=inputs,
             sequence_length=inputs_length,

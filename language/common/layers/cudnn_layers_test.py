@@ -25,6 +25,7 @@ from language.common.layers import cudnn_layers
 import numpy as np
 from six.moves import zip
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 from tensorflow.python.platform import test
 
@@ -41,7 +42,7 @@ class CudnnLayersTest(tf.test.TestCase):
           hidden_size=10,
           num_layers=3,
           dropout_ratio=0.2,
-          mode=tf.estimator.ModeKeys.TRAIN)
+          mode=tf_estimator.ModeKeys.TRAIN)
       with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         actual_output_emb = sess.run(output_emb)
@@ -70,7 +71,7 @@ class CudnnLayersTest(tf.test.TestCase):
             hidden_size=hidden_size,
             num_layers=num_layers,
             dropout_ratio=dropout_ratio,
-            mode=tf.estimator.ModeKeys.TRAIN,
+            mode=tf_estimator.ModeKeys.TRAIN,
             use_cudnn=True)
       saver = tf.train.Saver()
       with tf.Session(config=config) as sess:
@@ -86,7 +87,7 @@ class CudnnLayersTest(tf.test.TestCase):
             hidden_size=hidden_size,
             num_layers=num_layers,
             dropout_ratio=dropout_ratio,
-            mode=tf.estimator.ModeKeys.TRAIN,
+            mode=tf_estimator.ModeKeys.TRAIN,
             use_cudnn=False)
       saver = tf.train.Saver()
       with tf.Session(config=config) as sess:

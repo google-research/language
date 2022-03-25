@@ -21,6 +21,7 @@ from language.common.utils import tensor_utils
 from language.common.utils import tpu_utils
 from language.orqa.datasets import ict_dataset
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 import tensorflow_hub as hub
 
 
@@ -74,7 +75,7 @@ def create_ict_module(params, mode):
       tags_and_args=tags_and_args)
   ict_module = hub.Module(
       ict_module_spec,
-      tags={"train"} if mode == tf.estimator.ModeKeys.TRAIN else {},
+      tags={"train"} if mode == tf_estimator.ModeKeys.TRAIN else {},
       trainable=True)
   hub.register_module_for_export(ict_module, "ict")
   return ict_module
@@ -160,13 +161,13 @@ def model_fn(features, labels, mode, params):
         unmasked_accuracy=unmasked_accuracy)
 
   if params["use_tpu"]:
-    return tf.estimator.tpu.TPUEstimatorSpec(
+    return tf_estimator.tpu.TPUEstimatorSpec(
         mode=mode,
         loss=loss,
         train_op=train_op,
         eval_metrics=(metric_fn, metric_args))
   else:
-    return tf.estimator.EstimatorSpec(
+    return tf_estimator.EstimatorSpec(
         mode=mode,
         loss=loss,
         train_op=train_op,
@@ -191,7 +192,7 @@ def input_fn(params, is_train):
 
 def exporter():
   """Create exporters."""
-  serving_input_fn = tf.estimator.export.build_raw_serving_input_receiver_fn(
+  serving_input_fn = tf_estimator.export.build_raw_serving_input_receiver_fn(
       features=dict(
           block_ids=tf.placeholder(tf.int32, [None, None]),
           block_mask=tf.placeholder(tf.int32, [None, None]),

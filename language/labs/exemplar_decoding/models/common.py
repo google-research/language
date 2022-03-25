@@ -22,6 +22,7 @@ import language.labs.exemplar_decoding.models.adam as adam
 from language.labs.exemplar_decoding.models.hyperlstm import HyperLSTMCell
 from language.labs.exemplar_decoding.utils.data import id2text
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 
 def dimension_value(dimension):
@@ -81,7 +82,7 @@ def get_rnn_cell(mode,
           reuse=reuse)
     else:
       assert False
-    if mode == tf.estimator.ModeKeys.TRAIN and dropout > 0.:
+    if mode == tf_estimator.ModeKeys.TRAIN and dropout > 0.:
       cell = tf.nn.rnn_cell.DropoutWrapper(
           cell,
           input_size=input_size,

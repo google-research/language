@@ -38,6 +38,7 @@ from bert import modeling
 from bert import optimization
 import numpy as np
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 flags = tf.flags
 
@@ -243,7 +244,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
     input_ids = features["input_ids"]
     segment_ids = features["segment_ids"]
 
-    is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+    is_training = (mode == tf_estimator.ModeKeys.TRAIN)
     seq_length = modeling.get_shape_list(input_ids)[1]
     query_length = FLAGS.max_query_length
     batch_size = params["batch_size"]
@@ -321,7 +322,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
                       init_string)
 
     output_spec = None
-    if mode == tf.estimator.ModeKeys.TRAIN:
+    if mode == tf_estimator.ModeKeys.TRAIN:
       # Computes the loss for word prediction.
       loss = tf.losses.sparse_softmax_cross_entropy(
           input_ids[:, 2:query_length],
@@ -332,10 +333,10 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
                                                num_train_steps,
                                                num_warmup_steps, use_tpu)
 
-      output_spec = tf.estimator.tpu.TPUEstimatorSpec(
+      output_spec = tf_estimator.tpu.TPUEstimatorSpec(
           mode=mode, loss=loss, train_op=train_op, scaffold_fn=scaffold_fn)
 
-    elif mode == tf.estimator.ModeKeys.PREDICT:
+    elif mode == tf_estimator.ModeKeys.PREDICT:
       predictions = {
           "unique_ids": tf.identity(unique_ids),
           "input_ids": output_ids,
@@ -345,7 +346,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
           "end_positions": tf.identity(features["end_positions"]),
           "answer_types": tf.identity(features["answer_types"])
       }
-      output_spec = tf.estimator.tpu.TPUEstimatorSpec(
+      output_spec = tf_estimator.tpu.TPUEstimatorSpec(
           mode=mode, predictions=predictions, scaffold_fn=scaffold_fn)
     else:
       raise ValueError("Only TRAIN and PREDICT modes are supported: %s" %
@@ -471,13 +472,13 @@ def main(_):
     tpu_cluster_resolver = tf.distribute.cluster_resolver.TPUClusterResolver(
         FLAGS.tpu_name, zone=FLAGS.tpu_zone, project=FLAGS.gcp_project)
 
-  is_per_host = tf.estimator.tpu.InputPipelineConfig.PER_HOST_V2
-  run_config = tf.estimator.tpu.RunConfig(
+  is_per_host = tf_estimator.tpu.InputPipelineConfig.PER_HOST_V2
+  run_config = tf_estimator.tpu.RunConfig(
       cluster=tpu_cluster_resolver,
       master=FLAGS.session_master,
       model_dir=FLAGS.output_dir,
       save_checkpoints_steps=FLAGS.save_checkpoints_steps,
-      tpu_config=tf.estimator.tpu.TPUConfig(
+      tpu_config=tf_estimator.tpu.TPUConfig(
           iterations_per_loop=FLAGS.iterations_per_loop,
           tpu_job_name=FLAGS.tpu_job_name,
           num_shards=FLAGS.num_tpu_cores,
@@ -502,7 +503,7 @@ def main(_):
 
   # If TPU is not available, this will fall back to normal Estimator on CPU
   # or GPU.
-  estimator = tf.estimator.tpu.TPUEstimator(
+  estimator = tf_estimator.tpu.TPUEstimator(
       use_tpu=FLAGS.use_tpu,
       model_fn=model_fn,
       config=run_config,

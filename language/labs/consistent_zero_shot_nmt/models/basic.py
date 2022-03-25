@@ -30,6 +30,7 @@ from tensor2tensor.layers import common_layers
 from tensor2tensor.utils import registry
 from tensor2tensor.utils import t2t_model
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 from tensorflow.contrib import seq2seq as contrib_seq2seq
 
 
@@ -109,7 +110,7 @@ class BasicMultilingualNmt(t2t_model.T2TModel):
     target_tags = features["target_tags"]
 
     # Expand target tags to beam width, if necessary.
-    if self._hparams.mode == tf.estimator.ModeKeys.PREDICT:
+    if self._hparams.mode == tf_estimator.ModeKeys.PREDICT:
       # <float32> [batch_size * beam_width, 1, 1, emb_size].
       beam_width = self._hparams.beam_width
       target_tags = tf.tile(target_tags, [beam_width, 1, 1, 1])
@@ -147,7 +148,7 @@ class BasicMultilingualNmt(t2t_model.T2TModel):
     # Preprocess body output.
     last_only = (
         target_modality.top_is_pointwise and
-        self.hparams.mode == tf.estimator.ModeKeys.PREDICT and
+        self.hparams.mode == tf_estimator.ModeKeys.PREDICT and
         not self.hparams.force_full_predict)
     if last_only:
       # Take body outputs for the last position only.

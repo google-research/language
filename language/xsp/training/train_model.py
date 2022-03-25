@@ -27,6 +27,7 @@ import language.xsp.model.input_pipeline as input_pipeline
 import language.xsp.model.model_builder as model_builder
 import language.xsp.model.model_config as model_config
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 import tensorflow.compat.v1.gfile as gfile
 
 
@@ -114,13 +115,13 @@ def main(unused_argv):
 
   training_options = config.training_options
   use_tpu = FLAGS.use_tpu
-  run_config = tf.estimator.tpu.RunConfig(
+  run_config = tf_estimator.tpu.RunConfig(
       master=FLAGS.primary,
       model_dir=FLAGS.model_dir,
       save_summary_steps=1,
       save_checkpoints_steps=FLAGS.steps_between_saves,
       keep_checkpoint_max=KEEP_CHECKPOINTS_MAX,
-      tpu_config=tf.estimator.tpu.TPUConfig(
+      tpu_config=tf_estimator.tpu.TPUConfig(
           iterations_per_loop=training_options.tpu_iterations_per_loop,
           num_shards=FLAGS.num_tpu_shards))
 
@@ -129,7 +130,7 @@ def main(unused_argv):
   model_fn = model_builder.build_model_fn(
       config, FLAGS.output_vocab, clean_output_vocab_path="", use_tpu=use_tpu)
 
-  estimator = tf.estimator.tpu.TPUEstimator(
+  estimator = tf_estimator.tpu.TPUEstimator(
       model_fn=model_fn,
       use_tpu=use_tpu,
       config=run_config,
@@ -156,7 +157,7 @@ def main(unused_argv):
     # When FLAGS.init_checkpoint = None, the latest checkpoint will be evaluated
     num_train_steps = int(config.training_options.training_steps)
 
-    for ckpt in tf.estimator.training.checkpoints_iterator(FLAGS.model_dir):
+    for ckpt in tf_estimator.training.checkpoints_iterator(FLAGS.model_dir):
       acc = evaluate(estimator, eval_input_fn, ckpt)
       if acc > max_acc:
         copy_checkpoint(

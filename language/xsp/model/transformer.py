@@ -19,6 +19,7 @@ from language.xsp.model import common_layers
 from language.xsp.model import constants
 from language.xsp.model import decode_utils
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 # TODO(alanesuhr): Bias beam search based on sequence length.
 ALPHA = 0.0
@@ -65,7 +66,7 @@ def _build_transformer_decoder(encoder_output,
   _set_initializer()
 
   # Only apply dropout during training, not eval or inference.
-  perform_dropout = (mode == tf.estimator.ModeKeys.TRAIN)
+  perform_dropout = (mode == tf_estimator.ModeKeys.TRAIN)
   if perform_dropout:
     decoder_input = tf.nn.dropout(
         decoder_input,
@@ -98,7 +99,7 @@ def _build_transformer_decoder(encoder_output,
 
   # If set, only decode a single step, otherwise decode all steps in parallel.
   if single_step_index is not None:
-    if mode != tf.estimator.ModeKeys.PREDICT:
+    if mode != tf_estimator.ModeKeys.PREDICT:
       raise ValueError("Single step decoding only supported during inference.")
 
     # Important optimization if using a single layer decoder.

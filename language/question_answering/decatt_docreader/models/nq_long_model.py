@@ -28,6 +28,7 @@ from language.question_answering.decatt_docreader.models import nq_long_decatt_m
 from language.question_answering.decatt_docreader.utils import nq_long_utils
 
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 flags.DEFINE_string("embeddings_path", None, "Path to pretrained embeddings.")
 flags.DEFINE_integer("max_vocab_size", 4000000, "Maximum vocab size.")
@@ -69,7 +70,7 @@ def model_function(features, labels, mode, params, embeddings):
   """
   del params  # Unused.
 
-  if mode == tf.estimator.ModeKeys.PREDICT:
+  if mode == tf_estimator.ModeKeys.PREDICT:
     # Add a dummy batch dimension if we are exporting the predictor.
     features = {k: tf.expand_dims(v, 0) for k, v in features.items()}
 
@@ -114,7 +115,7 @@ def model_function(features, labels, mode, params, embeddings):
   # [batch_size, 1 + max_contexts]
   context_scores = tf.concat([null_score, non_null_context_scores], 1)
 
-  if mode != tf.estimator.ModeKeys.PREDICT:
+  if mode != tf_estimator.ModeKeys.PREDICT:
     labels = nq_long_utils.truncate_labels(labels, FLAGS.max_contexts)
 
     # In the data, NULL is given index -1 but this is not compatible with
@@ -169,11 +170,11 @@ def model_function(features, labels, mode, params, embeddings):
   export_long_answer_score = tf.reduce_max(non_null_context_scores, 1)
   predictions = dict(idx=export_long_answer_idx, score=export_long_answer_score)
 
-  if mode == tf.estimator.ModeKeys.PREDICT:
+  if mode == tf_estimator.ModeKeys.PREDICT:
     # Remove the dummy batch dimension if we are exporting the predictor.
     predictions = {k: tf.squeeze(v, 0) for k, v in predictions.items()}
 
-  estimator_spec = tf.estimator.EstimatorSpec(
+  estimator_spec = tf_estimator.EstimatorSpec(
       mode=mode,
       loss=loss,
       predictions=predictions,
@@ -230,7 +231,7 @@ def serving_input_receiver_function(embeddings):
       question=tf.placeholder(dtype=tf.string, shape=[], name="question"),
       context=tf.placeholder(dtype=tf.string, shape=[None], name="context"))
   features = preprocess_mapper(placeholders, embeddings.get_lookup_table())
-  return tf.estimator.export.ServingInputReceiver(features, placeholders)
+  return tf_estimator.export.ServingInputReceiver(features, placeholders)
 
 
 def compare_metrics(best_eval_result, current_eval_result):

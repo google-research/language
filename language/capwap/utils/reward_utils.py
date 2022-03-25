@@ -32,6 +32,7 @@ from language.capwap.utils import tensor_utils
 from language.capwap.utils import text_utils
 from language.capwap.utils import transformer_utils
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 import tensorflow_hub as hub
 
 RolloutOutputs = collections.namedtuple(
@@ -635,7 +636,7 @@ def write_spans(caption_file, question_file, output_file, vocab, params):
   def model_fn(features, labels, mode, params):
     """A model function satisfying the tf.estimator API."""
     del labels
-    assert mode == tf.estimator.ModeKeys.PREDICT, "Mode should be PREDICT."
+    assert mode == tf_estimator.ModeKeys.PREDICT, "Mode should be PREDICT."
     span, _ = rc_span(
         question_ids=features["question_inputs"].token_ids,
         question_mask=features["question_inputs"].mask,
@@ -644,7 +645,7 @@ def write_spans(caption_file, question_file, output_file, vocab, params):
         rc_model=hub.Module(params["rc_model"]),
         vocab=vocab,
         no_answer_bias=params.get("no_answer_bias", -1e4))
-    return tf.estimator.tpu.TPUEstimatorSpec(
+    return tf_estimator.tpu.TPUEstimatorSpec(
         mode=mode,
         predictions=dict(
             question_id=features["question_id"],

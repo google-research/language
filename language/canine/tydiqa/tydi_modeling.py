@@ -26,6 +26,7 @@ from language.canine import bert_optimization
 from language.canine import modeling as canine_modeling
 from language.canine.tydiqa import data
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 
 class GenericModelBuilder(metaclass=abc.ABCMeta):
@@ -106,7 +107,7 @@ class GenericModelBuilder(metaclass=abc.ABCMeta):
       input_mask = features["input_mask"]
       segment_ids = features["segment_ids"]
 
-      is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+      is_training = (mode == tf_estimator.ModeKeys.TRAIN)
 
       encoder_model = self.create_encoder_model(is_training, input_ids,
                                                 input_mask, segment_ids)
@@ -140,7 +141,7 @@ class GenericModelBuilder(metaclass=abc.ABCMeta):
                      init_string)
 
       output_spec = None
-      if mode == tf.estimator.ModeKeys.TRAIN:
+      if mode == tf_estimator.ModeKeys.TRAIN:
         seq_length = bert_modeling.get_shape_list(input_ids)[1]
 
         # Computes the loss for positions.
@@ -176,19 +177,19 @@ class GenericModelBuilder(metaclass=abc.ABCMeta):
                                                       num_train_steps,
                                                       num_warmup_steps, use_tpu)
 
-        output_spec = tf.estimator.tpu.TPUEstimatorSpec(
+        output_spec = tf_estimator.tpu.TPUEstimatorSpec(
             mode=mode,
             loss=total_loss,
             train_op=train_op,
             scaffold_fn=scaffold_fn)
-      elif mode == tf.estimator.ModeKeys.PREDICT:
+      elif mode == tf_estimator.ModeKeys.PREDICT:
         predictions = {
             "unique_ids": unique_ids,
             "start_logits": start_logits,
             "end_logits": end_logits,
             "answer_type_logits": answer_type_logits,
         }
-        output_spec = tf.estimator.tpu.TPUEstimatorSpec(
+        output_spec = tf_estimator.tpu.TPUEstimatorSpec(
             mode=mode, predictions=predictions, scaffold_fn=scaffold_fn)
       else:
         raise ValueError(f"Only TRAIN and PREDICT modes are supported: {mode}")

@@ -34,6 +34,7 @@ from language.capwap.utils import experiment_utils
 from language.capwap.utils import reward_utils
 from language.capwap.utils import text_utils
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 import tensorflow_hub as hub
 
 DATA_DIR = os.getenv("CAPWAP_DATA", "data")
@@ -98,7 +99,7 @@ def input_fn(params, input_file):
 def model_fn(features, labels, mode, params):
   """A model function satisfying the tf.estimator API."""
   del labels
-  assert mode == tf.estimator.ModeKeys.PREDICT, "Mode should be PREDICT."
+  assert mode == tf_estimator.ModeKeys.PREDICT, "Mode should be PREDICT."
   rc_model = hub.Module(params["rc_model"])
   outputs = rc_model(
       inputs=dict(
@@ -117,7 +118,7 @@ def model_fn(features, labels, mode, params):
       tf.logical_and(
           tf.equal(start, tf.cast(features["start_positions"] - 1, tf.int32)),
           tf.equal(end, tf.cast(features["end_positions"] - 1, tf.int32))))
-  return tf.estimator.tpu.TPUEstimatorSpec(
+  return tf_estimator.tpu.TPUEstimatorSpec(
       mode=mode,
       predictions=dict(
           unique_ids=features["unique_ids"],

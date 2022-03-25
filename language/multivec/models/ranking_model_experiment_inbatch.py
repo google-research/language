@@ -30,6 +30,7 @@ from language.multivec.models import checkpoint_utils
 from language.multivec.models.metrics import rank_metrics
 from language.multivec.models.metrics import RawResult
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 FLAGS = flags.FLAGS
 ismasked = "masked"
@@ -616,7 +617,7 @@ def model_fn_builder_dual(bert_config, init_checkpoint, learning_rate,
     label_ids = features["label_ids"]
     prior_scores = features["scores"]
 
-    is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+    is_training = (mode == tf_estimator.ModeKeys.TRAIN)
 
     (total_loss, logits) =\
         create_de_model(
@@ -653,19 +654,19 @@ def model_fn_builder_dual(bert_config, init_checkpoint, learning_rate,
                       init_string)
 
     output_spec = None
-    if mode == tf.estimator.ModeKeys.TRAIN:
+    if mode == tf_estimator.ModeKeys.TRAIN:
 
       train_op = optimization.create_optimizer(total_loss, learning_rate,
                                                num_train_steps,
                                                num_warmup_steps, use_tpu)
 
-      output_spec = tf.estimator.tpu.TPUEstimatorSpec(
+      output_spec = tf_estimator.tpu.TPUEstimatorSpec(
           mode=mode,
           loss=total_loss,
           train_op=train_op,
           scaffold_fn=scaffold_fn)
 
-    elif mode == tf.estimator.ModeKeys.PREDICT:
+    elif mode == tf_estimator.ModeKeys.PREDICT:
       predictions = {
           "q_ids": q_ids,
           "cand_nums": cand_nums,
@@ -673,7 +674,7 @@ def model_fn_builder_dual(bert_config, init_checkpoint, learning_rate,
           "label_ids": label_ids,
           "scores": prior_scores,
       }
-      output_spec = tf.estimator.tpu.TPUEstimatorSpec(
+      output_spec = tf_estimator.tpu.TPUEstimatorSpec(
           mode=mode, predictions=predictions, scaffold_fn=scaffold_fn)
     return output_spec
 
@@ -699,7 +700,7 @@ def model_fn_builder_single(bert_config, init_checkpoint, learning_rate,
     segment_ids = features["segment_ids"]
     label_ids = features["label_ids"]
     prior_scores = features["scores"]
-    is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+    is_training = (mode == tf_estimator.ModeKeys.TRAIN)
 
     (total_loss, logits) = create_ca_model(bert_config, is_training, input_ids,
                                            input_mask, segment_ids,
@@ -732,19 +733,19 @@ def model_fn_builder_single(bert_config, init_checkpoint, learning_rate,
                       init_string)
 
     output_spec = None
-    if mode == tf.estimator.ModeKeys.TRAIN:
+    if mode == tf_estimator.ModeKeys.TRAIN:
 
       train_op = optimization.create_optimizer(total_loss, learning_rate,
                                                num_train_steps,
                                                num_warmup_steps, use_tpu)
 
-      output_spec = tf.estimator.tpu.TPUEstimatorSpec(
+      output_spec = tf_estimator.tpu.TPUEstimatorSpec(
           mode=mode,
           loss=total_loss,
           train_op=train_op,
           scaffold_fn=scaffold_fn)
 
-    elif mode == tf.estimator.ModeKeys.PREDICT:
+    elif mode == tf_estimator.ModeKeys.PREDICT:
       predictions = {
           "q_ids": q_ids,
           "cand_nums": cand_nums,
@@ -752,7 +753,7 @@ def model_fn_builder_single(bert_config, init_checkpoint, learning_rate,
           "label_ids": label_ids,
           "scores": prior_scores,
       }
-      output_spec = tf.estimator.tpu.TPUEstimatorSpec(
+      output_spec = tf_estimator.tpu.TPUEstimatorSpec(
           mode=mode, predictions=predictions, scaffold_fn=scaffold_fn)
     return output_spec
 
@@ -977,14 +978,14 @@ def main(_):
     tpu_cluster_resolver = tf.distribute.cluster_resolver.TPUClusterResolver(
         FLAGS.tpu_name, zone=FLAGS.tpu_zone, project=FLAGS.gcp_project)
 
-  is_per_host = tf.estimator.tpu.InputPipelineConfig.PER_HOST_V2
-  run_config = tf.estimator.tpu.RunConfig(
+  is_per_host = tf_estimator.tpu.InputPipelineConfig.PER_HOST_V2
+  run_config = tf_estimator.tpu.RunConfig(
       cluster=tpu_cluster_resolver,
       master=FLAGS.master,
       model_dir=FLAGS.output_dir,
       save_checkpoints_steps=FLAGS.save_checkpoints_steps,
       keep_checkpoint_max=FLAGS.keep_checkpoint_max,
-      tpu_config=tf.estimator.tpu.TPUConfig(
+      tpu_config=tf_estimator.tpu.TPUConfig(
           iterations_per_loop=FLAGS.iterations_per_loop,
           num_shards=FLAGS.num_tpu_cores,
           per_host_input_for_training=is_per_host,
@@ -1018,7 +1019,7 @@ def main(_):
       use_tpu=FLAGS.use_tpu,
       use_one_hot_embeddings=FLAGS.use_tpu)
 
-  estimator = tf.estimator.tpu.TPUEstimator(
+  estimator = tf_estimator.tpu.TPUEstimator(
       use_tpu=FLAGS.use_tpu,
       model_fn=model_fn,
       config=run_config,

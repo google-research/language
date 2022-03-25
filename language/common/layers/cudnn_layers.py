@@ -19,6 +19,7 @@ from __future__ import print_function
 
 from six.moves import range
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 from tensorflow.contrib import cudnn_rnn as contrib_cudnn_rnn
 from tensorflow.contrib import rnn as contrib_rnn
 
@@ -96,7 +97,7 @@ def stacked_bilstm(input_emb, input_len, hidden_size, num_layers, dropout_ratio,
 
   for i in range(num_layers):
     with tf.variable_scope("lstm_{}".format(i)):
-      if mode == tf.estimator.ModeKeys.TRAIN:
+      if mode == tf_estimator.ModeKeys.TRAIN:
         input_emb = tf.nn.dropout(input_emb, 1.0 - dropout_ratio)
 
       output_emb = []

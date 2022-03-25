@@ -27,6 +27,7 @@ from bert import tokenization
 import six
 from six.moves import range
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver
 from tensorflow.contrib import data as contrib_data
 from tensorflow.contrib import tpu as contrib_tpu
@@ -575,7 +576,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate, use_tpu,
                       init_string)
 
     output_spec = None
-    if mode == tf.estimator.ModeKeys.TRAIN:
+    if mode == tf_estimator.ModeKeys.TRAIN:
 
       one_hot_positions = tf.one_hot(label_ids, depth=2, dtype=tf.float32)
       loss = -tf.reduce_mean(
@@ -593,7 +594,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate, use_tpu,
       output_spec = contrib_tpu.TPUEstimatorSpec(
           mode=mode, loss=loss, train_op=train_op, scaffold_fn=scaffold_fn)
 
-    elif mode == tf.estimator.ModeKeys.EVAL:
+    elif mode == tf_estimator.ModeKeys.EVAL:
 
       one_hot_positions = tf.one_hot(label_ids, depth=2, dtype=tf.float32)
       per_example_loss = -1 * tf.reduce_sum(
@@ -617,7 +618,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate, use_tpu,
           eval_metrics=eval_metrics,
           scaffold_fn=scaffold_fn)
 
-    elif mode == tf.estimator.ModeKeys.PREDICT:
+    elif mode == tf_estimator.ModeKeys.PREDICT:
       predictions = {
           "unique_ids": unique_ids,
           "membership_probs": membership_probs

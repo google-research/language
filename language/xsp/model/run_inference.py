@@ -36,6 +36,7 @@ from language.xsp.model.model_config import load_config
 
 import sqlparse
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 FLAGS = flags.FLAGS
 
@@ -193,7 +194,7 @@ def setup_graph():
       FLAGS.output_vocab_filepath,
       FLAGS.clean_output_vocab_filepath,
       beam_size=FLAGS.beam_size)
-  mode = tf.estimator.ModeKeys.PREDICT
+  mode = tf_estimator.ModeKeys.PREDICT
   predictions = model_fn(features, labels, mode).predictions
 
   saver = tf.train.Saver()

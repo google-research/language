@@ -20,6 +20,7 @@ from __future__ import print_function
 
 from language.question_answering.decatt_docreader.layers import decomposable_attention as decatt
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 
 class DecomposableAttentionTest(tf.test.TestCase):
@@ -38,7 +39,7 @@ class DecomposableAttentionTest(tf.test.TestCase):
           hidden_size=5,
           hidden_layers=2,
           dropout_ratio=0.1,
-          mode=tf.estimator.ModeKeys.TRAIN)
+          mode=tf_estimator.ModeKeys.TRAIN)
       with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         actual_output_emb = sess.run(output_emb)

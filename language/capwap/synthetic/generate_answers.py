@@ -37,6 +37,7 @@ from absl import flags
 from bert import modeling
 import numpy as np
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 
 from tensorflow.contrib import data as contrib_data
@@ -363,7 +364,7 @@ def model_fn_builder(bert_config, init_checkpoint, use_tpu, span_encoding,
         "answer_types": tf.identity(features["answer_types"])
     })
 
-    output_spec = tf.estimator.tpu.TPUEstimatorSpec(
+    output_spec = tf_estimator.tpu.TPUEstimatorSpec(
         mode=mode, predictions=predictions, scaffold_fn=scaffold_fn)
 
     return output_spec
@@ -437,12 +438,12 @@ def make_estimator_from_flags(bert_config, init_checkpoint):
   if FLAGS.use_tpu and FLAGS.tpu_name:
     tpu_cluster_resolver = tf.distribute.cluster_resolver.TPUClusterResolver(
         FLAGS.tpu_name, zone=FLAGS.tpu_zone, project=FLAGS.gcp_project)
-  is_per_host = tf.estimator.tpu.InputPipelineConfig.PER_HOST_V2
-  run_config = tf.estimator.tpu.RunConfig(
+  is_per_host = tf_estimator.tpu.InputPipelineConfig.PER_HOST_V2
+  run_config = tf_estimator.tpu.RunConfig(
       cluster=tpu_cluster_resolver,
       master=FLAGS.session_master,
       model_dir=FLAGS.output_dir,
-      tpu_config=tf.estimator.tpu.TPUConfig(
+      tpu_config=tf_estimator.tpu.TPUConfig(
           iterations_per_loop=FLAGS.iterations_per_loop,
           tpu_job_name=FLAGS.tpu_job_name,
           num_shards=FLAGS.num_tpu_cores,
@@ -458,7 +459,7 @@ def make_estimator_from_flags(bert_config, init_checkpoint):
 
   # If TPU is not available, this will fall back to normal Estimator on CPU
   # or GPU.
-  return tf.estimator.tpu.TPUEstimator(
+  return tf_estimator.tpu.TPUEstimator(
       use_tpu=FLAGS.use_tpu,
       model_fn=model_fn,
       config=run_config,

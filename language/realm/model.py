@@ -24,6 +24,7 @@ from language.common.utils import tensor_utils
 from language.realm import featurization
 from language.realm import preprocessing
 from tensorflow.compat import v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 import tensorflow_hub as hub
 
 
@@ -54,14 +55,14 @@ def model_fn(features, labels, mode, params):
   bert_module = hub.Module(
       spec=params["bert_hub_module_handle"],
       name="bert",
-      tags={"train"} if mode == tf.estimator.ModeKeys.TRAIN else {},
+      tags={"train"} if mode == tf_estimator.ModeKeys.TRAIN else {},
       trainable=True)
   hub.register_module_for_export(bert_module, "bert")
 
   embedder_module = hub.Module(
       spec=params["embedder_hub_module_handle"],
       name="embedder",
-      tags={"train"} if mode == tf.estimator.ModeKeys.TRAIN else {},
+      tags={"train"} if mode == tf_estimator.ModeKeys.TRAIN else {},
       trainable=True)
   hub.register_module_for_export(embedder_module, "embedder")
 
@@ -71,7 +72,7 @@ def model_fn(features, labels, mode, params):
     query_embedder_module = hub.Module(
         spec=params["embedder_hub_module_handle"],
         name="embedder",
-        tags={"train"} if mode == tf.estimator.ModeKeys.TRAIN else {},
+        tags={"train"} if mode == tf_estimator.ModeKeys.TRAIN else {},
         trainable=True)
     hub.register_module_for_export(embedder_module, "query_embedder")
 
@@ -188,7 +189,7 @@ def model_fn(features, labels, mode, params):
   # Evaluation
   # ==============================
   eval_metric_ops = None if params["use_tpu"] else dict()
-  if mode != tf.estimator.ModeKeys.PREDICT:
+  if mode != tf_estimator.ModeKeys.PREDICT:
     # [batch_size, num_masks]
     retrieval_utility = marginal_gold_log_probs - gold_log_probs[:, 0]
     retrieval_utility *= tf.cast(features["mlm_mask"], tf.float32)
@@ -212,7 +213,7 @@ def model_fn(features, labels, mode, params):
   predictions = dict()
 
   if params["use_tpu"]:
-    return tf.estimator.tpu.TPUEstimatorSpec(
+    return tf_estimator.tpu.TPUEstimatorSpec(
         mode=mode,
         loss=loss,
         train_op=train_op,
@@ -223,7 +224,7 @@ def model_fn(features, labels, mode, params):
       # quick feedback from tensorboard summaries when debugging locally.
       with tf.control_dependencies([u for _, u in eval_metric_ops.values()]):
         loss = tf.identity(loss)
-    return tf.estimator.EstimatorSpec(
+    return tf_estimator.EstimatorSpec(
         mode=mode,
         loss=loss,
         train_op=train_op,

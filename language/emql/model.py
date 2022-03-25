@@ -37,6 +37,7 @@ from absl import flags
 from language.emql import module
 from language.emql import util
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 import tensorflow_hub as hub
 
 FLAGS = flags.FLAGS
@@ -1191,7 +1192,7 @@ def build_model_fn(
     emql = EmQL(name, params, data_loader)
 
     # Define behaviors for different operationstrain / eval / pred
-    if mode == tf.estimator.ModeKeys.TRAIN:
+    if mode == tf_estimator.ModeKeys.TRAIN:
       loss, tensors = emql.get_tf_model(name, features, params)
       optimizer = tf.train.AdamOptimizer(params['learning_rate'])
       gvs = optimizer.compute_gradients(loss)
@@ -1199,10 +1200,10 @@ def build_model_fn(
                     for grad, var in gvs if grad is not None]
       train_op = optimizer.apply_gradients(
           capped_gvs, global_step=tf.train.get_global_step())
-      return tf.estimator.EstimatorSpec(
+      return tf_estimator.EstimatorSpec(
           mode=mode, train_op=train_op, loss=loss)
 
-    elif mode == tf.estimator.ModeKeys.EVAL:
+    elif mode == tf_estimator.ModeKeys.EVAL:
       loss, tensors = emql.get_tf_model(name, features, params)
 
       if name == 'mixture':
@@ -1222,13 +1223,13 @@ def build_model_fn(
       else:
         evaluations = emql.run_tf_evaluation(
             tensors['logits'], tensors['labels'])
-      return tf.estimator.EstimatorSpec(
+      return tf_estimator.EstimatorSpec(
           mode=mode, loss=loss, eval_metric_ops=evaluations)
 
-    elif mode == tf.estimator.ModeKeys.PREDICT:
+    elif mode == tf_estimator.ModeKeys.PREDICT:
       loss, tensors = emql.get_tf_model(name, features, params)
       predictions = emql.get_tf_prediction(name, features, tensors)
-      return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
+      return tf_estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
     else:
       raise ValueError('illegal mode %r' % mode)

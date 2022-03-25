@@ -20,6 +20,7 @@ from __future__ import print_function
 from absl import flags
 from language.common.utils import experiment_utils
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 FLAGS = flags.FLAGS
 
@@ -39,10 +40,10 @@ class ExperimentUtilsTest(tf.test.TestCase):
     train_op = optimizer.minimize(
         loss, global_step=tf.train.get_or_create_global_step())
     if params["use_tpu"]:
-      return tf.estimator.tpu.TPUEstimatorSpec(
+      return tf_estimator.tpu.TPUEstimatorSpec(
           mode=mode, loss=loss, train_op=train_op)
     else:
-      return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
+      return tf_estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
 
   def _simple_input_function(self, params):
     features = [[1.0, 0.0, -1.0, 2.5],

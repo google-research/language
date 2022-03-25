@@ -36,6 +36,7 @@ from language.labs.memory.model_utils import write_flags_to_file
 
 
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 # Dataset params
 flags.DEFINE_integer("num_examples", 100000, "Number of examples to train on.")
@@ -225,7 +226,7 @@ def model_function(features, labels, mode):
                                         labels=tf.argmax(labels, 1))
     }
 
-  return tf.estimator.EstimatorSpec(
+  return tf_estimator.EstimatorSpec(
       mode=mode,
       loss=loss,
       predictions=preds,
@@ -288,7 +289,7 @@ def experiment_function(run_config, hparams):
   train_input_fn = partial(input_function, is_train=True)
   eval_input_fn = partial(input_function, is_train=False)
 
-  estimator = tf.estimator.Estimator(
+  estimator = tf_estimator.Estimator(
       model_fn=model_function,
       config=run_config,
       model_dir=run_config.model_dir)

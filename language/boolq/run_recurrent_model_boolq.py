@@ -31,6 +31,7 @@ from language.common.layers import cudnn_layers
 from language.common.utils import tensor_utils
 import numpy as np
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 from tensorflow.contrib import lookup as contrib_lookup
 
 # Dataset parameters, these need to be pointed at the appropriate targets
@@ -214,7 +215,7 @@ def apply_lstm(x, seq_len):
       hidden_size=FLAGS.lstm_dim,
       num_layers=1,
       dropout_ratio=0.0,
-      mode=tf.estimator.ModeKeys.TRAIN,
+      mode=tf_estimator.ModeKeys.TRAIN,
       use_cudnn=None)
 
 
@@ -432,14 +433,14 @@ def train():
   # with named arguments, so pylint: disable=unused-argument
   def model_function(features, labels, mode, params):
     """Builds the `tf.estimator.EstimatorSpec` to train/eval with."""
-    is_train = mode == tf.estimator.ModeKeys.TRAIN
+    is_train = mode == tf_estimator.ModeKeys.TRAIN
     logits = predict(is_train, embeddings, features["premise"],
                      features["hypothesis"])
 
     loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
         labels=tf.to_int32(labels), logits=logits)
     loss = tf.reduce_mean(loss)
-    if mode == tf.estimator.ModeKeys.TRAIN:
+    if mode == tf_estimator.ModeKeys.TRAIN:
       train_op = get_train_op(loss)
     else:
       # Don't build the train_op unnecessarily, since the ADAM variables can
@@ -460,7 +461,7 @@ def train():
 
       scaffold = tf.train.Scaffold(init_fn=_init_fn)
 
-    return tf.estimator.EstimatorSpec(
+    return tf_estimator.EstimatorSpec(
         mode=mode,
         scaffold=scaffold,
         loss=loss,

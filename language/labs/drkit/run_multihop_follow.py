@@ -33,6 +33,7 @@ from language.labs.drkit import model_fns
 from language.labs.drkit import search_utils
 import numpy as np
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver
 from tensorflow.contrib import memory_stats as contrib_memory_stats
 
@@ -334,7 +335,7 @@ def create_optimizer(loss, init_lr, num_train_steps, num_warmup_steps, use_tpu,
       exclude_from_weight_decay=["LayerNorm", "layer_norm", "bias"])
 
   if use_tpu:
-    optimizer = tf.estimator.tpu.CrossShardOptimizer(optimizer)
+    optimizer = tf_estimator.tpu.CrossShardOptimizer(optimizer)
 
   tvars = tf.trainable_variables()
   if exclude_bert:
@@ -414,7 +415,7 @@ def model_fn_builder(bert_config,
     for name in sorted(features.keys()):
       tf.logging.info("  name = %s, shape = %s", name, features[name].shape)
 
-    is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+    is_training = (mode == tf_estimator.ModeKeys.TRAIN)
 
     # Initialize sparse tensors.
     with tf.device("/cpu:0"):
@@ -477,7 +478,7 @@ def model_fn_builder(bert_config,
                       init_string)
 
     output_spec = None
-    if mode == tf.estimator.ModeKeys.TRAIN:
+    if mode == tf_estimator.ModeKeys.TRAIN:
       one_mb = tf.constant(1024 * 1024, dtype=tf.int64)
       devices = tf.config.experimental.list_logical_devices("GPU")
       memory_footprints = []
@@ -492,13 +493,13 @@ def model_fn_builder(bert_config,
         train_op = create_optimizer(total_loss, learning_rate, num_train_steps,
                                     num_warmup_steps, use_tpu, False)
 
-      output_spec = tf.estimator.tpu.TPUEstimatorSpec(
+      output_spec = tf_estimator.tpu.TPUEstimatorSpec(
           mode=mode,
           loss=total_loss,
           train_op=train_op,
           scaffold_fn=scaffold_fn)
-    elif mode == tf.estimator.ModeKeys.PREDICT:
-      output_spec = tf.estimator.tpu.TPUEstimatorSpec(
+    elif mode == tf_estimator.ModeKeys.PREDICT:
+      output_spec = tf_estimator.tpu.TPUEstimatorSpec(
           mode=mode, predictions=predictions, scaffold_fn=scaffold_fn)
     else:
       raise ValueError("Only TRAIN and PREDICT modes are supported: %s" %
@@ -752,14 +753,14 @@ def main(_):
     tpu_cluster_resolver = contrib_cluster_resolver.TPUClusterResolver(
         FLAGS.tpu_name, zone=FLAGS.tpu_zone, project=FLAGS.gcp_project)
 
-  is_per_host = tf.estimator.tpu.InputPipelineConfig.PER_HOST_V2
-  run_config = tf.estimator.tpu.RunConfig(
+  is_per_host = tf_estimator.tpu.InputPipelineConfig.PER_HOST_V2
+  run_config = tf_estimator.tpu.RunConfig(
       cluster=tpu_cluster_resolver,
       master=FLAGS.master,
       model_dir=FLAGS.output_dir,
       save_checkpoints_steps=FLAGS.save_checkpoints_steps,
       keep_checkpoint_max=8,
-      tpu_config=tf.estimator.tpu.TPUConfig(
+      tpu_config=tf_estimator.tpu.TPUConfig(
           iterations_per_loop=FLAGS.iterations_per_loop,
           num_shards=FLAGS.num_tpu_cores,
           per_host_input_for_training=is_per_host),
@@ -800,7 +801,7 @@ def main(_):
 
   # If TPU is not available, this will fall back to normal Estimator on CPU
   # or GPU.
-  estimator = tf.estimator.tpu.TPUEstimator(
+  estimator = tf_estimator.tpu.TPUEstimator(
       use_tpu=FLAGS.use_tpu,
       model_fn=model_fn,
       config=run_config,
@@ -870,7 +871,7 @@ def main(_):
         use_one_hot_embeddings=FLAGS.use_tpu,
         create_model_fn=create_model_fn,
         summary_obj=summary_obj)
-    estimator = tf.estimator.tpu.TPUEstimator(
+    estimator = tf_estimator.tpu.TPUEstimator(
         use_tpu=FLAGS.use_tpu,
         model_fn=model_fn,
         config=run_config,

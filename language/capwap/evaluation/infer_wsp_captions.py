@@ -38,6 +38,7 @@ from language.capwap.utils import tensor_utils
 from language.capwap.utils import text_utils
 from language.capwap.utils import transformer_utils
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 import tensorflow_hub as hub
 
 DATA_DIR = os.getenv("QA2CAPTION_DATA", "data")
@@ -72,12 +73,12 @@ FLAGS = flags.FLAGS
 def model_fn(features, labels, mode, params, vocab):
   """Model function."""
   del labels
-  assert mode == tf.estimator.ModeKeys.PREDICT, "Mode should be PREDICT."
+  assert mode == tf_estimator.ModeKeys.PREDICT, "Mode should be PREDICT."
 
   # Initialize transformer model.
   model = transformer_utils.TransformerModel(
       config=transformer_utils.TransformerConfig.from_dict(params),
-      is_training=(mode == tf.estimator.ModeKeys.TRAIN))
+      is_training=(mode == tf_estimator.ModeKeys.TRAIN))
 
   # image_features: [batch_size, num_regions, feature_size]
   # image_positions: [batch_size, num_regions]
@@ -153,7 +154,7 @@ def model_fn(features, labels, mode, params, vocab):
     checkpoint_utils.init_from_checkpoint(params["checkpoint"])
     return tf.train.Scaffold()
 
-  return tf.estimator.tpu.TPUEstimatorSpec(
+  return tf_estimator.tpu.TPUEstimatorSpec(
       mode=mode,
       predictions=predictions,
       scaffold_fn=scaffold_fn,

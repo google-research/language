@@ -20,9 +20,10 @@ from __future__ import print_function
 
 import os
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 
-class BestCheckpointExporter(tf.estimator.Exporter):
+class BestCheckpointExporter(tf_estimator.Exporter):
   """Exporter that saves the model's best checkpoint.
 
   We use this over `tf.estimator.BestExporter` since we don't want to

@@ -32,6 +32,7 @@ from bert import tokenization
 from language.labs.drkit import evaluate
 import numpy as np
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 from tqdm import tqdm
 from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver
 from tensorflow.contrib import data as contrib_data
@@ -1440,7 +1441,7 @@ def model_fn_builder(bert_config,
     ent_input_ids = features["ent_input_ids"]
     ent_input_mask = features["ent_input_mask"]
 
-    is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+    is_training = (mode == tf_estimator.ModeKeys.TRAIN)
 
     (start_logits, end_logits, ent_logits, rel_start_logits, rel_end_logits,
      doc_hidden, qry_start, qry_end, qry_bow, word_emb_table) = create_model(
@@ -1484,7 +1485,7 @@ def model_fn_builder(bert_config,
                       init_string)
 
     output_spec = None
-    if mode == tf.estimator.ModeKeys.TRAIN:
+    if mode == tf_estimator.ModeKeys.TRAIN:
       seq_length = modeling.get_shape_list(doc_input_ids)[1]
 
       def compute_loss(logits, positions):
@@ -1562,7 +1563,7 @@ def model_fn_builder(bert_config,
           train_op=train_op,
           scaffold_fn=scaffold_fn,
           host_call=host_call)
-    elif mode == tf.estimator.ModeKeys.PREDICT:
+    elif mode == tf_estimator.ModeKeys.PREDICT:
       predictions = {
           "unique_ids": unique_ids,
           "start_logits": start_logits,

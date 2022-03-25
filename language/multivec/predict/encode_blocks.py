@@ -20,6 +20,7 @@ from absl import flags
 import h5py
 import numpy as np
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 import tensorflow_hub as hub
 
 flags.DEFINE_string("retriever_module_path", None,
@@ -70,7 +71,7 @@ def model_fn_query(features, labels, mode, params):
       signature="query_output",
       as_dict=True)["output_layer"]
   predictions = dict(block_emb=block_emb, key=features["key"])
-  return tf.estimator.tpu.TPUEstimatorSpec(mode=mode, predictions=predictions)
+  return tf_estimator.tpu.TPUEstimatorSpec(mode=mode, predictions=predictions)
 
 
 def model_fn_passage(features, labels, mode, params):
@@ -86,7 +87,7 @@ def model_fn_passage(features, labels, mode, params):
       signature="passage_output",
       as_dict=True)["output_layer"]
   predictions = dict(block_emb=block_emb, key=features["key"])
-  return tf.estimator.tpu.TPUEstimatorSpec(mode=mode, predictions=predictions)
+  return tf_estimator.tpu.TPUEstimatorSpec(mode=mode, predictions=predictions)
 
 
 def pad_or_truncate_pair(token_ids, sequence_length):
@@ -166,15 +167,15 @@ def main(_):
         FLAGS.tpu_name, zone=FLAGS.tpu_zone, project=FLAGS.gcp_project)
   else:
     tpu_cluster_resolver = None
-  run_config = tf.estimator.tpu.RunConfig(
+  run_config = tf_estimator.tpu.RunConfig(
       cluster=tpu_cluster_resolver,
       master=FLAGS.master,
-      tpu_config=tf.estimator.tpu.TPUConfig(iterations_per_loop=1000))
+      tpu_config=tf_estimator.tpu.TPUConfig(iterations_per_loop=1000))
   if FLAGS.encode_query:
     model_fn = model_fn_query
   else:
     model_fn = model_fn_passage
-  estimator = tf.estimator.tpu.TPUEstimator(
+  estimator = tf_estimator.tpu.TPUEstimator(
       use_tpu=FLAGS.use_tpu,
       model_fn=model_fn,
       config=run_config,

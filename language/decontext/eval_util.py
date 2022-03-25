@@ -49,6 +49,7 @@ def normalize_text(input_text):
 
   def replace_punctuation(s):
     to_replace = set(string.punctuation)
+    # TODO(danielandor): Fix annotation tokenization artifacts here as well.
     return ''.join('' if ch in to_replace else ch for ch in s)
 
   def white_space_fix(s):
@@ -61,18 +62,8 @@ def normalize_text(input_text):
   return text
 
 
-_TEXT_NORMALIZER_FN = normalize_text
-_WORD_TOKENIZER_FN = nltk.tokenize.word_tokenize
-
-
-def set_text_normalizer_fn(fn):
-  global _TEXT_NORMALIZER_FN
-  _TEXT_NORMALIZER_FN = fn
-
-
-def set_word_tokenizer_fn(fn):
-  global _WORD_TOKENIZER_FN
-  _WORD_TOKENIZER_FN = fn
+_DEFAULT_TEXT_NORMALIZER_FN = normalize_text
+_DEFAULT_WORD_TOKENIZER_FN = nltk.tokenize.word_tokenize
 
 
 def get_sent(pred):
@@ -90,7 +81,7 @@ def get_sent_dict(prediction_dict):
   return pred_sent_dict
 
 
-def get_ngram_counter(ids, n):
+def _get_ngram_counter(ids, n):
   """Get a Counter with the ngrams of the given ID list.
 
   Args:
@@ -108,7 +99,7 @@ def get_ngram_counter(ids, n):
   return counts
 
 
-def get_raw_sari_score(source_ids, prediction_ids, list_of_targets):
+def _get_raw_sari_score(source_ids, prediction_ids, list_of_targets):
   """Compute the SARI score for a single prediction and one or more targets.
 
   Args:
@@ -122,14 +113,14 @@ def get_raw_sari_score(source_ids, prediction_ids, list_of_targets):
     false negative addition tokens, true positive deletion tokens,
     false positive deletion tokens, false negative deletion tokens).
   """
-  source_counts = get_ngram_counter(source_ids, 1)
-  prediction_counts = get_ngram_counter(prediction_ids, 1)
+  source_counts = _get_ngram_counter(source_ids, 1)
+  prediction_counts = _get_ngram_counter(prediction_ids, 1)
   # All ngrams in the targets with count r/num_targets, where r is the number
   # of targets where the ngram occurs.
   weighted_target_counts = collections.Counter()
   num_nonempty_targets = 0
   for target_ids_i in list_of_targets:
-    target_counts_i = get_ngram_counter(target_ids_i, 1)
+    target_counts_i = _get_ngram_counter(target_ids_i, 1)
     if target_counts_i:
       weighted_target_counts += target_counts_i
       num_nonempty_targets += 1
@@ -154,7 +145,7 @@ def get_raw_sari_score(source_ids, prediction_ids, list_of_targets):
   return (add_tp, add_fp, add_fn, del_tp, del_fp, del_fn)
 
 
-def compute_raw_sari_score(original, pred, references):
+def _compute_raw_sari_score(original, pred, references, tokenizer):
   """Compute SARI score.
 
     The score is introduced in the following paper to measure
@@ -176,6 +167,7 @@ def compute_raw_sari_score(original, pred, references):
     original: the original sentence.
     pred: predicted sentence.
     references: a list of reference sentences.
+    tokenizer: Word tokenizer to use.
 
   Returns:
     SARIScore.
@@ -185,9 +177,9 @@ def compute_raw_sari_score(original, pred, references):
   if not references:
     raise ValueError('Annotation cannot be empty.')
   # Tokenize.
-  tokenized_original = _WORD_TOKENIZER_FN(original)
-  tokenized_prediction = _WORD_TOKENIZER_FN(pred)
-  tokenized_references = [_WORD_TOKENIZER_FN(annot) for annot in references]
+  tokenized_original = tokenizer(original)
+  tokenized_prediction = tokenizer(pred)
+  tokenized_references = [tokenizer(annot) for annot in references]
   # Create vocab.
   vocab = set(tokenized_prediction + tokenized_original)
   for tokenized_reference in tokenized_references:
@@ -201,7 +193,7 @@ def compute_raw_sari_score(original, pred, references):
     reference_ids_list.append(np.array([vocab_dict[t] for t in reference]))
   # Compute the score.
   (add_tp, add_fp, add_fn, del_tp, del_fp, del_fn) = (
-      get_raw_sari_score(source_ids, pred_ids, reference_ids_list))
+      _get_raw_sari_score(source_ids, pred_ids, reference_ids_list))
   return RawSARIScore(add_tp, add_fp, add_fn, del_tp, del_fp, del_fn)
 
 
@@ -262,9 +254,14 @@ def process_annotation(annotation_dict, allow_single_annotations=False):
   return original_sent_dict, reference_sents_dict, median_annotation_dict
 
 
-def compute_sentence_generation_scores(original_sent_dict, reference_dict,
-                                       pred_dict):
+def compute_sentence_generation_scores(original_sent_dict,
+                                       reference_dict,
+                                       pred_dict,
+                                       text_normalizer=None,
+                                       word_tokenizer=None):
   """Compute the decontextualization performances."""
+  normalizer = text_normalizer or _DEFAULT_TEXT_NORMALIZER_FN
+  tokenizer = word_tokenizer or _DEFAULT_WORD_TOKENIZER_FN
 
   per_i_match_scores = []
   per_i_match_only_changed_scores = []
@@ -280,14 +277,12 @@ def compute_sentence_generation_scores(original_sent_dict, reference_dict,
   per_i_raw_sari_del_fns = []
 
   for ex_id in list(reference_dict.keys()):
-    normalized_others = [
-        _TEXT_NORMALIZER_FN(annot) for annot in reference_dict[ex_id]
-    ]
+    normalized_others = [normalizer(annot) for annot in reference_dict[ex_id]]
     orig_sent = original_sent_dict[ex_id]
     model_pred_sent = pred_dict[ex_id]
 
-    normalized_orig_sent = _TEXT_NORMALIZER_FN(orig_sent)
-    normalized_pred_sent = _TEXT_NORMALIZER_FN(model_pred_sent)
+    normalized_orig_sent = normalizer(orig_sent)
+    normalized_pred_sent = normalizer(model_pred_sent)
     is_changed = normalized_pred_sent != normalized_orig_sent
     is_matched = normalized_pred_sent in normalized_others
 
@@ -299,8 +294,9 @@ def compute_sentence_generation_scores(original_sent_dict, reference_dict,
     if normalized_orig_sent not in normalized_others:
       per_i_match_only_changed_scores.append(is_matched)
 
-    raw_sari = compute_raw_sari_score(normalized_orig_sent,
-                                      normalized_pred_sent, normalized_others)
+    raw_sari = _compute_raw_sari_score(normalized_orig_sent,
+                                       normalized_pred_sent, normalized_others,
+                                       tokenizer)
 
     per_i_raw_sari_add_fns.append(raw_sari.add_fn)
     per_i_raw_sari_del_fns.append(raw_sari.del_fn)
@@ -315,6 +311,7 @@ def compute_sentence_generation_scores(original_sent_dict, reference_dict,
       'Avg. Length Increase Ratio (length of decontextualized '
       'sentence divided by the original sentence):%.2f',
       (get_avg(per_i_raw_length_ratios)))
+  # TODO(danielandor): Add a median increase in length.
   logging.info('Avg. Change Ratio (percent examples modified): %.1f',
                (get_avg(per_i_changed) * 100))
   logging.info('Sentence Match Score: %.1f',

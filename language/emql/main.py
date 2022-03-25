@@ -20,7 +20,7 @@ from absl import flags
 from language.emql.data_loader import DataLoader
 from language.emql.eval import Query2BoxMetrics
 from language.emql.model import build_model_fn
-import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 from tqdm import tqdm
 
 FLAGS = flags.FLAGS
@@ -129,16 +129,16 @@ def run_model():
                            FLAGS.kb_file,
                            FLAGS.vocab_file)
 
-  estimator_config = tf.estimator.RunConfig(
+  estimator_config = tf_estimator.RunConfig(
       save_checkpoints_steps=FLAGS.checkpoint_step)
 
-  warm_start_settings = tf.compat.v1.estimator.WarmStartSettings(  # pylint: disable=g-long-ternary
+  warm_start_settings = tf_estimator.WarmStartSettings(  # pylint: disable=g-long-ternary
       ckpt_to_initialize_from=FLAGS.load_model_dir,
       vars_to_warm_start=['embeddings_mat/entity_embeddings_mat',
                           'embeddings_mat/relation_embeddings_mat'],
       ) if FLAGS.load_model_dir is not None else None
 
-  estimator = tf.estimator.Estimator(
+  estimator = tf_estimator.Estimator(
       model_fn=build_model_fn(FLAGS.name, data_loader, FLAGS.eval_name,
                               FLAGS.eval_metric_at_k),
       model_dir=FLAGS.checkpoint_dir + FLAGS.model_name,
@@ -156,12 +156,12 @@ def run_model():
 
   # Define mode-specific operations
   if FLAGS.mode == 'train':
-    train_spec = tf.estimator.TrainSpec(input_fn=train_input_fn)
+    train_spec = tf_estimator.TrainSpec(input_fn=train_input_fn)
     # Busy waiting for evaluation until new checkpoint comes out
-    test_spec = tf.estimator.EvalSpec(
+    test_spec = tf_estimator.EvalSpec(
         input_fn=eval_input_fn, steps=FLAGS.num_online_eval,
         start_delay_secs=0, throttle_secs=FLAGS.eval_time)
-    tf.estimator.train_and_evaluate(estimator, train_spec, test_spec)
+    tf_estimator.train_and_evaluate(estimator, train_spec, test_spec)
 
   elif FLAGS.mode == 'eval':
     tf_evaluation = estimator.evaluate(eval_input_fn)

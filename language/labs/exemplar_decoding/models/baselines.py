@@ -24,6 +24,7 @@ from language.labs.exemplar_decoding.models.output_wrapper import OutputWrapper
 from language.labs.exemplar_decoding.utils import tensor_utils
 import language.labs.exemplar_decoding.utils.data as data
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 
 EncoderOutputs = namedtuple(
@@ -87,7 +88,7 @@ def encoder(features, mode, vocab, hps):
 
   # [batch_size, src_len, emb_dim]
   src_encoder_input_emb = tf.nn.embedding_lookup(embeddings, src_inputs)
-  if mode == tf.estimator.ModeKeys.TRAIN and hps.emb_drop > 0.:
+  if mode == tf_estimator.ModeKeys.TRAIN and hps.emb_drop > 0.:
     src_encoder_input_emb = tf.nn.dropout(
         src_encoder_input_emb, keep_prob=1.0-hps.emb_drop)
 
@@ -136,7 +137,7 @@ def encoder(features, mode, vocab, hps):
     # [batch_size, neighbor_len, emb_dim]
     neighbor_input_emb = tf.nn.embedding_lookup(
         embeddings, neighbor_inputs)
-    if mode == tf.estimator.ModeKeys.TRAIN and hps.emb_drop > 0.:
+    if mode == tf_estimator.ModeKeys.TRAIN and hps.emb_drop > 0.:
       neighbor_input_emb = tf.nn.dropout(
           neighbor_input_emb, keep_prob=1.0-hps.emb_drop)
     with tf.variable_scope("neighbor_encoder"):
@@ -273,7 +274,7 @@ def basic_decoder(features, mode, vocab, encoder_outputs, hps):
 
   # [batch_size, dec_len, emb_dim]
   decoder_input_emb = tf.nn.embedding_lookup(embeddings, decoder_inputs)
-  if mode == tf.estimator.ModeKeys.TRAIN and hps.emb_drop > 0.:
+  if mode == tf_estimator.ModeKeys.TRAIN and hps.emb_drop > 0.:
     decoder_input_emb = tf.nn.dropout(
         decoder_input_emb, keep_prob=1.0-hps.emb_drop)
 
@@ -357,7 +358,7 @@ def basic_decoder(features, mode, vocab, encoder_outputs, hps):
         mask=float_mask,
         hps=hps)
 
-  if mode == tf.estimator.ModeKeys.TRAIN:
+  if mode == tf_estimator.ModeKeys.TRAIN:
     if hps.sampling_probability > 0.:
       helper = tf.contrib.seq2seq.ScheduledEmbeddingTrainingHelper(
           inputs=decoder_input_emb,
@@ -406,7 +407,7 @@ def beam_decoder(features, mode, vocab, encoder_outputs, hps):
   Returns:
     Decoder outputs
   """
-  assert mode is not tf.estimator.ModeKeys.TRAIN, "Not using beam in training."
+  assert mode is not tf_estimator.ModeKeys.TRAIN, "Not using beam in training."
 
   batch_size = tensor_utils.shape(features["src_len"], 0)
   embeddings = encoder_outputs.embeddings

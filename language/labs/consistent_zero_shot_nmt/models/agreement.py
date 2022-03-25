@@ -30,6 +30,7 @@ from language.labs.consistent_zero_shot_nmt.utils import model_utils
 from tensor2tensor.layers import common_layers
 from tensor2tensor.utils import registry
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 from tensorflow.contrib import seq2seq as contrib_seq2seq
 from tensorflow.contrib import training as contrib_training
 
@@ -80,7 +81,7 @@ class AgreementMultilingualNmt(basic.BasicMultilingualNmt):
     """Preprocesses features for multilingual translation."""
     seqs, tags = {}, {}
 
-    if self._hparams.mode == tf.estimator.ModeKeys.TRAIN:
+    if self._hparams.mode == tf_estimator.ModeKeys.TRAIN:
       seqs["src"] = features["inputs"]
       seqs["tgt"] = features["targets"]
       seqs["aux"] = None
@@ -109,7 +110,7 @@ class AgreementMultilingualNmt(basic.BasicMultilingualNmt):
       tags["tgt"] = features["target_tags"]
 
       # Expand target tags to beam width, if necessary.
-      if self._hparams.mode == tf.estimator.ModeKeys.PREDICT:
+      if self._hparams.mode == tf_estimator.ModeKeys.PREDICT:
         tags["tgt"] = tf.tile(tags["tgt"], [self._hparams.beam_width, 1, 1, 1])
 
       from_domains = ["src"]
@@ -269,7 +270,7 @@ class AgreementMultilingualNmt(basic.BasicMultilingualNmt):
             shifted_targets, targets_length,
             hiddens, hiddens_length,
             enc_state,
-            mode=tf.estimator.ModeKeys.PREDICT,
+            mode=tf_estimator.ModeKeys.PREDICT,
             decoder_iterations=self._hparams.aux_decode_length)
         aux_dec_outputs = decode_func()
         # Compute logits (protect central directions from the gradients).
@@ -391,7 +392,7 @@ class AgreementMultilingualNmt(basic.BasicMultilingualNmt):
 
     # Construct agreement losses.
     aux_losses = {}
-    if self._hparams.mode == tf.estimator.ModeKeys.TRAIN:
+    if self._hparams.mode == tf_estimator.ModeKeys.TRAIN:
       if self._hparams.enc_agreement_coeff > 0:
         aux_losses["agreement_enc"] = tf.cond(
             global_step > self._hparams.enc_agreement_enable_step,
@@ -425,7 +426,7 @@ class AgreementMultilingualNmtLm(AgreementMultilingualNmt):
     targets = features["targets"]
     target_tags = features["target_tags"]
 
-    if self._hparams.mode == tf.estimator.ModeKeys.PREDICT:
+    if self._hparams.mode == tf_estimator.ModeKeys.PREDICT:
       target_tags = tf.tile(target_tags, [self._hparams.beam_width, 1, 1, 1])
 
     # Construct LM inputs.
@@ -473,7 +474,7 @@ class AgreementMultilingualNmtLm(AgreementMultilingualNmt):
         lm_outputs = self.language_model(
             inputs=inputs,
             inputs_length=inputs_length,
-            mode=tf.estimator.ModeKeys.PREDICT,
+            mode=tf_estimator.ModeKeys.PREDICT,
             hparams=self._hparams,
             trainable=False,
             reuse=tf.AUTO_REUSE)
@@ -512,7 +513,7 @@ class AgreementMultilingualNmtLm(AgreementMultilingualNmt):
       nmt_body = super(AgreementMultilingualNmtLm, self).body
       outputs, aux_losses = nmt_body(features)
       # Build LM auxiliary losses.
-      if self._hparams.mode == tf.estimator.ModeKeys.TRAIN:
+      if self._hparams.mode == tf_estimator.ModeKeys.TRAIN:
         if self._hparams.lm_loss_coeff > 0:
           self.language_model = language_models.get(self._hparams.lm_type)
           # Make LM loss non-zero after the specified number of steps.

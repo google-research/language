@@ -53,6 +53,7 @@ from bert import modeling
 from bert import optimization
 from bert import run_pretraining
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 import tensorflow_hub as hub
 from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver
 from tensorflow.contrib import data as contrib_data
@@ -263,7 +264,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
       tf.logging.info("  name = %s, shape = %s" % (name, features[name].shape))
 
     label = features["label"]
-    is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+    is_training = (mode == tf_estimator.ModeKeys.TRAIN)
     module = hub.Module(
         "https://tfhub.dev/google/imagenet/resnet_v2_152/feature_vector/3",
         trainable=FLAGS.trainable_resnet)
@@ -389,7 +390,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
                       init_string)
 
     output_spec = None
-    if mode == tf.estimator.ModeKeys.TRAIN:
+    if mode == tf_estimator.ModeKeys.TRAIN:
       loss = 0.0
       if FLAGS.negative_loss:
         tf.logging.info("Using negative loss.")
@@ -414,7 +415,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
       output_spec = contrib_tpu.TPUEstimatorSpec(
           mode=mode, loss=loss, train_op=train_op, scaffold_fn=scaffold_fn)
 
-    elif mode == tf.estimator.ModeKeys.PREDICT:
+    elif mode == tf_estimator.ModeKeys.PREDICT:
       predictions = {
           # Image, annotation and choice identifiers.
           "img_id": features["img_id"],

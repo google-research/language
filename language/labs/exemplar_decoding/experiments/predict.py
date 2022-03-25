@@ -22,6 +22,7 @@ from absl import flags
 import language.labs.exemplar_decoding.models.model_function as model_function
 import language.labs.exemplar_decoding.utils.data as data
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 flags.DEFINE_string("train_path", None, "Path to train examples.")
 
@@ -235,13 +236,13 @@ def main(_):
       cp=FLAGS.coverage_penalty,
       predict_mode=FLAGS.predict_mode)
 
-  run_config = tf.estimator.RunConfig(model_dir=FLAGS.model_dir)
+  run_config = tf_estimator.RunConfig(model_dir=FLAGS.model_dir)
 
   vocab = data.Vocab(FLAGS.vocab_path, FLAGS.vocab_size, FLAGS.dataset)
   eval_input_fn = partial(
       data.input_function, is_train=False, vocab=vocab, hps=hps)
 
-  estimator = tf.estimator.Estimator(
+  estimator = tf_estimator.Estimator(
       model_fn=partial(model_function.model_function, vocab=vocab, hps=hps),
       config=run_config,
       model_dir=run_config.model_dir)

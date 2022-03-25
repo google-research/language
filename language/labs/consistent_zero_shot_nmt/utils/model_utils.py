@@ -20,6 +20,7 @@ from __future__ import print_function
 
 from tensor2tensor.layers import common_layers
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 from tensorflow.contrib import framework as contrib_framework
 from tensorflow.contrib import rnn as contrib_rnn
 from tensorflow.contrib import seq2seq as contrib_seq2seq
@@ -48,7 +49,7 @@ def _single_cell(unit_type,
                  trainable=True):
   """Create an instance of a single RNN cell."""
   # dropout (= 1 - keep_prob) is set to 0 during eval and infer
-  dropout = dropout if mode == tf.estimator.ModeKeys.TRAIN else 0.0
+  dropout = dropout if mode == tf_estimator.ModeKeys.TRAIN else 0.0
 
   # Cell Type
   if unit_type == "lstm":

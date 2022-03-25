@@ -20,6 +20,7 @@ from __future__ import print_function
 from language.common.inputs import char_utils
 from language.common.utils import tensor_utils
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 from tensorflow.contrib import layers as contrib_layers
 
 
@@ -42,7 +43,7 @@ def ffnn(input_emb, hidden_sizes, dropout_ratio, mode):
   """
   for i, h in enumerate(hidden_sizes):
     with tf.variable_scope("ffnn_{}".format(i)):
-      if mode == tf.estimator.ModeKeys.TRAIN and dropout_ratio is not None:
+      if mode == tf_estimator.ModeKeys.TRAIN and dropout_ratio is not None:
         input_emb = tf.nn.dropout(input_emb, 1.0 - dropout_ratio)
       input_emb = tf.layers.dense(input_emb, h)
       if i < len(hidden_sizes) - 1:
@@ -125,7 +126,7 @@ def highway(input_emb, output_size, dropout_ratio=None, mode=None,
     output_emb: A Tensor with the same shape as `input_emb`, except for the last
         dimension which will have size `output_size instead.
   """
-  if mode == tf.estimator.ModeKeys.TRAIN and dropout_ratio is not None:
+  if mode == tf_estimator.ModeKeys.TRAIN and dropout_ratio is not None:
     input_emb = tf.nn.dropout(input_emb, 1.0 - dropout_ratio)
 
   with tf.variable_scope("joint_linear_layer"):

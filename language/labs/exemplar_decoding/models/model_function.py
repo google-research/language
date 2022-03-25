@@ -25,6 +25,7 @@ from language.labs.exemplar_decoding.utils import data
 from language.labs.exemplar_decoding.utils import rouge_utils
 import numpy as np
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 
 def repetitive_ngrams(n, text):
@@ -101,7 +102,7 @@ def model_function(features, labels, mode, vocab, hps):
       hps=hps
   )
 
-  if mode == tf.estimator.ModeKeys.TRAIN:
+  if mode == tf_estimator.ModeKeys.TRAIN:
     if hps.predict_mode:
       sys.exit(0)
     outputs, _ = model.basic_decoder(
@@ -124,11 +125,11 @@ def model_function(features, labels, mode, vocab, hps):
         weights=weights,
         hps=hps)
 
-    return tf.estimator.EstimatorSpec(
+    return tf_estimator.EstimatorSpec(
         mode=mode,
         loss=loss,
         train_op=train_op)
-  elif mode == tf.estimator.ModeKeys.EVAL:
+  elif mode == tf_estimator.ModeKeys.EVAL:
     outputs, teacher_outputs = model.basic_decoder(
         features=features,
         mode=mode,
@@ -205,12 +206,12 @@ def model_function(features, labels, mode, vocab, hps):
         vocab, use_bpe=hps.use_bpe, predict_mode=hps.predict_mode)
     with tf.control_dependencies([print_op]):
       loss = tf.identity(loss)
-    return tf.estimator.EstimatorSpec(
+    return tf_estimator.EstimatorSpec(
         mode=mode,
         loss=loss,
         predictions=predictions,
         eval_metric_ops=eval_metric_ops)
-  elif mode == tf.estimator.ModeKeys.PREDICT:
+  elif mode == tf_estimator.ModeKeys.PREDICT:
     outputs, teacher_outputs = model.basic_decoder(
         features=features,
         mode=mode,
@@ -241,6 +242,6 @@ def model_function(features, labels, mode, vocab, hps):
         "outputs": predicted_ids,
         "lengths": lengths - 1,
     }
-    return tf.estimator.EstimatorSpec(
+    return tf_estimator.EstimatorSpec(
         mode=mode,
         predictions=predictions)

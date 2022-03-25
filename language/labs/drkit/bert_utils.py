@@ -21,6 +21,7 @@ from bert import modeling
 from language.labs.drkit import run_dualencoder_lsf
 import numpy as np
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 from tqdm import tqdm
 
 FLAGS = flags.FLAGS
@@ -139,7 +140,7 @@ class BERTPredictor:
 
     if estimator is None:
       bert_config = modeling.BertConfig.from_json_file(FLAGS.bert_config_file)
-      run_config = tf.estimator.tpu.RunConfig()
+      run_config = tf_estimator.tpu.RunConfig()
       qa_config = run_dualencoder_lsf.QAConfig(
           doc_layers_to_use=FLAGS.doc_layers_to_use,
           doc_aggregation_fn=FLAGS.doc_aggregation_fn,
@@ -168,7 +169,7 @@ class BERTPredictor:
 
       # If TPU is not available, this will fall back to normal Estimator on CPU
       # or GPU.
-      estimator = tf.estimator.tpu.TPUEstimator(
+      estimator = tf_estimator.tpu.TPUEstimator(
           use_tpu=False,
           model_fn=model_fn,
           config=run_config,

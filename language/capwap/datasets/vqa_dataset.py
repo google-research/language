@@ -27,6 +27,7 @@ from language.capwap.utils import image_utils
 from language.capwap.utils import tensor_utils
 from language.capwap.utils import text_utils
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 KEYS = frozenset({
     "input_type", "image_id", "question_id", "question_inputs", "answer_inputs",
@@ -150,11 +151,11 @@ def get_dataset(params, mode, file_pattern, vocab):
   dataset = tf.data.Dataset.from_tensor_slices(tf.constant(data_files))
 
   # Shuffle.
-  if mode == tf.estimator.ModeKeys.TRAIN:
+  if mode == tf_estimator.ModeKeys.TRAIN:
     dataset = dataset.shuffle(buffer_size=len(data_files))
 
   # Repeat.
-  if mode != tf.estimator.ModeKeys.PREDICT:
+  if mode != tf_estimator.ModeKeys.PREDICT:
     dataset = dataset.repeat()
 
   # Load TFRecords from files.
@@ -164,7 +165,7 @@ def get_dataset(params, mode, file_pattern, vocab):
       num_parallel_calls=min(len(data_files), params["num_input_threads"]))
 
   # Shuffle.
-  if mode == tf.estimator.ModeKeys.TRAIN:
+  if mode == tf_estimator.ModeKeys.TRAIN:
     dataset = dataset.shuffle(buffer_size=1000)
 
   # Decode TFRecords.

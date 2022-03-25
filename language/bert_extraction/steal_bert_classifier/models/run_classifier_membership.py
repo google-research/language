@@ -21,6 +21,7 @@ import os
 from bert import modeling
 from bert import tokenization
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver
 from tensorflow.contrib import data as contrib_data
 from tensorflow.contrib import tpu as contrib_tpu
@@ -611,7 +612,7 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
     else:
       is_real_example = tf.ones(tf.shape(label_ids), dtype=tf.float32)
 
-    is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+    is_training = (mode == tf_estimator.ModeKeys.TRAIN)
 
     membership_logits, membership_vars = create_model(bert_config, is_training,
                                                       input_ids, input_mask,
@@ -647,7 +648,7 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
                       init_string)
 
     output_spec = None
-    if mode == tf.estimator.ModeKeys.TRAIN:
+    if mode == tf_estimator.ModeKeys.TRAIN:
 
       one_hot_positions = tf.one_hot(label_ids, depth=2, dtype=tf.float32)
       per_example_loss = -tf.reduce_sum(
@@ -670,7 +671,7 @@ def model_fn_builder(bert_config, num_labels, init_checkpoint, learning_rate,
           loss=total_loss,
           train_op=train_op,
           scaffold_fn=scaffold_fn)
-    elif mode == tf.estimator.ModeKeys.EVAL:
+    elif mode == tf_estimator.ModeKeys.EVAL:
 
       one_hot_positions = tf.one_hot(label_ids, depth=2, dtype=tf.float32)
       per_example_loss = -tf.reduce_sum(

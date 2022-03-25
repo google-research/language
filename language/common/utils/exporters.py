@@ -24,10 +24,11 @@ import re
 from language.common.utils import file_utils
 import six
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 import tensorflow_hub as hub
 
 
-class BestSavedModelAndCheckpointExporter(tf.estimator.BestExporter):
+class BestSavedModelAndCheckpointExporter(tf_estimator.BestExporter):
   """Exporter that saves the best SavedModel and checkpoint."""
 
   def __init__(self,
@@ -145,7 +146,7 @@ class LatestExporterWithSteps(hub.LatestModuleExporter):
         tf.logging.warning("Couldn't find step counter in %r", checkpoint_path)
 
 
-class BestModuleExporter(tf.estimator.Exporter):
+class BestModuleExporter(tf_estimator.Exporter):
   """Export the registered modules with the best metric value."""
 
   def __init__(self, name, serving_input_fn, compare_fn, exports_to_keep=5):

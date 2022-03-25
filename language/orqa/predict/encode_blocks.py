@@ -25,6 +25,7 @@ from language.orqa.utils import scann_utils
 
 import numpy as np
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 import tensorflow_hub as hub
 
 flags.DEFINE_string("retriever_module_path", None,
@@ -66,7 +67,7 @@ def model_fn(features, labels, mode, params):
           segment_ids=features["block_segment_ids"]),
       signature="projected")
   predictions = dict(block_emb=block_emb)
-  return tf.estimator.tpu.TPUEstimatorSpec(mode=mode, predictions=predictions)
+  return tf_estimator.tpu.TPUEstimatorSpec(mode=mode, predictions=predictions)
 
 
 def parse_examples(serialized_example):
@@ -119,11 +120,11 @@ def main(_):
         FLAGS.tpu_name, zone=FLAGS.tpu_zone, project=FLAGS.gcp_project)
   else:
     tpu_cluster_resolver = None
-  run_config = tf.estimator.tpu.RunConfig(
+  run_config = tf_estimator.tpu.RunConfig(
       cluster=tpu_cluster_resolver,
       master=FLAGS.master,
-      tpu_config=tf.estimator.tpu.TPUConfig(iterations_per_loop=1000))
-  estimator = tf.estimator.tpu.TPUEstimator(
+      tpu_config=tf_estimator.tpu.TPUConfig(iterations_per_loop=1000))
+  estimator = tf_estimator.tpu.TPUEstimator(
       use_tpu=FLAGS.use_tpu,
       model_fn=model_fn,
       config=run_config,

@@ -25,6 +25,7 @@ from language.xsp.model import sequence_example_decoder
 
 from six.moves import zip
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 import tf_slim as slim
 
 # Keys used for the feature and label output dicts.
@@ -302,7 +303,7 @@ def create_serving_input_fn(use_segment_ids, use_foreign_key_features,
     placeholder, features, _ = create_placeholder_inputs(
         use_segment_ids, use_foreign_key_features, use_alignment_features)
     inputs = {constants.SERIALIZED_EXAMPLE: placeholder}
-    return tf.estimator.export.ServingInputReceiver(features, inputs)
+    return tf_estimator.export.ServingInputReceiver(features, inputs)
 
   return input_fn
 

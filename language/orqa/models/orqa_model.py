@@ -28,6 +28,7 @@ from language.orqa.utils import eval_utils
 from language.orqa.utils import scann_utils
 import six
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 import tensorflow_hub as hub
 from official.nlp.data import squad_lib
 
@@ -102,7 +103,7 @@ def retrieve(features, retriever_beam_size, mode, params):
 
   retriever_module = hub.Module(
       params["retriever_module_path"],
-      tags={"train"} if mode == tf.estimator.ModeKeys.TRAIN else {},
+      tags={"train"} if mode == tf_estimator.ModeKeys.TRAIN else {},
       trainable=True)
 
   # [1, projection_size]
@@ -190,7 +191,7 @@ def read(features, retriever_logits, blocks, mode, params, labels):
 
   reader_module = hub.Module(
       params["reader_module_path"],
-      tags={"train"} if mode == tf.estimator.ModeKeys.TRAIN else {},
+      tags={"train"} if mode == tf_estimator.ModeKeys.TRAIN else {},
       trainable=True)
 
   concat_outputs = reader_module(
@@ -399,7 +400,7 @@ def model_fn(features, labels, mode, params):
     labels = tf.constant([""])
 
   reader_beam_size = params["reader_beam_size"]
-  if mode == tf.estimator.ModeKeys.PREDICT:
+  if mode == tf_estimator.ModeKeys.PREDICT:
     retriever_beam_size = reader_beam_size
   else:
     retriever_beam_size = params["retriever_beam_size"]
@@ -423,7 +424,7 @@ def model_fn(features, labels, mode, params):
 
   predictions = get_predictions(reader_outputs, params)
 
-  if mode == tf.estimator.ModeKeys.PREDICT:
+  if mode == tf_estimator.ModeKeys.PREDICT:
     loss = None
     train_op = None
     eval_metric_ops = None
@@ -460,7 +461,7 @@ def model_fn(features, labels, mode, params):
                                         int(params["num_train_steps"] / 10))),
         use_tpu=False)
 
-  return tf.estimator.EstimatorSpec(
+  return tf_estimator.EstimatorSpec(
       mode=mode,
       loss=loss,
       train_op=train_op,
@@ -471,7 +472,7 @@ def model_fn(features, labels, mode, params):
 def serving_fn():
   placeholders = dict(
       question=tf.placeholder(dtype=tf.string, shape=[], name="question"))
-  return tf.estimator.export.ServingInputReceiver(placeholders, placeholders)
+  return tf_estimator.export.ServingInputReceiver(placeholders, placeholders)
 
 
 def exporter():
@@ -513,7 +514,7 @@ def get_predictor_for_model_fn(model_dir, model_function):
   estimator_spec = model_function(
       features=serving_input_receiver.features,
       labels=None,
-      mode=tf.estimator.ModeKeys.PREDICT,
+      mode=tf_estimator.ModeKeys.PREDICT,
       params=params)
   question_tensor = serving_input_receiver.receiver_tensors["question"]
   session = tf.train.MonitoredSession(

@@ -22,6 +22,7 @@ import os
 from absl import flags
 
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 flags.DEFINE_integer("batch_size", 16, "Batch size.")
 
@@ -119,18 +120,18 @@ def run_experiment(model_fn,
           FLAGS.tpu_name, zone=FLAGS.tpu_zone, project=FLAGS.gcp_project)
     else:
       tpu_cluster_resolver = None
-    run_config = tf.estimator.tpu.RunConfig(
+    run_config = tf_estimator.tpu.RunConfig(
         cluster=tpu_cluster_resolver,
         master=FLAGS.master,
         model_dir=FLAGS.model_dir,
         tf_random_seed=FLAGS.tf_random_seed,
         save_checkpoints_steps=FLAGS.save_checkpoints_steps,
-        tpu_config=tf.estimator.tpu.TPUConfig(
+        tpu_config=tf_estimator.tpu.TPUConfig(
             iterations_per_loop=FLAGS.save_checkpoints_steps))
     if "batch_size" in params:
       # Let the TPUEstimator fill in the batch size.
       params.pop("batch_size")
-    estimator = tf.estimator.tpu.TPUEstimator(
+    estimator = tf_estimator.tpu.TPUEstimator(
         use_tpu=True,
         model_fn=model_fn,
         params=params,
@@ -139,22 +140,22 @@ def run_experiment(model_fn,
         eval_batch_size=FLAGS.eval_batch_size,
         predict_batch_size=FLAGS.eval_batch_size)
   else:
-    run_config = tf.estimator.RunConfig(
+    run_config = tf_estimator.RunConfig(
         model_dir=FLAGS.model_dir,
         tf_random_seed=FLAGS.tf_random_seed,
         save_checkpoints_steps=FLAGS.save_checkpoints_steps,
         keep_checkpoint_max=FLAGS.keep_checkpoint_max)
     params["batch_size"] = FLAGS.batch_size
-    estimator = tf.estimator.Estimator(
+    estimator = tf_estimator.Estimator(
         config=run_config,
         model_fn=model_fn,
         params=params,
         model_dir=FLAGS.model_dir)
 
-  train_spec = tf.estimator.TrainSpec(
+  train_spec = tf_estimator.TrainSpec(
       input_fn=train_input_fn,
       max_steps=FLAGS.num_train_steps)
-  eval_spec = tf.estimator.EvalSpec(
+  eval_spec = tf_estimator.EvalSpec(
       name="default",
       input_fn=eval_input_fn,
       exporters=exporters,
@@ -163,7 +164,7 @@ def run_experiment(model_fn,
       steps=FLAGS.num_eval_steps)
 
   tf.logging.set_verbosity(tf.logging.INFO)
-  tf.estimator.train_and_evaluate(
+  tf_estimator.train_and_evaluate(
       estimator=estimator,
       train_spec=train_spec,
       eval_spec=eval_spec)

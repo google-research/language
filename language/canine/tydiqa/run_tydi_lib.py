@@ -27,6 +27,7 @@ from language.canine.tydiqa import tf_io
 from language.canine.tydiqa import tydi_modeling
 from language.canine.tydiqa import tydi_tokenization_interface
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 
 class TyDiRunner(metaclass=abc.ABCMeta):
@@ -170,7 +171,7 @@ class TyDiRunner(metaclass=abc.ABCMeta):
   def get_estimator(self, model_fn):
     """Creates the TPUEstimator object."""
     # If TPU is not available, this falls back to normal Estimator on CPU/GPU.
-    estimator = tf.estimator.tpu.TPUEstimator(
+    estimator = tf_estimator.tpu.TPUEstimator(
         use_tpu=self.use_tpu,
         model_fn=model_fn,
         config=self.get_tpu_run_config(),
@@ -182,16 +183,16 @@ class TyDiRunner(metaclass=abc.ABCMeta):
     """Creates the RunConfig object."""
     tpu_cluster_resolver = None
     if self.use_tpu and self.tpu_name:
-      tpu_cluster_resolver = tf.estimator.cluster_resolver.TPUClusterResolver(
+      tpu_cluster_resolver = tf_estimator.cluster_resolver.TPUClusterResolver(
           self.tpu_name, zone=self.tpu_zone, project=self.gcp_project)
 
-    is_per_host = tf.estimator.tpu.InputPipelineConfig.PER_HOST_V2
-    run_config = tf.estimator.tpu.RunConfig(
+    is_per_host = tf_estimator.tpu.InputPipelineConfig.PER_HOST_V2
+    run_config = tf_estimator.tpu.RunConfig(
         cluster=tpu_cluster_resolver,
         master=self.master,
         model_dir=self.output_dir,
         save_checkpoints_steps=self.save_checkpoints_steps,
-        tpu_config=tf.estimator.tpu.TPUConfig(
+        tpu_config=tf_estimator.tpu.TPUConfig(
             iterations_per_loop=self.iterations_per_loop,
             per_host_input_for_training=is_per_host))
     return run_config

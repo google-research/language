@@ -34,6 +34,7 @@ from language.tek_representations.utils import mrqa_official_eval
 from language.tek_representations.utils import triviaqa_evaluation
 from language.tek_representations.utils import util
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 flags = tf.flags
 FLAGS = flags.FLAGS
@@ -854,7 +855,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
     input_ids = features["input_ids"]
     input_mask = features["input_mask"]
 
-    is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+    is_training = (mode == tf_estimator.ModeKeys.TRAIN)
 
     (start_logits, end_logits) = create_model(
         bert_config=bert_config,
@@ -889,7 +890,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
                       init_string)
 
     output_spec = None
-    if mode == tf.estimator.ModeKeys.TRAIN:
+    if mode == tf_estimator.ModeKeys.TRAIN:
       seq_length = modeling.get_shape_list(input_ids)[1]
 
       # Computes the loss for positions.
@@ -918,7 +919,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
           loss=total_loss,
           train_op=train_op,
           scaffold_fn=scaffold_fn)
-    elif mode == tf.estimator.ModeKeys.PREDICT:
+    elif mode == tf_estimator.ModeKeys.PREDICT:
       predictions = {
           "unique_ids": unique_ids,
           "example_index": example_index,

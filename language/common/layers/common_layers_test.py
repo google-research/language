@@ -21,6 +21,7 @@ from __future__ import print_function
 from language.common.inputs import char_utils
 from language.common.layers import common_layers
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 
 class CommonLayersTest(tf.test.TestCase):
@@ -32,7 +33,7 @@ class CommonLayersTest(tf.test.TestCase):
           input_emb=input_emb,
           hidden_sizes=[7, 9],
           dropout_ratio=0.2,
-          mode=tf.estimator.ModeKeys.TRAIN)
+          mode=tf_estimator.ModeKeys.TRAIN)
       with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         actual_output_emb = sess.run(output_emb)
@@ -45,7 +46,7 @@ class CommonLayersTest(tf.test.TestCase):
           input_emb=input_emb,
           hidden_sizes=[7, 9],
           dropout_ratio=0.2,
-          mode=tf.estimator.ModeKeys.TRAIN)
+          mode=tf_estimator.ModeKeys.TRAIN)
       with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         actual_output_emb = sess.run(output_emb)

@@ -19,6 +19,7 @@ from bert import modeling
 from bert import optimization
 from bert import tokenization
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver
 from tensorflow.contrib import tpu as contrib_tpu
@@ -257,7 +258,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
     else:
       is_real_example = tf.ones(tf.shape(label_ids), dtype=tf.float32)
 
-    is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+    is_training = (mode == tf_estimator.ModeKeys.TRAIN)
 
     (total_loss, per_example_loss, logits,
      probabilities) = create_model(bert_config, is_training, input_ids,
@@ -289,7 +290,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
                       init_string)
 
     output_spec = None
-    if mode == tf.estimator.ModeKeys.TRAIN:
+    if mode == tf_estimator.ModeKeys.TRAIN:
 
       train_op = optimization.create_optimizer(total_loss, learning_rate,
                                                num_train_steps,
@@ -301,7 +302,7 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
           train_op=train_op,
           scaffold_fn=scaffold_fn)
 
-    elif mode == tf.estimator.ModeKeys.EVAL:
+    elif mode == tf_estimator.ModeKeys.EVAL:
 
       def metric_fn(per_example_loss, label_ids, logits, is_real_example):
         predictions = tf.argmax(logits, axis=-1, output_type=tf.int32)

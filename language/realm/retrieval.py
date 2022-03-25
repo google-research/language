@@ -25,6 +25,7 @@ from language.realm import parallel
 from language.realm import profile
 import numpy as np
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 import tensorflow_hub as hub
 
 
@@ -300,7 +301,7 @@ class DocumentEmbedder(object):
       if use_tpu:
         raise ValueError('Must supply a RunConfig if use_tpu.')
       else:
-        run_config = tf.estimator.tpu.RunConfig()  # Just supply a default.
+        run_config = tf_estimator.tpu.RunConfig()  # Just supply a default.
 
     self._hub_module_spec = hub_module_spec
     self._featurizer = featurizer
@@ -408,13 +409,13 @@ class DocumentEmbedder(object):
       # [batch_size, embed_dim]
       embeds = embedder_module(inputs=features, signature='projected')
 
-      return tf.estimator.tpu.TPUEstimatorSpec(
+      return tf_estimator.tpu.TPUEstimatorSpec(
           mode=mode, predictions={
               'embeds': embeds,
               'result_idx': result_idx
           })
 
-    estimator = tf.estimator.tpu.TPUEstimator(
+    estimator = tf_estimator.tpu.TPUEstimator(
         use_tpu=self._use_tpu,
         model_fn=model_fn,
         model_dir=None,  # Don't persist model.
@@ -518,7 +519,7 @@ def embed_documents_using_multiple_tpu_workers(
   num_shards = len(shard_paths)
   num_tpu_workers = len(tpu_workers)
 
-  tpu_config = tf.estimator.tpu.TPUConfig(
+  tpu_config = tf_estimator.tpu.TPUConfig(
       iterations_per_loop=1,  # This seems to be ignored by predict().
       num_shards=num_tpu_cores_per_worker)
 
@@ -532,7 +533,7 @@ def embed_documents_using_multiple_tpu_workers(
   for k, num_shards_k in enumerate(num_shards_per_worker):
     worker_kwargs.append({
         'tpu_run_config':
-            tf.estimator.tpu.RunConfig(
+            tf_estimator.tpu.RunConfig(
                 master=tpu_workers[k], tpu_config=tpu_config),
         'shard_paths':
             shard_paths[shards_assigned:shards_assigned + num_shards_k],

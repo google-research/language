@@ -22,6 +22,7 @@ from language.capwap.utils import image_utils
 from language.capwap.utils import text_utils
 import numpy as np
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 
 class DatasetTypes(object):
@@ -98,7 +99,7 @@ def input_fn(params, mode, get_dataset_fns, weights=None, mix_batches=True):
 
   # Weird bug where tensor2tensor doens't like non-static shapes on CPU,
   # but is ok when it's on TPU. Luckily we evaluate on TPU in our case.
-  if mode != tf.estimator.ModeKeys.PREDICT:
+  if mode != tf_estimator.ModeKeys.PREDICT:
     drop_remainder = True
   elif not params["use_tpu"]:
     tf.logging.warning("Evaluation intended for TPU! Will have to drop "

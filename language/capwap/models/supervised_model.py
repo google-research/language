@@ -24,6 +24,7 @@ from language.capwap.utils import checkpoint_utils
 from language.capwap.utils import tensor_utils
 from language.capwap.utils import transformer_utils
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 
 def model_fn(features, labels, mode, params, vocab):
@@ -47,7 +48,7 @@ def model_fn(features, labels, mode, params, vocab):
 
   model = transformer_utils.TransformerModel(
       config=transformer_utils.TransformerConfig.from_dict(params),
-      is_training=(mode == tf.estimator.ModeKeys.TRAIN))
+      is_training=(mode == tf_estimator.ModeKeys.TRAIN))
 
   # image_features: [batch_size, num_regions, feature_size]
   # image_positions: [batch_size, num_regions]
@@ -97,7 +98,7 @@ def model_fn(features, labels, mode, params, vocab):
   # TRAINING
   # ----------------------------------------------------------------------------
 
-  if mode == tf.estimator.ModeKeys.TRAIN:
+  if mode == tf_estimator.ModeKeys.TRAIN:
     # During training, apply forced decoding with a diagonal attention mask.
     # [batch_size, caption_length - 1, input_length + caption_length - 1]
     attention_mask = transformer_utils.compute_attention_mask(
@@ -141,7 +142,7 @@ def model_fn(features, labels, mode, params, vocab):
   # TESTING.
   # ----------------------------------------------------------------------------
 
-  if mode == tf.estimator.ModeKeys.PREDICT:
+  if mode == tf_estimator.ModeKeys.PREDICT:
     decode_output = transformer_utils.beam_search_decode(
         model=model,
         encoder_cache=input_cache,
@@ -172,7 +173,7 @@ def model_fn(features, labels, mode, params, vocab):
       checkpoint_utils.init_from_checkpoint(checkpoint)
     return tf.train.Scaffold()
 
-  return tf.estimator.tpu.TPUEstimatorSpec(
+  return tf_estimator.tpu.TPUEstimatorSpec(
       mode=mode,
       loss=loss,
       train_op=train_op,

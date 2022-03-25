@@ -37,6 +37,7 @@ from language.labs.drkit import search_utils
 import numpy as np
 from sklearn.preprocessing import normalize
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 import tornado.web
 import tornado.wsgi
 from tensorflow.contrib import tpu as contrib_tpu
@@ -390,7 +391,7 @@ def hotpot_model_fn_builder(bert_config, init_checkpoint, learning_rate,
     input_mask = features["input_mask"]
     segment_ids = features["segment_ids"]
 
-    is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+    is_training = (mode == tf_estimator.ModeKeys.TRAIN)
 
     (start_logits,
      end_logits,
@@ -429,7 +430,7 @@ def hotpot_model_fn_builder(bert_config, init_checkpoint, learning_rate,
                       init_string)
 
     output_spec = None
-    if mode == tf.estimator.ModeKeys.PREDICT:
+    if mode == tf_estimator.ModeKeys.PREDICT:
       sp_mask = tf.cast(features["supporting_mask"], tf.float32)  # B x N
       predictions = {
           "unique_ids": unique_ids,
@@ -888,7 +889,7 @@ def model_fn_builder(bert_config,
     for name in sorted(features.keys()):
       tf.logging.info("  name = %s, shape = %s", name, features[name].shape)
 
-    is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+    is_training = (mode == tf_estimator.ModeKeys.TRAIN)
 
     # Initialize sparse tensors.
     with tf.device("/cpu:0"):
@@ -944,7 +945,7 @@ def model_fn_builder(bert_config,
         tf.train.init_from_checkpoint(init_checkpoint, assignment_map)
 
     output_spec = None
-    if mode == tf.estimator.ModeKeys.PREDICT:
+    if mode == tf_estimator.ModeKeys.PREDICT:
       output_spec = contrib_tpu.TPUEstimatorSpec(
           mode=mode, predictions=predictions, scaffold_fn=scaffold_fn)
     else:

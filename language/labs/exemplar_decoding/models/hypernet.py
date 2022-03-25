@@ -26,6 +26,7 @@ from language.labs.exemplar_decoding.models.output_wrapper import OutputWrapper
 from language.labs.exemplar_decoding.utils import tensor_utils
 import language.labs.exemplar_decoding.utils.data as data
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 EncoderOutputs = namedtuple(
     "EncoderOutputs",
@@ -96,7 +97,7 @@ def encoder(features, mode, vocab, hps):
   # [batch_size, src_len, emb_dim]
   src_input_emb = tf.nn.embedding_lookup(embeddings, src_inputs)
 
-  if mode == tf.estimator.ModeKeys.TRAIN and hps.emb_drop > 0.:
+  if mode == tf_estimator.ModeKeys.TRAIN and hps.emb_drop > 0.:
     src_input_emb = tf.nn.dropout(
         src_input_emb, keep_prob=1.0-hps.emb_drop)
   src_att_context, neighbor_att_context = None, None
@@ -145,7 +146,7 @@ def encoder(features, mode, vocab, hps):
     neighbor_input_emb = tf.nn.embedding_lookup(
         embeddings, neighbor_inputs)
 
-    if mode == tf.estimator.ModeKeys.TRAIN and hps.emb_drop > 0.:
+    if mode == tf_estimator.ModeKeys.TRAIN and hps.emb_drop > 0.:
       neighbor_input_emb = tf.nn.dropout(
           neighbor_input_emb, keep_prob=1.0-hps.emb_drop)
     if hps.binary_neighbor:
@@ -218,7 +219,7 @@ def encoder(features, mode, vocab, hps):
     neighbor_fw_states, neighbor_bw_states = neighbor_encoder_states
     neighbor_h = tf.concat(
         [neighbor_fw_states[-1].h, neighbor_bw_states[-1].h], axis=1)
-    if mode == tf.estimator.ModeKeys.TRAIN and hps.drop > 0.:
+    if mode == tf_estimator.ModeKeys.TRAIN and hps.drop > 0.:
       neighbor_h = tf.nn.dropout(neighbor_h, keep_prob=1.0-hps.drop)
     mem_input = tf.layers.dense(
         neighbor_h, units=hps.decoder_dim,
@@ -226,7 +227,7 @@ def encoder(features, mode, vocab, hps):
         use_bias=True,
         kernel_initializer=tf.contrib.layers.xavier_initializer(),
         name="mem_input")
-    if mode == tf.estimator.ModeKeys.TRAIN and hps.drop > 0.:
+    if mode == tf_estimator.ModeKeys.TRAIN and hps.drop > 0.:
       mem_input = tf.nn.dropout(
           mem_input, keep_prob=1.0-hps.drop)
   elif hps.sum_neighbor:
@@ -234,7 +235,7 @@ def encoder(features, mode, vocab, hps):
     src_fw_states, src_bw_states = src_encoder_states
     src_h = tf.concat([src_fw_states[-1].h, src_bw_states[-1].h], axis=1)
 
-    if mode == tf.estimator.ModeKeys.TRAIN and hps.drop > 0.:
+    if mode == tf_estimator.ModeKeys.TRAIN and hps.drop > 0.:
       src_h = tf.nn.dropout(src_h, keep_prob=1.0-hps.drop)
     src_h = tf.layers.dense(
         src_h, units=hps.decoder_dim,
@@ -255,7 +256,7 @@ def encoder(features, mode, vocab, hps):
     mem_input = tf.reduce_sum(
         neighbor_encoder_outputs * tf.expand_dims(alpha, -1), 1)
     # mem_input = tf.reduce_mean(mem_input, axis=1)
-    if mode == tf.estimator.ModeKeys.TRAIN and hps.drop > 0.:
+    if mode == tf_estimator.ModeKeys.TRAIN and hps.drop > 0.:
       mem_input = tf.nn.dropout(mem_input, keep_prob=1.0-hps.drop)
   else:
     assert hps.rnn_cell != "hyper_lstm"
@@ -272,7 +273,7 @@ def encoder(features, mode, vocab, hps):
         h_states.append(tf.concat((fw.h, bw.h), 1))
       cs, hs = c_states[-1], h_states[-1]
 
-      if mode == tf.estimator.ModeKeys.TRAIN and hps.drop > 0.:
+      if mode == tf_estimator.ModeKeys.TRAIN and hps.drop > 0.:
         hs = tf.nn.dropout(hs, keep_prob=1.0-hps.drop)
         cs = tf.nn.dropout(cs, keep_prob=1.0-hps.drop)
 
@@ -349,7 +350,7 @@ def basic_decoder(features, mode, vocab, encoder_outputs, hps):
 
   # [batch_size, dec_len, emb_dim]
   decoder_input_emb = tf.nn.embedding_lookup(embeddings, decoder_inputs)
-  if mode == tf.estimator.ModeKeys.TRAIN and hps.emb_drop > 0.:
+  if mode == tf_estimator.ModeKeys.TRAIN and hps.emb_drop > 0.:
     decoder_input_emb = tf.nn.dropout(
         decoder_input_emb, keep_prob=1.0-hps.emb_drop)
 
@@ -439,7 +440,7 @@ def basic_decoder(features, mode, vocab, encoder_outputs, hps):
         mode=mode,
         hps=hps)
 
-  if mode == tf.estimator.ModeKeys.TRAIN:
+  if mode == tf_estimator.ModeKeys.TRAIN:
     if hps.sampling_probability > 0.:
       helper = tf.contrib.seq2seq.ScheduledEmbeddingTrainingHelper(
           inputs=decoder_input_emb,
@@ -487,7 +488,7 @@ def beam_decoder(features, mode, vocab, encoder_outputs, hps):
   Returns:
     Decoder outputs
   """
-  assert mode is not tf.estimator.ModeKeys.TRAIN, "Not using beam in training."
+  assert mode is not tf_estimator.ModeKeys.TRAIN, "Not using beam in training."
   embeddings = encoder_outputs.embeddings
   mem_input = encoder_outputs.mem_input
   batch_size = tensor_utils.shape(features["src_len"], 0)

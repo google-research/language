@@ -158,11 +158,11 @@ def get_estimator(model_fn, params):
     raise ValueError(
         "TPU iterations per loop should evenly divide checkpointing.")
 
-  tpu_config = tf.estimator.tpu.TPUConfig(
+  tpu_config = tf_estimator.tpu.TPUConfig(
       iterations_per_loop=tpu_iterations_per_loop,
       tpu_job_name=FLAGS.tpu_job_name)
 
-  run_config = tf.estimator.tpu.RunConfig(
+  run_config = tf_estimator.tpu.RunConfig(
       master=FLAGS.session_master,
       model_dir=params.get("model_dir") or get_model_dir(),
       tf_random_seed=FLAGS.tf_random_seed,
@@ -175,7 +175,7 @@ def get_estimator(model_fn, params):
   batch_size = params.pop("batch_size")
   eval_batch_size = params.pop("eval_batch_size")
   predict_batch_size = params.pop("predict_batch_size")
-  estimator = tf.estimator.tpu.TPUEstimator(
+  estimator = tf_estimator.tpu.TPUEstimator(
       model_fn=model_fn,
       use_tpu=params["use_tpu"],
       config=run_config,
@@ -281,7 +281,7 @@ def evaluate_checkpoints(
         with tf.io.gfile.GFile(ckpt + ".caption_pred", "w") as f:
           iterator = estimator.predict(
               input_fn=functools.partial(
-                  caption_input_fn, mode=tf.estimator.ModeKeys.PREDICT),
+                  caption_input_fn, mode=tf_estimator.ModeKeys.PREDICT),
               checkpoint_path=ckpt,
               yield_single_examples=True)
           i = 0
@@ -303,7 +303,7 @@ def evaluate_checkpoints(
         with tf.io.gfile.GFile(ckpt + ".question_pred", "w") as f:
           iterator = estimator.predict(
               input_fn=functools.partial(
-                  vqa_input_fn, mode=tf.estimator.ModeKeys.PREDICT),
+                  vqa_input_fn, mode=tf_estimator.ModeKeys.PREDICT),
               checkpoint_path=ckpt,
               yield_single_examples=True)
           i = 0

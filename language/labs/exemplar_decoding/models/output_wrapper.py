@@ -20,6 +20,7 @@ from language.labs.exemplar_decoding.models.common import sparse_batched_matmul
 from language.labs.exemplar_decoding.models.linear import Linear
 from language.labs.exemplar_decoding.utils import tensor_utils
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 _BIAS_VARIABLE_NAME = "bias"
 _WEIGHTS_VARIABLE_NAME = "kernel"
 
@@ -36,7 +37,7 @@ class OutputWrapper(tf.nn.rnn_cell.RNNCell):
                sparse_inputs=None,
                mask=None,
                hps=None,
-               mode=tf.estimator.ModeKeys.EVAL,
+               mode=tf_estimator.ModeKeys.EVAL,
                reuse=None):
     """Create a cell with output projection.
 
@@ -163,7 +164,7 @@ class OutputWrapper(tf.nn.rnn_cell.RNNCell):
         if self._activation:
           hidden = self._activation(hidden)
 
-        if self._mode == tf.estimator.ModeKeys.TRAIN and self._dropout > 0.:
+        if self._mode == tf_estimator.ModeKeys.TRAIN and self._dropout > 0.:
           hidden = tf.nn.dropout(hidden, keep_prob=1.-self._dropout)
 
       with tf.variable_scope("mlp2", reuse=self._reuse):
@@ -199,7 +200,7 @@ class OutputWrapper(tf.nn.rnn_cell.RNNCell):
             axis=2)
         alignments = tf.nn.softmax(scores)
 
-    if self._mode == tf.estimator.ModeKeys.TRAIN and self._dropout > 0.:
+    if self._mode == tf_estimator.ModeKeys.TRAIN and self._dropout > 0.:
       rnn_out = tf.nn.dropout(rnn_out, keep_prob=1.-self._dropout)
     gen_logits = self._compute_logits(rnn_out)
     if self._use_copy:

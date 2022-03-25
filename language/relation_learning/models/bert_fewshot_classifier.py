@@ -28,6 +28,7 @@ from bert import tokenization
 from language.relation_learning.data import fewrel
 import six
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 FLAGS = flags.FLAGS
 
@@ -336,7 +337,7 @@ def model_fn_builder(bert_config,
     """The `model_fn` for tf.Estimator."""
     del labels, params
 
-    if mode != tf.estimator.ModeKeys.PREDICT:
+    if mode != tf_estimator.ModeKeys.PREDICT:
       raise ValueError("Only PREDICT mode is supported: %s" % (mode))
 
     tf.logging.info("*** Features *** %s %s" % (type(features), features))
@@ -360,7 +361,7 @@ def model_fn_builder(bert_config,
         class_examples_combiner=class_examples_combiner)
 
     predictions = tf.argmax(logits, axis=-1, output_type=tf.int32)
-    output_spec = tf.estimator.EstimatorSpec(
+    output_spec = tf_estimator.EstimatorSpec(
         mode=mode, predictions={
             "predictions": predictions,
             "guid": guid,
@@ -398,7 +399,7 @@ def main(_):
       fewshot_num_examples_per_class=fewshot_num_examples_per_class,
       tokenizer=tokenizer,
       class_examples_combiner=FLAGS.fewshot_examples_combiner)
-  estimator = tf.estimator.Estimator(
+  estimator = tf_estimator.Estimator(
       model_fn=model_fn, params={"batch_size": FLAGS.predict_batch_size})
 
   # Convert examples into tensorflow examples, and store to a file.

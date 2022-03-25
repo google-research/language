@@ -22,6 +22,7 @@ from language.orqa.datasets import text_classification_dataset
 from language.orqa.models import orqa_model
 from language.orqa.utils import bert_utils
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 import tensorflow_hub as hub
 
 
@@ -67,7 +68,7 @@ def read(features, retriever_logits, blocks, mode, params):
 
   reader_module = hub.Module(
       params["reader_module_path"],
-      tags={"train"} if mode == tf.estimator.ModeKeys.TRAIN else {},
+      tags={"train"} if mode == tf_estimator.ModeKeys.TRAIN else {},
       trainable=True)
 
   concat_outputs = reader_module(
@@ -121,7 +122,7 @@ def model_fn(features, labels, mode, params):
   """Model function."""
   reader_beam_size = params["reader_beam_size"]
   num_classes = params["num_classes"]
-  if mode == tf.estimator.ModeKeys.PREDICT:
+  if mode == tf_estimator.ModeKeys.PREDICT:
     retriever_beam_size = reader_beam_size
   else:
     retriever_beam_size = params["retriever_beam_size"]
@@ -149,7 +150,7 @@ def model_fn(features, labels, mode, params):
       tf.reshape(final_logits, [reader_beam_size * num_classes]))
   predictions = tf.math.floormod(predictions, num_classes)
 
-  if mode == tf.estimator.ModeKeys.PREDICT:
+  if mode == tf_estimator.ModeKeys.PREDICT:
     loss = None
     train_op = None
     eval_metric_ops = None
@@ -169,7 +170,7 @@ def model_fn(features, labels, mode, params):
                                         int(params["num_train_steps"] / 10))),
         use_tpu=False)
 
-  return tf.estimator.EstimatorSpec(
+  return tf_estimator.EstimatorSpec(
       mode=mode,
       loss=loss,
       train_op=train_op,

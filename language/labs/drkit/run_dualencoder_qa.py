@@ -29,6 +29,7 @@ from bert import optimization
 from bert import tokenization
 from language.labs.drkit import evaluate
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver
 from tensorflow.contrib import data as contrib_data
 
@@ -482,7 +483,7 @@ def create_optimizer(loss, init_lr, num_train_steps, num_warmup_steps, use_tpu,
       exclude_from_weight_decay=["LayerNorm", "layer_norm", "bias"])
 
   if use_tpu:
-    optimizer = tf.estimator.tpu.CrossShardOptimizer(optimizer)
+    optimizer = tf_estimator.tpu.CrossShardOptimizer(optimizer)
 
   tvars = tf.trainable_variables()
   exclude_vars = []
@@ -583,7 +584,7 @@ def model_fn_builder(bert_config,
     qry_input_mask = features["qry_input_mask"]
     qry_segment_ids = features["qry_segment_ids"]
 
-    is_training = (mode == tf.estimator.ModeKeys.TRAIN)
+    is_training = (mode == tf_estimator.ModeKeys.TRAIN)
 
     start_logits, end_logits, doc_hidden, qry_start, qry_end = create_model(
         bert_config=bert_config,
@@ -646,7 +647,7 @@ def model_fn_builder(bert_config,
                       init_string)
 
     output_spec = None
-    if mode == tf.estimator.ModeKeys.TRAIN:
+    if mode == tf_estimator.ModeKeys.TRAIN:
       seq_length = modeling.get_shape_list(doc_input_ids)[1]
 
       def compute_loss(logits, positions):
@@ -675,13 +676,13 @@ def model_fn_builder(bert_config,
           exclude_scopes=qa_config.exclude_scopes)
 
       host_call = summary_obj.get_host_call() if summary_obj else None
-      output_spec = tf.estimator.tpu.TPUEstimatorSpec(
+      output_spec = tf_estimator.tpu.TPUEstimatorSpec(
           mode=mode,
           loss=total_loss,
           train_op=train_op,
           scaffold_fn=scaffold_fn,
           host_call=host_call)
-    elif mode == tf.estimator.ModeKeys.PREDICT:
+    elif mode == tf_estimator.ModeKeys.PREDICT:
       predictions = {
           "unique_ids": unique_ids,
           "start_logits": start_logits,
@@ -690,7 +691,7 @@ def model_fn_builder(bert_config,
           "qry_st_features": qry_start,
           "qry_en_features": qry_end,
       }
-      output_spec = tf.estimator.tpu.TPUEstimatorSpec(
+      output_spec = tf_estimator.tpu.TPUEstimatorSpec(
           mode=mode, predictions=predictions, scaffold_fn=scaffold_fn)
     else:
       raise ValueError("Only TRAIN and PREDICT modes are supported: %s" %
@@ -1253,19 +1254,19 @@ def main(_):
     tpu_cluster_resolver = contrib_cluster_resolver.TPUClusterResolver(
         FLAGS.tpu_name, zone=FLAGS.tpu_zone, project=FLAGS.gcp_project)
 
-  is_per_host = tf.estimator.tpu.InputPipelineConfig.PER_HOST_V2
+  is_per_host = tf_estimator.tpu.InputPipelineConfig.PER_HOST_V2
 
   json.dump(
       tf.app.flags.FLAGS.flag_values_dict(),
       tf.gfile.Open(os.path.join(FLAGS.output_dir, "pretrain_flags.json"), "w"))
 
   if FLAGS.do_pretrain:
-    run_config = tf.estimator.tpu.RunConfig(
+    run_config = tf_estimator.tpu.RunConfig(
         cluster=tpu_cluster_resolver,
         master=FLAGS.master,
         model_dir=FLAGS.output_dir,
         save_checkpoints_steps=FLAGS.save_checkpoints_steps,
-        tpu_config=tf.estimator.tpu.TPUConfig(
+        tpu_config=tf_estimator.tpu.TPUConfig(
             iterations_per_loop=FLAGS.iterations_per_loop,
             num_shards=FLAGS.num_tpu_cores,
             per_host_input_for_training=is_per_host))
@@ -1299,7 +1300,7 @@ def main(_):
 
     # If TPU is not available, this will fall back to normal Estimator on CPU
     # or GPU.
-    estimator = tf.estimator.tpu.TPUEstimator(
+    estimator = tf_estimator.tpu.TPUEstimator(
         use_tpu=FLAGS.use_tpu,
         model_fn=model_fn,
         config=run_config,
@@ -1324,12 +1325,12 @@ def main(_):
     my_output_dir = os.path.join(FLAGS.output_dir, "eval", str(ckpt_number))
     tf.gfile.MakeDirs(my_output_dir)
 
-    run_config = tf.estimator.tpu.RunConfig(
+    run_config = tf_estimator.tpu.RunConfig(
         cluster=tpu_cluster_resolver,
         master=FLAGS.master,
         model_dir=my_output_dir,
         save_checkpoints_steps=FLAGS.save_checkpoints_steps,
-        tpu_config=tf.estimator.tpu.TPUConfig(
+        tpu_config=tf_estimator.tpu.TPUConfig(
             iterations_per_loop=FLAGS.iterations_per_loop,
             num_shards=FLAGS.num_tpu_cores,
             per_host_input_for_training=is_per_host))
@@ -1357,7 +1358,7 @@ def main(_):
 
     # If TPU is not available, this will fall back to normal Estimator on CPU
     # or GPU.
-    estimator = tf.estimator.tpu.TPUEstimator(
+    estimator = tf_estimator.tpu.TPUEstimator(
         use_tpu=FLAGS.use_tpu,
         model_fn=model_fn,
         config=run_config,

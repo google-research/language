@@ -21,6 +21,7 @@ from __future__ import print_function
 import re
 from six.moves import zip
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 
 class AdamWeightDecayOptimizer(tf.train.Optimizer):
@@ -232,7 +233,7 @@ def create_optimizer(loss,
       freeze_pretrained_steps=freeze_pretrained_steps)
 
   if use_tpu:
-    optimizer = tf.estimator.tpu.CrossShardOptimizer(optimizer)
+    optimizer = tf_estimator.tpu.CrossShardOptimizer(optimizer)
 
   tvars = tf.trainable_variables()
   grads = tf.gradients(loss, tvars)

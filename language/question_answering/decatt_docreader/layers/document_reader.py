@@ -20,6 +20,7 @@ from __future__ import print_function
 from language.common.layers import cudnn_layers
 from language.common.utils import tensor_utils
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 
 def _attend_to_question(context_emb, question_emb, question_mask, hidden_size):
@@ -155,7 +156,7 @@ def score_endpoints(question_emb,
         dropout_ratio=dropout_ratio,
         mode=mode,
         use_cudnn=use_cudnn)
-  if mode == tf.estimator.ModeKeys.TRAIN:
+  if mode == tf_estimator.ModeKeys.TRAIN:
     contextualized_context_emb = tf.nn.dropout(contextualized_context_emb,
                                                1.0 - dropout_ratio)
     contextualized_question_emb = tf.nn.dropout(contextualized_question_emb,
@@ -165,7 +166,7 @@ def score_endpoints(question_emb,
   pooled_question_emb = _attention_pool(contextualized_question_emb,
                                         question_mask)
 
-  if mode == tf.estimator.ModeKeys.TRAIN:
+  if mode == tf_estimator.ModeKeys.TRAIN:
     pooled_question_emb = tf.nn.dropout(pooled_question_emb,
                                         1.0 - dropout_ratio)
 

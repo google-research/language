@@ -27,6 +27,7 @@ import functools
 from language.capwap import datasets
 from language.capwap.utils import text_utils
 import tensorflow.compat.v1 as tf
+from tensorflow.compat.v1 import estimator as tf_estimator
 
 
 def preprocess_mapper(raw_text, params, lookup_table, vocab):
@@ -82,11 +83,11 @@ def get_dataset(params, mode, file_pattern, vocab):
   dataset = tf.data.Dataset.from_tensor_slices(tf.constant(data_files))
 
   # Shuffle.
-  if mode == tf.estimator.ModeKeys.TRAIN:
+  if mode == tf_estimator.ModeKeys.TRAIN:
     dataset = dataset.shuffle(buffer_size=len(data_files))
 
   # Repeat.
-  if mode != tf.estimator.ModeKeys.PREDICT:
+  if mode != tf_estimator.ModeKeys.PREDICT:
     dataset = dataset.repeat()
 
   # Load text from files.
@@ -96,7 +97,7 @@ def get_dataset(params, mode, file_pattern, vocab):
       num_parallel_calls=len(data_files))
 
   # Shuffle.
-  if mode == tf.estimator.ModeKeys.TRAIN:
+  if mode == tf_estimator.ModeKeys.TRAIN:
     dataset = dataset.shuffle(buffer_size=1000)
 
   # Preprocess.
