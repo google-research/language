@@ -68,6 +68,33 @@ class McdUtilsTest(tf.test.TestCase):
         examples_out_1, examples_out_2, _get_compounds_fn)
     self.assertEqual(compound_divergence_out, 1.0)
 
+  def test_get_all_compounds(self):
+    examples = ["jump twice", "walk twice", "jump thrice", "look and walk"]
+    compounds_to_count = mcd_utils.get_all_compounds(examples,
+                                                     _get_compounds_fn)
+
+    expected_compounds_to_count = {
+        "jump twice": 1,
+        "walk twice": 1,
+        "jump thrice": 1,
+        "look and": 1,
+        "and walk": 1
+    }
+    self.assertDictEqual(expected_compounds_to_count, compounds_to_count)
+
+  def test_compute_divergence(self):
+    compound_counts_1 = {"a": 1, "b": 2, "c": 3}  # sum = 6
+    compound_counts_2 = {"b": 4, "c": 5, "d": 6}  # sum = 15
+    coef = 0.1
+
+    divergence = mcd_utils.compute_divergence(compound_counts_1,
+                                              compound_counts_2, coef)
+
+    expected_divergence = 1.0 - (((2 / 6)**0.1 * (4 / 15)**0.9) +
+                                 ((3 / 6)**0.1 * (5 / 15)**0.9))
+
+    self.assertAlmostEqual(expected_divergence, divergence)
+
 
 if __name__ == "__main__":
   tf.test.main()

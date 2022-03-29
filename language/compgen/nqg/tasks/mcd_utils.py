@@ -21,7 +21,7 @@ https://arxiv.org/abs/1912.09713
 import collections
 
 
-def _compute_divergence(compound_counts_1, compound_counts_2, coef=0.1):
+def compute_divergence(compound_counts_1, compound_counts_2, coef=0.1):
   """Compute compound divergence using Chernoff coefficient."""
   sum_1 = sum(compound_counts_1.values())
   sum_2 = sum(compound_counts_2.values())
@@ -127,17 +127,20 @@ def _compute_new_divergence_2(compound_counts_1,
   return 1.0 - new_similarity
 
 
-def _get_all_compounds(examples, get_compounds_fn):
+def get_all_compounds(examples, get_compounds_fn):
   compounds_to_count = collections.Counter()
   for example in examples:
     compounds_to_count.update(get_compounds_fn(example))
   return compounds_to_count
 
 
-def measure_example_divergence(examples_1, examples_2, get_compounds_fn):
-  compounds_1 = _get_all_compounds(examples_1, get_compounds_fn)
-  compounds_2 = _get_all_compounds(examples_2, get_compounds_fn)
-  return _compute_divergence(compounds_1, compounds_2)
+def measure_example_divergence(examples_1,
+                               examples_2,
+                               get_compounds_fn,
+                               coef=0.1):
+  compounds_1 = get_all_compounds(examples_1, get_compounds_fn)
+  compounds_2 = get_all_compounds(examples_2, get_compounds_fn)
+  return compute_divergence(compounds_1, compounds_2, coef)
 
 
 def _shifted_enumerate(items, start_idx):
@@ -206,16 +209,14 @@ def maximize_divergence(examples_1, examples_2, get_compounds_fn, get_atoms_fn,
   """Approx. maximizes compound divergence by iteratively swapping examples."""
   start_idx_1 = 0
   start_idx_2 = 0
-  compounds_1 = _get_all_compounds(
-      examples_1, get_compounds_fn=get_compounds_fn)
-  compounds_2 = _get_all_compounds(
-      examples_2, get_compounds_fn=get_compounds_fn)
+  compounds_1 = get_all_compounds(examples_1, get_compounds_fn=get_compounds_fn)
+  compounds_2 = get_all_compounds(examples_2, get_compounds_fn=get_compounds_fn)
   for iteration_num in range(max_iterations):
     atoms_1_single = _get_atoms_below_count(
         examples_1, get_atoms_fn, atom_count=min_atom_count)
 
     # Compute the compound divergence for the current split of examples.
-    divergence = _compute_divergence(compounds_1, compounds_2)
+    divergence = compute_divergence(compounds_1, compounds_2)
     print("Iteration %s divergence: %s" % (iteration_num, divergence))
 
     if max_divergence and divergence >= max_divergence:
@@ -398,9 +399,9 @@ def _get_atoms_below_count(examples, get_atoms_fn, atom_count):
 
 def print_compound_frequencies(examples_1, examples_2, get_compounds_fn):
   """Prints compound frequencies for debugging."""
-  compound_counts_1 = _get_all_compounds(
+  compound_counts_1 = get_all_compounds(
       examples_1, get_compounds_fn=get_compounds_fn)
-  compound_counts_2 = _get_all_compounds(
+  compound_counts_2 = get_all_compounds(
       examples_2, get_compounds_fn=get_compounds_fn)
   sum_1 = sum(compound_counts_1.values())
   sum_2 = sum(compound_counts_2.values())
