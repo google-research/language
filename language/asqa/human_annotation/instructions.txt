@@ -1,0 +1,21 @@
+In this document, we give some guidelines on how to perform pairwise comparisons. Before proceeding, please take a look at `screenshot.png` to familiarize yourself with the annotation interface.
+
+Overall, each pairwise comparison consists of two parts: Evaluation 1 and Evaluation 2.
+
+
++++++Evaluation 1.+++++
+
+First, annotators should evaluate the QA accuracy of each long-form answer **separately**. For each long-form answer and each QA pair, annotators need to check if this QA pair is captured in the long-form answer, that is, check whether the disambiguated question Q can be correctly answered from the long-form answer. If the QA pair is captured in the long-form answer, annotators should check the corresponding checkbox.
+
+Importantly, in this stage, long-form answers **are not compared directly** and the accuracy of each answer is evaluated independently. If both long-form answers capture a QA pair, both checkboxes need to be checked. Similarly, if both long-form answers do not capture a QA pair, both checkboxes should be left unchecked.
+
+
++++++Evaluation 2.+++++
+
+In the second part of the evaluation, annotators need to compare the long-form answers on three criteria:
+
+1. Which paragraph is better in terms of resolving ambiguity? To answer this question, evaluate wheter a user can understand the source of ambiguity in their question after reading the long-form answer.
+
+2. Which paragraph is better in terms of fluency? Identify the answer which is more fluent and coherent.
+
+3. Which paragraph is better overall? Now combine all dimensions (accuracy, quality of disambiguation, and fluency) into an overall comparison. Which answer you would be happier with overall?

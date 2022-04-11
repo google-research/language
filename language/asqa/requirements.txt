@@ -1,0 +1,3 @@
+rouge-score
+nltk
+datasets
