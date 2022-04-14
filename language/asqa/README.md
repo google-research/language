@@ -2,8 +2,9 @@
 Ivan Stelmakh (CMU), Yi Luan (Google Research), Bhuwan Dhingra (Google Research, Duke), Ming-Wei Chang (Google Research)
 
 ## Abstract
-ASQA is the first long-form question answering dataset that focuses on ambiguous factoid questions. Different from previous long-form answers datasets, each question is annotated with both long-form answers and extractive question-answer pairs, which should be answerable by the generated passage. A generated long-form answer will be evaluated using both ROUGE and QA accuracy. We showed that these evaluation metrics correlated with human judgment well.
-In this repostory we release the ASQA dataset, together with the evaluation code.
+ASQA is the first long-form question answering dataset that focuses on ambiguous factoid questions. Different from previous long-form answers datasets, each question is annotated with both long-form answers and extractive question-answer pairs, which should be answerable by the generated passage. A generated long-form answer will be evaluated using both ROUGE and QA accuracy. In the paper, we show that these evaluation metrics are well-correlated with human judgments.
+
+In this repostory, we release the ASQA dataset, together with the evaluation code.
 
 
 ## ASQA Dataset
@@ -35,10 +36,10 @@ Note: A leaderboard will be set up soon. Stay tuned.
 The annotation guideline is provided in [this slide](https://drive.google.com/drive/folders/1IS8J7fBlYvD7a1GrQlx85Ls6Y6mlcKje?usp=sharing).
 
 ## Automatic Evaluation
-Given predicted long answers from a model it is straightforward to compute ROUGE
-by comparing to the reference answers, but for computing the QA accuracy we need
-run a separate reading comprehension model. For this we use huggingface's implementation
-of Roberta-large trained on Squad 2.0 and fine-tuned on the ASQA training set.
+Given predicted long answers from a model, it is straightforward to compute ROUGE
+by comparing to the reference answers, but for computing the QA accuracy we need to
+run a separate reading comprehension model. For this, we use the huggingface's implementation
+of Roberta-large trained on Squad 2.0.
 
 All codes under this repository are compatible with Python 3, and a Unix-like system.
 
@@ -58,12 +59,12 @@ sh install.sh
 chmod +x ./eval.sh
 ./eval.sh ${RESULTS_PATH} ${EXP_NAME}
 ```
-The final results will show in screen and will also be generated in ./results/${EXP_NAME}/final_eval_results.json.
+The final results will show on the screen and will also be generated in ./results/${EXP_NAME}/final_eval_results.json.
 
 ### Break down of each evaluation step
-The following provides the evaluation guideline for each step:
+Instructione below provide the evaluation guideline for each step:
 #### STEP-1: Convert your system output to Roberta input format
-First, save your system output into key, value pairs in json format. Refer to the following example for format.
+First, save your system output into key-value pairs in json format. Refer to the following example for the format.
 
 ```
 mkdir outputs
@@ -75,7 +76,7 @@ OUTPUT_DIR=./results/${EXP_NAME}
 mkdir -p ${OUTPUT_DIR}
 ```
 
-Then run the following script to convert to Roberta input format:
+Then run the following script to convert predictions into the Roberta input format:
 
 ```
 python convert_to_roberta_format.py  \
@@ -88,7 +89,7 @@ python convert_to_roberta_format.py  \
 The output question-context pairs for Roberta will be stored at `./outputs/qa.json`.
 
 #### STEP-2: Run the Roberta Squad 2.0 inference
-Next run the following command which uses an example script from the
+Next, run the following command which uses an example script from the
 transformers library to get QA predictions from Roberta:
 
 ```
@@ -102,11 +103,11 @@ python transformers/examples/pytorch/question-answering/run_qa.py \
   --null_score_diff_threshold 0
 ```
 
-Note: This assumes that the transformers library was cloned from github using
+Note: This command assumes that the transformers library was cloned from github using
 the install script above. If not, you can download `run_qa.py` from [here](https://github.com/huggingface/transformers/blob/master/examples/pytorch/question-answering/run_qa.py).
 
-Note: The above command takes ~30 mins to run on a CPU. This can be
-significantly sped up if you have access to a GPU(s).
+Note: The above command takes ~30 mins to run on a CPU. The computation can be
+significantly fastened if you have access to a GPU(s).
 
 #### STEP-3: Take the Roberta output and run evaluation
 The following command will compute the final evaluation metrics:
@@ -180,16 +181,16 @@ As a result of these steps, the parent folder (created in Step 0) will contain t
 
 ### Step-3: Annotation ###
 
-Open the 'AnnotationInterface' google sheet which should now be in your drive folder (GF) and proceed to the do the annotation. We have provided instructions for the annotators for this part in 'instructions.txt'.
+Open the 'AnnotationInterface' google sheet which should now be in your drive folder (GF) and proceed to the the annotation. We have provided instructions for the annotators for this part in 'instructions.txt'.
 
 ### Step-4: Analysis ###
 
-After annotations are completed, download the spreadsheet as an excel (.xlsx) file and execute analysis.py script:
+After annotations are completed, download the spreadsheet as an excel (.xlsx) file and execute `analysis.py` script:
 
 ```
 python analysis.py --setup ./setup.tsv --comparisons ./AnnotationInterface.xlsx --dst ./resuts_of_comparisons.tsv
 ```
-The script will create the `resuts_of_comparisons.tsv` file with the results of pairwise comparisons. Each line in this file will summarize the result of a single pairwise comparison. This file can then be used for subsequent custom analysis. The resulting file will contain the following information:
+The script will create the `resuts_of_comparisons.tsv` file with the results of pairwise comparisons. Each line in this file will summarize the result of a single pairwise comparison. This file can then be used for subsequent custom analysis and contains the following information:
 
 * pair -- index of comparison
 * numQA -- number of QA pairs associated with the corresponding ASQA instance
