@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# Lint as: python3
 """Test the eval pipeline defined in totto_eval.sh.
 
 Run this script to test that the libraries called in the totto_eval script are

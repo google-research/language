@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# Lint as: python3
 r"""Script to compute PARENT metric modified for ToTTo dataset.
 
 https://arxiv.org/abs/1906.01081

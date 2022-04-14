@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# Lint as: python3
 # Implicit length check with bool is incorrect with numpy/tensorflow.
 # pylint: disable=g-explicit-length-test
 """Preprocessing for fever, primarily tokenizers and encoders."""

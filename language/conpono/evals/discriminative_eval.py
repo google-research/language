@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# Lint as: python3
 """Evaluate coherent permutation discrimination model on baseline."""
 
 from collections import namedtuple  # pylint: disable=g-importing-member

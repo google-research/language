@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# Lint as: python3
 """Computes BLEURT (https://arxiv.org/abs/2004.04696) for ToTTo dataset.
 
 To handle multiple references, scores are computed for each reference separately

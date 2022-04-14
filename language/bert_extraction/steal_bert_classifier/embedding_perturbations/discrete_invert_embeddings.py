@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# Lint as: python3
 """Calculate data impressions via discrete-level operations on some objective.
 
 Using the idea mentioned in HotFlip (https://arxiv.org/pdf/1712.06751.pdf).

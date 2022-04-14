@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# Lint as: python3
 """Calculate the interpolations between two sentences using mixup on BERT embeddings using mixup (https://arxiv.org/abs/1710.09412)."""
 
 import os
