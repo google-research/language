@@ -1,6 +1,14 @@
 # TempLAMA
 
-This folder contains the code for constructing the TempLAMA dataset using [SLING](https://github.com/ringgaard/sling). The dataset is described in the paper [Time-Aware Language Models as Temporal Knowledge Bases](https://arxiv.org/abs/2106.15110).
+This folder contains the code for constructing the TempLAMA dataset using [SLING](https://github.com/ringgaard/sling). The dataset is described in the paper [Time-Aware Language Models as Temporal Knowledge Bases](https://direct.mit.edu/tacl/article/doi/10.1162/tacl_a_00459/110012/Time-Aware-Language-Models-as-Temporal-Knowledge).
+
+**Update**: You can now directly download the preprocessed data at:
+
+```
+https://storage.googleapis.com/gresearch/templama/train.json
+https://storage.googleapis.com/gresearch/templama/val.json
+https://storage.googleapis.com/gresearch/templama/test.json
+```
 
 ## Prerequisites
 
@@ -25,12 +33,17 @@ bash prepare_data.sh <path_to_sling> <path_to_store_templama>
 If you use this data please cite:
 
 ```
-@misc{dhingra2021timeaware,
-      title={Time-Aware Language Models as Temporal Knowledge Bases},
-      author={Bhuwan Dhingra and Jeremy R. Cole and Julian Martin Eisenschlos and Daniel Gillick and Jacob Eisenstein and William W. Cohen},
-      year={2021},
-      eprint={2106.15110},
-      archivePrefix={arXiv},
-      primaryClass={cs.CL}
+@article{dhingra2022time,
+    author = {Dhingra, Bhuwan and Cole, Jeremy R. and Eisenschlos, Julian Martin and Gillick, Daniel and Eisenstein, Jacob and Cohen, William W.},
+    title = "{Time-Aware Language Models as Temporal Knowledge Bases}",
+    journal = {Transactions of the Association for Computational Linguistics},
+    volume = {10},
+    pages = {257-273},
+    year = {2022},
+    month = {03},
+    issn = {2307-387X},
+    doi = {10.1162/tacl_a_00459},
+    url = {https://doi.org/10.1162/tacl\_a\_00459},
+    eprint = {https://direct.mit.edu/tacl/article-pdf/doi/10.1162/tacl\_a\_00459/2004543/tacl\_a\_00459.pdf},
 }
 ```

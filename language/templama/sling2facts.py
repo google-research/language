@@ -269,10 +269,10 @@ class SlingExtractor(object):
 
   def write_kb(self, filename):
     """Write out all triples rel/subject/object, perhaos with qualifiers."""
-    with open(filename, 'w') as fp:
+    with open(filename, 'wb') as fp:
       for f in self.frames(filter_english=FLAGS.skip_nonenglish):
         for t in self.as_triples(SlotCollection(f)):
-          fp.write(t + '\n')
+          fp.write((t + '\n').encode('utf-8'))
 
   def echo_frame(self):
     """For debug, log triples for a subject with given string id."""
