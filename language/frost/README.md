@@ -5,7 +5,7 @@ This repository contains our pretrained and fine-tuned model checkpoints
 their predictions from our paper
 [FROST: Planning with Learned Entity Prompts for Abstractive Summarization](https://aclanthology.org/2021.tacl-1.88.pdf)
 and
-[A Well-Composed Text is Half Done! Composition Sampling for Diverse Conditional Generation](https://github.com/google-research/language/tree/master/language/frost).
+[A Well-Composed Text is Half Done! Composition Sampling for Diverse Conditional Generation](https://arxiv.org/pdf/2203.15108.pdf).
 We also include spaCy code for FROST-style annotation of targets.
 
 This is not an official Google product. Please cite our papers if you use our
@@ -62,14 +62,14 @@ models for more controllable, faithful and diverse text generation.
 ## Checkpoints and Predictions
 
 Download FROST and Composition Sampling checkpoints and predictions from
-[Google Cloud](https://console.cloud.google.com/storage/browser/frost-composition-sampling-data).
+[Google Cloud](https://console.cloud.google.com/storage/browser/gresearch/frost_composition_sampling).
 
 Alternatively in terminal, follow the instructions and install
 [gsutil](https://cloud.google.com/storage/docs/gsutil_install). Then
 
 ```
-mkdir frost-composition-sampling-data
-gsutil cp -r gs://frost-composition-sampling-data/ frost-composition-sampling-data/
+mkdir frost_composition_sampling
+gsutil cp -r gs://gresearch/frost_composition_sampling frost_composition_sampling/
 ```
 
 ### FROST Pretrained Checkpoint
