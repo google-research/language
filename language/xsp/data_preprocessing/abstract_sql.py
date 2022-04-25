@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# Lint as: python3
 """Self-contained library for converting SQL w/ under-specified FROM clause.
 
 This module relies on the sqlparse library, which is a non-validating

@@ -168,9 +168,10 @@ class Tokenizer(object):
   def tokenize(self, tokens):
     """Tokenize one sentence."""
 
-    max_seq_len = self.max_seq_len - 2  # Include sos and eos.
-    if len(tokens) > max_seq_len:
-      tokens = tokens[:max_seq_len]
+    # Add <SOS> and <EOS>.
+    tokens = [self.vocab.sos_token] + tokens + [self.vocab.eos_token]
+    if len(tokens) > self.max_seq_len:
+      tokens = tokens[:self.max_seq_len]
     token_ids = np.asarray([self.vocab(token) for token in tokens])
     token_ids = list(token_ids)
     token_mask = [1] * len(token_ids)
