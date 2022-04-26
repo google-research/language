@@ -7,9 +7,9 @@ Concretely, the release includes three components:
 
 * A set of 25 BERT-Base models (English, uncased), trained with the same hyper-parameters but different random seeds.
 * For the first five models, 28 checkpoints captured during the course of pre-training (140 checkpoints total).
-* A statistical library and a Colab notebook to demonstrate its use.
+* A statistical library (`multibootstrap.py`) and notebook examples to demonstrate its use.
 
-We describe the release in detail and present example analyses in the [MultiBERTs paper](https://arxiv.org/abs/2106.16163). All the data and checkpoints mentioned on this page and in the paper are available on [our Cloud Bucket](https://console.cloud.google.com/storage/browser/multiberts/public).
+We describe the release in detail and present example analyses in the [MultiBERTs paper](https://arxiv.org/abs/2106.16163), published at ICLR 2022. All the data and checkpoints mentioned on this page and in the paper are available on [our Cloud Bucket](https://console.cloud.google.com/storage/browser/multiberts/public).
 
 
 
@@ -94,19 +94,24 @@ Note: the archives are large (>10 GB). You may download the checkpoints selectiv
 
 ## Statistical Library
 
-The script [`bootstrap.py`](https://github.com/google-research/language/blob/master/language/multiberts/multibootstrap.py) is our implementation of the Multi-Bootstrap, a non-parametric procedure to help researchers estimate significance and report confidence intervals in MultiBERTs experiments.
-Additional details are provided in our [demo Colab](https://github.com/google-research/language/blob/master/language/multiberts/multi_vs_original.ipynb) and the [MultiBERTs paper](https://arxiv.org/pdf/2106.16163).
+[`multibootstrap.py`](https://github.com/google-research/language/blob/master/language/multiberts/multibootstrap.py) is our implementation of the Multi-Bootstrap, a non-parametric procedure to help researchers estimate significance and report confidence intervals when working with multiple pretraining seeds.
 
+Additional details are provided in the [MultiBERTs paper](https://arxiv.org/pdf/2106.16163). The following notebooks also demonstrate example usage, and will reproduce the results from the paper:
+
+- [`coref.ipynb`](https://github.com/google-research/language/blob/master/language/multiberts/coref.ipynb) - Winogender coreference example from Section 4 and Appendix D of the paper; includes both paired and unpaired examples.
+- [`2m_vs_1m.ipynb`](https://github.com/google-research/language/blob/master/language/multiberts/2m_vs_1m.ipynb.ipynb) - Paired analysis from Appendix E.1 of the paper, comparing 2M vs 1M steps of pretraining.
+- [`multi_vs_original.ipynb`](https://github.com/google-research/language/blob/master/language/multiberts/multi_vs_original.ipynb.ipynb) - Unpaired analysis from Appendix E.2 of the paper, comparing MultiBERTs to the original BERT release.
 
 
 ## How to cite
 
 ```
-@article{sellam2021multiberts,
-  title={The MultiBERTs: BERT Reproductions for Robustness Analysis},
-  author={Thibault Sellam and Steve Yadlowsky and Jason Wei and Naomi Saphra and Alexander D'Amour and Tal Linzen and Jasmijn Bastings and Iulia Turc and Jacob Eisenstein and Dipanjan Das and Ian Tenney and Ellie Pavlick},
-  journal={arXiv preprint arXiv:2106.16163},
-  year={2021}
+@inproceedings{sellam2022multiberts,
+  title={The Multi{BERT}s: {BERT} Reproductions for Robustness Analysis},
+  author={Thibault Sellam and Steve Yadlowsky and Ian Tenney and Jason Wei and Naomi Saphra and Alexander D'Amour and Tal Linzen and Jasmijn Bastings and Iulia Raluca Turc and Jacob Eisenstein and Dipanjan Das and Ellie Pavlick},
+  booktitle={International Conference on Learning Representations},
+  year={2022},
+  url={https://openreview.net/forum?id=K0E_F0gFDgA}
 }
 ```
 
@@ -114,6 +119,8 @@ Additional details are provided in our [demo Colab](https://github.com/google-re
 
 If you have a technical question regarding the dataset, code, or publication, please send us an email (see paper).
 
+
 ## Disclaimer
+
 This is not an official Google product.
 
