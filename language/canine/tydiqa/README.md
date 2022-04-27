@@ -103,7 +103,7 @@ Next, we fine-tune on the TyDi QA training data starting from the multilingual
 CANINE checkpoint, preferably on GPU:
 
 ```sh
-python3 -m langauge.canine.tydiqa.run_tydi \
+python3 -m language.canine.tydiqa.run_tydi \
   --model_config_file=canine_dir/model_config.json \
   --init_checkpoint=canine_dir/canine_model.ckpt \
   --train_records_file=train_samples/*.tfrecord \
