@@ -1,9 +1,8 @@
 # Compositional Structure Learner (CSL)
 
-This directory contains code for the paper "Improving Compositional Generalization with Latent Structure and Data Augmentation"
+This directory contains code for the paper ["Improving Compositional Generalization with Latent Structure and Data Augmentation"](https://arxiv.org/abs/2112.07610)
 (Linlu Qiu, Peter Shaw, Panupong Pasupat, Paweł Krzysztof Nowak, Tal Linzen, Fei Sha, Kristina Toutanova)
 
-TODO(petershaw): Add paper link.
 
 ## Synthetic Data Generation Pipeline
 
@@ -105,3 +104,5 @@ there are tools to generate seed rules and an output CFG from the training data,
 along with the manually specified seed rules, `smcalflow/manual_seed_rules.txt`.
 
 There are also additional utilities for preprocessing the data for T5.
+
+The dataset can be downloaded from: https://github.com/microsoft/compositional-generalization-span-level-attention#download-dataset

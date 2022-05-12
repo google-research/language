@@ -22,7 +22,7 @@ class TopUtilsTest(absltest.TestCase):
 
   def test_round_trip(self):
     serialized = ("[IN:GET_CALL_TIME [SL:CONTACT "
-                  "[IN:GET_CONTACT [SL:TYPE_RELATION Mum ] ] ] "
+                  "[IN:GET_CONTACT [SL:TYPE_RELATION Dad ] ] ] "
                   "[SL:DATE_TIME yesterday evening ] ]")
     lf = top_utils.deserialize_top(serialized)
     roundtrip_serialized = lf.serialize()
@@ -40,7 +40,7 @@ class TopUtilsTest(absltest.TestCase):
 
   def test_get_frame(self):
     serialized = ("[IN:GET_CALL_TIME [SL:CONTACT "
-                  "[IN:GET_CONTACT [SL:TYPE_RELATION Mum ] ] ] "
+                  "[IN:GET_CONTACT [SL:TYPE_RELATION Dad ] ] ] "
                   "[SL:DATE_TIME yesterday evening ] ]")
     expected_frame = ("IN:GET_CALL_TIME-"
                       "SL:CONTACT.IN:GET_CONTACT.SL:TYPE_RELATION-"
@@ -50,10 +50,10 @@ class TopUtilsTest(absltest.TestCase):
 
   def test_format(self):
     serialized = ("[IN:GET_CALL_TIME [SL:CONTACT "
-                  "[IN:GET_CONTACT [SL:TYPE_RELATION Mum ] ] ] "
+                  "[IN:GET_CONTACT [SL:TYPE_RELATION Dad ] ] ] "
                   "[SL:DATE_TIME yesterday evening ] ]")
     expected_formatted = ("[IN get call time = [SL contact = "
-                          "[IN get contact = [SL type relation = Mum]]] "
+                          "[IN get contact = [SL type relation = Dad]]] "
                           "[SL date time = yesterday evening]]")
     formatted = top_utils.format_serialized(serialized)
     self.assertEqual(expected_formatted, formatted)
