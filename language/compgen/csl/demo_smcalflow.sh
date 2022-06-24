@@ -22,6 +22,16 @@ DATA_DIR=/path/to/data/  # CHANGEME
 TRAIN_TSV=${DATA_DIR}/train.tsv
 TEST_TSV=${DATA_DIR}/dev.tsv
 
+# Retokenize inputs.
+python -m language.compgen.csl.tasks.smcalflow.tools.retokenize_inputs \
+  --input ${TRAIN_TSV} \
+  --output ${DATA_DIR}/train.tk.tsv
+python -m language.compgen.csl.tasks.smcalflow.tools.retokenize_inputs \
+  --input ${TEST_TSV} \
+  --output ${DATA_DIR}/dev.tk.tsv
+TRAIN_TSV=${DATA_DIR}/train.tk.tsv
+TEST_TSV=${DATA_DIR}/dev.tk.tsv
+
 # Filter "bad examples in training set.
 python -m language.compgen.csl.tasks.smcalflow.tools.filter_examples \
   --input ${TRAIN_TSV} \

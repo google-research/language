@@ -122,7 +122,13 @@ class CfqParser(dataset_parser.DatasetParserInterface):
 
     # Trim long relations.
     program_trimmed_rel = str(example.program)
-    for relation, relation_trimmed in self.trimmed_relations.items():
+    # Sort relations in the reverse order to avoid bad replacement.
+    sorted_relations = sorted(
+        self.trimmed_relations.keys(),
+        key=lambda x: x.count("ns:"),
+        reverse=True)
+    for relation in sorted_relations:
+      relation_trimmed = self.trimmed_relations[relation]
       program_trimmed_rel = program_trimmed_rel.replace(relation,
                                                         relation_trimmed)
 

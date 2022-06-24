@@ -96,6 +96,7 @@ The dataset can be downloaded from: https://github.com/najoungkim/COGS
 ### SMCalFlow-CS
 
 The configuration files for SMCalFlow-CS are included under `tasks/smcalflow`.
+We re-tokenize inputs using `smcalflow/tools/retokenize_inputs.py`.
 Additionally, there is a tool for heuristically filtering the training data
 to discard some noisy examples `smcalflow/tools/filter_examples.py`. Also,
 there are tools to generate seed rules and an output CFG from the training data,

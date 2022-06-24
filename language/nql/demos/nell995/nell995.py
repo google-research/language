@@ -318,7 +318,7 @@ def main(unused_args):
       def eval_periodically_callback(fd, latest_loss, elapsed_time):
         # default callback increments model.num_examples
         status = old_callback(fd, latest_loss, elapsed_time)
-        model.num_steps += 1
+        model.num_steps += 1  # pytype: disable=attribute-error
         if (model.num_steps % FLAGS.steps_between_evals) == 0:
           tf.logging.info('running eval on heldout dev set...')
           evaluation = trainer.evaluate(callback_dset_fn())

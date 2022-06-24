@@ -13,7 +13,7 @@ To download the ASQA dataset, run:
 
 ```
 mkdir dataset
-gsutil cp -R gs://gresearch/ASQA/ASQA.json dataset
+gsutil cp -R gs://gresearch/ASQA/data/ASQA.json dataset
 ```
 
 Note: this requires [gsutil](https://cloud.google.com/storage/docs/gsutil).
@@ -29,8 +29,6 @@ Each instance is a dictionary with the following attributes:
 4. "annotations". One (for "train" set) or two (for "dev" set) long-form answers to the ambiguous question constructed by ASQA annotators. Each annotation is a dictionary of the following structure: {"long_answer": annotation, "knowledge": list of additional knowledge pieces}. Each piece of additional knowledge is represented by a separate dictionary: {"content": a passage from Wikipedia, "wikipage": title of the Wikipedia page the passage was taken from}.
 
 Note: We do not release the questions from the test set of ASQA as these questions would reveal a subset of questions from the AmbigQA test set which are not publicly available.
-
-Note: A leaderboard will be set up soon. Stay tuned.
 
 ### Annotation guideline
 The annotation guideline is provided in [this slide](https://drive.google.com/drive/folders/1IS8J7fBlYvD7a1GrQlx85Ls6Y6mlcKje?usp=sharing).
@@ -202,3 +200,22 @@ The script will create the `resuts_of_comparisons.tsv` file with the results of 
 * leftModel -- name of the left model (prediction shown on the left)
 * rightModel -- name of the right model (prediction shown on the right)
 * key -- key of the corresponding ASQA instance
+
+
+## Submission
+Checkout ASQA [leaderboard]( https://ambigqa.github.io/asqa_leaderboard.html).
+
+Create a prediction file using the questions on NQ-open test data, and email it to Yi Luan (luanyi@google.com).
+
+Please make sure you include the following in the email:
+
+* Test prediction file. Make sure that the format is in line with the official evaluation script. As you are not supposed to know which subset of NQ-open test set is ASQA, your file should contain predictions for all NQ-open test examples.
+* The name of the model
+* Dev prediction file and expected dev results. This is to double-check there is no unexpected problem.
+* [optional] The institution, and link to the paper/code/demo. They can be updated later.
+
+Notes
+
+Models will be sorted by DR performance.
+Please allow for up to one week ahead of time before getting the test numbers and/or your numbers appear on the leaderboard.
+We limit the number of submissions to be 20 per year and 3 per month.
