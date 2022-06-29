@@ -57,12 +57,78 @@ Each sentence in the source article has a marker with a pair of square brackets 
 
 This means that the first sentence is updated using the context item (0) and (1). Note that the reference is calculated heuristically (excepted for the gold_test data). '[2] [3] [4]' means that the these sentences are copied directly from the source article.
 
-** Raw file
+## Raw file
 
 Files with name such as article_pairs.update.jsonl-?????-of-00251 are generated using our data extraction pipeline. Each line is a json object describing the source article, the target article and the entity annotations we used to compute the context. The raw files are only in the train folder and the test folder, given the gold_test folder is a subset of the test folder where we clean the data even further with human annotations.
 
 The main purpose of the raw files is for the users who want to create a different version of the input/output files than the EdiT5 processed files.
 
-## Eval Scripts
+## Eval Scripts without t5x
 
-The eval scripts will be release later.
+The NER related metric will be released later.
+
+For t5x users, simply load the task  and evalution for UpdateRouge should work out-of-box.
+
+### Step 1: Generate jsonl files.
+
+    Run convert_task_to_jsonl.py
+
+    The typical use case will consider only three possible combinations.
+
+    To output the validation set (from "Nov. 20, 2019" and "Nov. 20, 2020")
+
+    --task_name="wikidiff_diff_all_text_reference" --split="validation"
+
+    To output the test set (from "Nov. 20, 2020" and "Nov. 20, 2021").
+
+    --task_name="wikidiff_diff_all_text_reference_test" --split="test"
+
+    To print out the gold test (from "Nov. 20, 2020" and "Nov. 20, 2021",
+       verified by annotators)
+
+    --task_name="wikidiff_diff_all_text_reference_gold_test" --split="test"
+
+    ** Output **
+
+    This script will be used for output two jsonl files.
+
+    {output_prefix}_inputonly.jsonl
+
+        The input only files will contain the input of EdiT5 for the
+        chosen split. This file is used for genearting the prediction
+        using your models.
+
+    {output_prefix}_inputlabels.jsonl
+
+        The input and labels file contains both the input and the
+        targeted output.
+
+### Step 2: Apply your own model to generate output
+
+    Every line in {output_prefix}_inputonly.jsonl is the input example and your
+    model should try to generate the output. The output format should be like
+    the one in scripts/sample_data/pred.json.
+
+### Step 3: Run evaluation script
+
+    Use scripts/evaluate_direct_jsonls.py with the following arguments
+    --input_labels_jsonl={output_prefix}_inputlabels.jsonl
+    --prediction_jsonl=pred.jsonl
+    --task_name=wikidiff_diff_all_text_reference
+
+    to get the final results.
+
+## Evaluating with t5x
+
+To run evaluation with t5x first install the dependencies. This involves following the instructions in [t5x](https://github.com/google-research/t5x), and pip installing rouge_score and tqdm.
+
+Then an example evaluation run is
+```
+ python t5x/t5x/eval.py \
+   --gin_file language/fruit/t5x/configs/t5_large_eval.gin \
+   --gin.MIXTURE_OR_TASK_NAME=\"wikidiff_diff_all_text_reference_test\" \
+   --gin.CHECKPOINT_PATH=\"$(pwd)/checkpoint\" \
+   --gin.EVAL_OUTPUT_DIR=\"/tmp/eval\" \
+   --gin.DROPOUT_RATE=0
+```
+

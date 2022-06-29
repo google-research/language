@@ -1,0 +1,1 @@
+{"target":{"normalized_inputs": "foo", "inputs": "bar [CONTEXT] bizz",  "normalized_targets": "baz"}, "prediction": {"normalized_targets": "buzz"}}

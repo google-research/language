@@ -1,0 +1,21 @@
+# Finetune pre-trained T5 Large on WikiDiff
+
+import language.fruit.tasks
+
+include "t5x/configs/runs/finetune.gin"
+include "t5x/examples/t5/t5_1_0/small.gin"
+
+
+TASK_FEATURE_LENGTHS = {"inputs": 1024, "targets": 512}
+TRAIN_STEPS = 1_030_700  # TODO(rloganiv): Enough?
+INITIAL_CHECKPOINT_PATH = %gin.REQUIRED
+USE_CACHED_TASKS = False
+
+# NOTE: When fine-tuning the public T5 checkpoints (trained in T5 MeshTF)
+# the loss normalizing factor should be set to 1024 * 228 (pretraining
+# batch_size * target_token_length).
+LOSS_NORMALIZING_FACTOR = 233472
+
+# Ensure truncation during inference
+infer_eval/utils.DatasetConfig:
+  task_feature_lengths = %TASK_FEATURE_LENGTHS

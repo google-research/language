@@ -644,8 +644,9 @@ class MemoryAttentionLayerTest(parameterized.TestCase):
             list(expected_top_text_entities[i]))
 
     if max_text_identifiers is not None:
-      self.assertSequenceEqual(num_disallowed_per_device,
-                               logging_helpers['n_disallowed'])
+      self.assertSequenceEqual(
+          list(num_disallowed_per_device),
+          list(logging_helpers['n_disallowed']))
 
 
 if __name__ == '__main__':
