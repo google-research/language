@@ -145,6 +145,7 @@ def can_parse(source,
   def postprocess_cell_fn(nodes):
     """Filter and merge generated nodes."""
     new_nodes = list(set(nodes).intersection(target))
+    # Discard targets that are not substrings of the gold target.
     return new_nodes
 
   tokens = source.split(" ")
