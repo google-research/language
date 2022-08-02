@@ -4,3 +4,4 @@ nltk==3.7
 numpy==1.21.6
 tensorflow==2.9.1
 tensorflow-text==2.9.0
+tensorflow-datasets==4.6.0
