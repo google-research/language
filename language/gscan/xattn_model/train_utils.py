@@ -19,9 +19,10 @@ from clu import parameter_overview
 
 import flax
 import flax.linen as nn
+import flax.optim
 from flax.training import common_utils
 import jax
-import jax.experimental.optimizers
+import jax.example_libraries.optimizers
 import jax.numpy as jnp
 
 from language.gscan.xattn_model import evaluation
@@ -113,7 +114,7 @@ def get_learning_rate(step,
     values = [
         base_learning_rate * 0.1**i for i in range(len(step_boundaries) + 1)
     ]
-    lr = jax.experimental.optimizers.piecewise_constant(
+    lr = jax.example_libraries.optimizers.piecewise_constant(
         boundaries=boundaries, values=values)(
             step)
   else:

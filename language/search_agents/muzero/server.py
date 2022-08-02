@@ -64,7 +64,7 @@ class NQServer:
           # try again
           continue
         raise exception
-    return response
+    return response  # pytype: disable=name-error  # py310-upgrade
 
   @functools.lru_cache(maxsize=1024)
   def get_documents(

@@ -25,7 +25,7 @@ from clu import metric_writers
 
 import flax.jax_utils as flax_utils
 import jax
-import jax.experimental.optimizers
+import jax.example_libraries.optimizers
 import jax.numpy as jnp
 
 from language.gscan.xattn_model import evaluation

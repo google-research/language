@@ -26,7 +26,7 @@ from clu import periodic_actions
 import flax.jax_utils as flax_utils
 from flax.training import common_utils
 import jax
-import jax.experimental.optimizers
+import jax.example_libraries.optimizers
 from language.gscan.xattn_model import train_utils
 from language.gscan.xattn_model.dataset import input_pipeline
 from language.gscan.xattn_model.model import model_utils
@@ -67,7 +67,7 @@ def train_step(batch, rng, state, config, learning_rate_fn, grad_clip=None):
   # Compute average gradient across multiple workers.
   grad = jax.lax.pmean(grad, axis_name='batch')
   if grad_clip:
-    grad = jax.experimental.optimizers.clip_grads(grad, grad_clip)
+    grad = jax.example_libraries.optimizers.clip_grads(grad, grad_clip)
 
   new_optimizer = state.optimizer.apply_gradient(grad, learning_rate=lr)
   new_state = state.replace(step=step, optimizer=new_optimizer)
@@ -203,7 +203,7 @@ def train_and_evaluate(config, workdir):
   with metric_writers.ensure_flushes(writer):
     for step in range(initial_step, num_train_steps + 1):
       is_last_step = step == num_train_steps
-      with jax.profiler.StepTraceContext('train', step_num=step):
+      with jax.profiler.StepTraceAnnotation('train', step_num=step):
         batch = jax.tree_map(np.asarray, next(train_iter))
         state, metrics = p_train_step(batch=batch, rng=train_rngs, state=state)
         train_metrics.append(metrics)
