@@ -7,11 +7,11 @@ This is the release for the paper: [FRUIT: Faithfully Reflecting Updated Informa
 
 * (5/12/2022) The data is available now, and the evaluation scripts will be released later.
 
-## Dataset
+## FRUIT-Wiki Dataset
 
 ### Download
 
-To download the FRUIT dataset, run:
+To download the FRUIT-Wiki dataset, run:
 
 ```
 mkdir fruit_dataset
@@ -57,11 +57,16 @@ Each sentence in the source article has a marker with a pair of square brackets 
 
 This means that the first sentence is updated using the context item (0) and (1). Note that the reference is calculated heuristically (excepted for the gold_test data). '[2] [3] [4]' means that the these sentences are copied directly from the source article.
 
-## Raw file
+## Raw Files
 
 Files with name such as article_pairs.update.jsonl-?????-of-00251 are generated using our data extraction pipeline. Each line is a json object describing the source article, the target article and the entity annotations we used to compute the context. The raw files are only in the train folder and the test folder, given the gold_test folder is a subset of the test folder where we clean the data even further with human annotations.
 
 The main purpose of the raw files is for the users who want to create a different version of the input/output files than the EdiT5 processed files.
+
+## Data Collection Pipeline
+
+To enable researchers to apply our data collection pipeline to future Wikipedia snapshots, this repository also contains our data processing code. Please refer to the [README_PIPELINE.md](./README_PIPELINE.md) file for detailed instructions on how to run the different pipeline steps.
+
 
 ## Eval Scripts without t5x
 
@@ -131,4 +136,3 @@ Then an example evaluation run is
    --gin.EVAL_OUTPUT_DIR=\"/tmp/eval\" \
    --gin.DROPOUT_RATE=0
 ```
-
