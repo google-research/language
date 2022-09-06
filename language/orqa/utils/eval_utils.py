@@ -87,7 +87,7 @@ def evaluate_predictions_impl(references,
     else:
       missing_predictions += 1
 
-  return dict(
+  return dict(  # pytype: disable=bad-return-type  # dict-kwargs
       missing_predictions=missing_predictions,
       num_correct=correct,
       num_total=len(references),

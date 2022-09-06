@@ -144,7 +144,7 @@ def multibootstrap(run_info,
       # redefined on every loop iteration.
       score_row = lambda i: score_fn(selected_labels, preds[i, jj])  # pylint: disable=cell-var-from-loop
     else:
-      score_row = lambda i: score_fn(labels, preds[i])  # pylint: disable=cell-var-from-loop
+      score_row = lambda i: score_fn(labels, preds[i])  # pylint: disable=cell-var-from-loop  # pytype: disable=wrong-arg-types
 
     # Select and score rows corresponding to selected seeds.
     base_score = _score_seeds(base_seed_to_row, base_seed_sample, score_row)

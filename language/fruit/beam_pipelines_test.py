@@ -26,8 +26,7 @@ from language.fruit import beam_pipelines
 from language.fruit import rendering_utils
 
 TESTDATA_DIR = "language/fruit/testdata/"
-VOCAB_FILE = (
-    "gs:///t5-data/vocabs/cc_all.32000.100extra/sentencepiece.model")
+VOCAB_FILE = ("gs://t5-data/vocabs/cc_all.32000.100extra/sentencepiece.model")
 
 
 class RedirectTablePipelineTest(absltest.TestCase):

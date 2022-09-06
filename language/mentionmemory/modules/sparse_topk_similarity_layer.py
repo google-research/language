@@ -105,8 +105,8 @@ class SparseTopKSimilarityLayer(nn.Module):
       ids_by_topk_row = jut.matmul_slice(top_id_by_row, top_row_idx)
 
       # Gather highest scoring vectors for k best rows.
-      query_index = jnp.arange(queries_per_split).reshape(-1, 1).tile(
-          [1, self.k_top])
+      query_index = jax.lax.broadcasted_iota(
+          jnp.int_, shape=(queries_per_split, self.k_top), dimension=0)
       top_cluster_idx, top_cluster_row_idx = jnp.divmod(top_row_idx,
                                                         rows_per_cluster)
       split_topk_values = selected_data[query_index, top_cluster_idx,

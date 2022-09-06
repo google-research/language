@@ -88,8 +88,8 @@ class ConfigTest(tf.test.TestCase):
   def test_simple_config_object_access_error(self):
     c = SimpleConfigObject()
     # pylint: disable=no-member
-    self.assertRaises(Exception, lambda: c.not_defined)
-    self.assertRaises(Exception, lambda: c.nested.not_defined)
+    self.assertRaises(Exception, lambda: c.not_defined)  # pytype: disable=attribute-error
+    self.assertRaises(Exception, lambda: c.nested.not_defined)  # pytype: disable=attribute-error
     # pylint: enable=no-member
 
   def test_simple_config_object_from_simple_dict(self):
