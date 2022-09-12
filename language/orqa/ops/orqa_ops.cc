@@ -10,7 +10,11 @@ REGISTER_OP("HasAnswer")
     .Output("result : bool")
     .SetShapeFn([](shape_inference::InferenceContext *c) {
       c->set_output(0, c->input(0));
-      return Status::OK();
+#if TF_GRAPH_DEF_VERSION >= 1137
+      return ::tensorflow::OkStatus();
+#else
+      return ::tensorflow::Status::OK();
+#endif
     })
     .Doc(R"doc(
 HasAnswer.
@@ -82,7 +86,11 @@ REGISTER_OP("ReaderInputs")
       c->set_output(
           6, c->MakeShape(
                  {num_blocks, shape_inference::InferenceContext::kUnknownDim}));
-      return Status::OK();
+#if TF_GRAPH_DEF_VERSION >= 1137
+      return ::tensorflow::OkStatus();
+#else
+      return ::tensorflow::Status::OK();
+#endif
     })
     .Doc(R"doc(
 ReaderInputs.
