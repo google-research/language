@@ -19,6 +19,20 @@ Each step supports a number of flags that allow the user to customize how the da
 
 For concrete illustration this section lists the sequence of commands run to produce the FRUIT-Wiki dataset. Please note that these commands will be executed using Beam's DirectRunner runner, which will process the data locally using a single process. The runner and other Beam-related settings can be modified by using `--pipeline_options` flag. We direct the reader to the [Beam documentation](https://beam.apache.org/documentation/) for information on how to set this flag for their use case.
 
+### Setup Python environment
+
+To install the requirements:
+```{bash}
+conda create --name fruit python=3.7
+conda activate fruit
+pip install -r language/fruit/requirements.txt
+```
+
+Ensure that dependencies were installed correctly by running a unit test:
+```{bash}
+python -m language.fruit.beam_pipelines_test
+```
+
 ### Download XML dumps
 
 You will need to begin with two Wikipedia XML dumps. Current dumps can be downloaded from https://dumps.wikimedia.org/, while historic dumps can be downloaded from https://archive.org/. You will want to download the `enwiki-YYYYMMDD-pages-articles.xml.bz2` file.
@@ -65,7 +79,7 @@ python -m language.fruit.scripts.run_process_snapshot_pipeline \
  --third_party \
  --use_source_mentions \
  --target_redirects enwiki-20191120-redirects.tsv* \
- --source_redirects enwiki-20181120-redirects.tsv*
+ --source_redirects enwiki-20181120-redirects.tsv* \
 ```
 
 ### Filter for generation
@@ -74,7 +88,8 @@ python -m language.fruit.scripts.run_process_snapshot_pipeline \
 python -m language.fruit.scripts.run_filter_for_generation_pipeline \
  --input_pattern article_pairs.jsonl* \
  --output_pattern article_pairs.update.jsonl \
- --nouse_source_mentions
+ --nouse_source_mentions \
+ --vocab_model_file "gs://t5-data/vocabs/cc_all.32000.100extra/sentencepiece.model"
 ```
 
 ### Prepare for model
@@ -88,7 +103,7 @@ Here are the ones of interest:
    -   `diff`: Generate only the edits.
    -   `controllable`: Insert control codes in the input telling the model where to make edits.
 
--   `--delimiter\_type`:
+-   `--delimiter_type`:
 
    -   `text`: Delimit input sentences and evidence using textual delimiters (e.g., [0], [1], (2), (3), etc.)
    -   `extra_id`: Delimit input sentences and evidence using unique tokens in the model vocab.
@@ -107,7 +122,8 @@ python -m language.fruit.scripts.run_to_tfrecords_pipeline \
  --evidence_marker_type reference \
  --noinclude_source \
  --include_evidence \
- --include_distractors
+ --include_distractors \
+ --vocab_model_file "gs://t5-data/vocabs/cc_all.32000.100extra/sentencepiece.model"
 ```
 
 ## Applying to your own data.
