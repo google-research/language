@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import collections
+from collections import abc
 import copy
 import itertools
 import json
@@ -290,7 +291,7 @@ def flatten_recursive(item):
   output = []
   if isinstance(item, (list, tuple)):
     output.extend(item)
-  elif isinstance(item, collections.Mapping):
+  elif isinstance(item, abc.Mapping):
     output.extend(item.values())
   else:
     return [item]
