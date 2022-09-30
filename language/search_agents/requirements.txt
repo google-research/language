@@ -9,7 +9,7 @@ keras
 nltk
 numpy
 pygtrie
-tensorflow==2.4.1
+tensorflow==2.7.2
 tensorflow-addons
 tensorflow-probability==0.11.0
 tensorflow-serving-api
