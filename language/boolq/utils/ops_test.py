@@ -43,6 +43,10 @@ class OpsTest(tf.test.TestCase):
               batch_size=4,
               n_buckets=2,
               hist_bounds=[2, 4, 6, 8]))
+      # Turn off `inject_prefetch` optimization
+      options = tf.data.Options()
+      options.experimental_optimization.inject_prefetch = False
+      data = data.with_options(options)
       it = data.make_initializable_iterator()
       sess.run(it.initializer)
       sess.run(tf.local_variables_initializer())

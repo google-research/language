@@ -78,7 +78,10 @@ def main(unused_argv):
         | "Format" >> beam.Map(lambda ex: "%s\t%s" % (ex[0], ex[1])))
     if not FLAGS.allow_duplicates:
       examples = examples | "RemoveDuplicates" >> beam.Distinct()
-    _ = examples | "WriteExamples" >> beam.io.WriteToText(FLAGS.output)
+    _ = (
+        examples
+        | "Reshuffle" >> beam.Reshuffle()
+        | "WriteExamples" >> beam.io.WriteToText(FLAGS.output))
 
   pipeline_options = beam.options.pipeline_options.PipelineOptions(
       FLAGS.pipeline_options)
