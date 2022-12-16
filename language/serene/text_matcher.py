@@ -75,7 +75,7 @@ class TextMatcher:
     if not candidates:
       return []
     # make candidates indexable via numpy style indices
-    candidates = np.array(candidates, dtype=np.object)
+    candidates = np.array(candidates, dtype=object)
     # (1, vocab_size)
     claim_repr = self._tfidf.transform([claim])
     # (n_candidates, vocab_size)
@@ -103,7 +103,7 @@ class TextMatcher:
     if not candidates:
       return []
     # make candidates indexable via numpy style indices
-    candidates = np.array(candidates, dtype=np.object)
+    candidates = np.array(candidates, dtype=object)
     # (1, vocab_size)
     claim_repr = self._tfidf.transform([claim])
     # (n_candidates, vocab_size)

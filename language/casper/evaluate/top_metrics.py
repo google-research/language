@@ -22,7 +22,9 @@ def _safe_divide(x, y):
   return x / y if y != 0 else 0.0
 
 
-def top_metrics(targets: List[str], predictions: List[str]) -> Dict[str, float]:
+def top_metrics(targets: List[str],
+                predictions: List[str],
+                error_on_invalid_target: bool = True) -> Dict[str, float]:
   """Returns eval metrics for TOP and MTOP datasets."""
   num_correct = 0
   num_total = 0
@@ -39,7 +41,10 @@ def top_metrics(targets: List[str], predictions: List[str]) -> Dict[str, float]:
     target_lf = top_utils.deserialize_top(target)
     predicted_lf = top_utils.deserialize_top(predicted)
 
-    assert target_lf is not None
+    if error_on_invalid_target:
+      assert target_lf is not None
+    elif target_lf is None:
+      continue
     if not predicted_lf:
       num_invalid += 1
       continue

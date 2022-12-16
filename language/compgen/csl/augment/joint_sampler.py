@@ -333,6 +333,32 @@ class JointSampler(object):
       if verbose:
         print("Converting rule %d." % i)
 
+    return cls.from_joint_rules(
+        joint_rules,
+        max_recursion=max_recursion,
+        min_recursion=min_recursion,
+        verbose=verbose)
+
+  @classmethod
+  def from_joint_rules(cls,
+                       joint_rules,
+                       max_recursion=10,
+                       min_recursion=1,
+                       verbose=False):
+    """Init JointSampler from QCFG rules and Target CFG rules.
+
+    Args:
+      joint_rules: A list of JointRule instances.
+      max_recursion: Attempt to limit the derivation tree depth to this number.
+        There are cases where this number may not be a strict bound, e.g. if
+        certain nonterminals cannot be expanded by a rule with no RHS
+        nonterminals.
+      min_recursion: Minimum recursion depth.
+      verbose: Whether to log rule expansion probabilities (very slow).
+
+    Returns:
+      A JointSampler Instance.
+    """
     # Dict of NT symbol to joint_rule.
     nonterminals_to_nt_rules = collections.defaultdict(list)
     nonterminals_to_t_rules = collections.defaultdict(list)

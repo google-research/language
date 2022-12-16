@@ -113,7 +113,7 @@ def mask_logits(vec, mask):
 
 def _lowercase(x):
   # Specify `np.object` to avoid incorrectly returning a np.string type arr
-  return np.array([w.decode().lower().encode() for w in x], np.object)
+  return np.array([w.decode().lower().encode() for w in x], object)
 
 
 def lowercase_op(string_tensor):

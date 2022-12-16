@@ -14,7 +14,7 @@ Two types of MiQA questions can be built using each row in the dataset.
 
 1. If $M_p$, which of the following statements could that imply: $M_c$ or $L_c$?
 
-2. $L_c$ is implied by which of the following: $M_p or $L_p$?
+2. $L_c$ is implied by which of the following: $M_p$ or $L_p$?
 
 Here are some examples:
 

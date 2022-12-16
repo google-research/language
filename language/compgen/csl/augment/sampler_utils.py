@@ -91,7 +91,8 @@ class SamplerWrapper(object):
                target_grammar_rules=None,
                checkpoint=None,
                sampler_file=None,
-               verbose=False):
+               verbose=False,
+               joint_rules=None):
     self.sampler = None
     self.score_fn = None
     self.augment_config = augment_config
@@ -102,6 +103,7 @@ class SamplerWrapper(object):
     self.checkpoint = checkpoint
     self.sampler_file = sampler_file
     self.verbose = verbose
+    self.joint_rules = joint_rules
 
   def initialize(self):
     """Initialzie sampler."""
@@ -138,22 +140,34 @@ class SamplerWrapper(object):
           nonterminal_bias=nontermminal_bias,
           min_nonterminal_rule_arity=min_nonterminal_rule_arity)
 
-    if self.target_grammar_rules:
-      if self.sampler_file and gfile.exists(self.sampler_file):
-        self.sampler = joint_sampler.JointSampler.from_file(
-            self.sampler_file,
-            max_recursion=self.augment_config["max_recursions"],
-            min_recursion=self.augment_config["min_recursions"],
-            verbose=self.verbose)
-      else:
-        self.sampler = joint_sampler.JointSampler.from_rules(
-            self.target_grammar_rules,
-            self.rules,
-            max_recursion=self.augment_config["max_recursions"],
-            min_recursion=self.augment_config["min_recursions"],
-            max_single_nt_applications=self
-            .augment_config["max_single_nt_applications"],
-            verbose=self.verbose)
+    # If a sampler file already exists, load joint rules fom it.
+    if self.sampler_file and gfile.exists(self.sampler_file):
+      # TODO(pawelnow): Remove this branch and use the more efficient
+      # `from_joint_rules`.
+      self.sampler = joint_sampler.JointSampler.from_file(
+          self.sampler_file,
+          max_recursion=self.augment_config["max_recursions"],
+          min_recursion=self.augment_config["min_recursions"],
+          verbose=self.verbose)
+    # If joint rules are passed explicitly, initialize using those.
+    elif self.joint_rules:
+      self.sampler = joint_sampler.JointSampler.from_joint_rules(
+          self.joint_rules,
+          max_recursion=self.augment_config["max_recursions"],
+          min_recursion=self.augment_config["min_recursions"],
+          verbose=self.verbose)
+    # Otherwise, if target rules are provided, initialize new joint rules.
+    # This step can be expensive.
+    elif self.target_grammar_rules:
+      self.sampler = joint_sampler.JointSampler.from_rules(
+          self.target_grammar_rules,
+          self.rules,
+          max_recursion=self.augment_config["max_recursions"],
+          min_recursion=self.augment_config["min_recursions"],
+          max_single_nt_applications=self
+          .augment_config["max_single_nt_applications"],
+          verbose=self.verbose)
+    # Finally, if no target rules are provided, simply sample from QCFG.
     else:
       self.sampler = qcfg_sampler.QCFGSampler(
           self.rules,

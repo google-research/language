@@ -32,6 +32,10 @@ python -m spacy download en_core_web_md-3.0.0a1
 ## Generating data
 
 ```bash
+pip install nltk
+
+python3 create_new_words.py --output_path=$HOME/words.tsv
+
 python3 generate.py --output_path=$HOME/winodict
 ```
 

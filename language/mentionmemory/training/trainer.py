@@ -241,7 +241,10 @@ def train(config: ml_collections.ConfigDict):
   del initial_variables
 
   # Restore unreplicated train state from last checkpoint
-  train_state = checkpoints.restore_checkpoint(config.model_dir, train_state)
+  try:
+    train_state = checkpoints.restore_checkpoint(config.model_dir, train_state)
+  except ValueError:
+    pass
   # Grab last step.
   start_step = int(train_state.step)
 

@@ -70,21 +70,21 @@ def _rouge_calculation(hypotheses,
     references2 = references1
 
   scorer = rouge_scorer.RougeScorer(metrics, use_stemmer=True)
-  aggregator1 = scoring.BootstrapAggregator()
-  aggregator2 = scoring.BootstrapAggregator()
+  aggregator = scoring.BootstrapAggregator()
 
   for i in range(len(hypotheses)):
     scores1 = scorer.score(references1[i], hypotheses[i])
     scores2 = scorer.score(references2[i], hypotheses[i])
-    aggregator1.add_scores(scores1)
-    aggregator2.add_scores(scores2)
+    if scores1['rougeLsum'].fmeasure > scores2['rougeLsum'].fmeasure:
+      aggregator.add_scores(scores1)
+    else:
+      aggregator.add_scores(scores2)
 
   scores = {m: [] for m in metrics}
 
   for m in metrics:
-    fmeasure1 = aggregator1.aggregate()[m].mid.fmeasure
-    fmeasure2 = aggregator2.aggregate()[m].mid.fmeasure
-    scores[m].append(max(fmeasure1, fmeasure2))
+    fmeasure = aggregator.aggregate()[m].mid.fmeasure
+    scores[m].append(fmeasure)
 
   for m in scores:
     scores[m] = 100 * sum(scores[m]) / len(scores[m])
