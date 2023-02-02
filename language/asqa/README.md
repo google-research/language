@@ -2,9 +2,14 @@
 Ivan Stelmakh (CMU), Yi Luan (Google Research), Bhuwan Dhingra (Google Research, Duke), Ming-Wei Chang (Google Research)
 
 ## Abstract
-ASQA is the first long-form question answering dataset that focuses on ambiguous factoid questions. Different from previous long-form answers datasets, each question is annotated with both long-form answers and extractive question-answer pairs, which should be answerable by the generated passage. A generated long-form answer will be evaluated using both ROUGE and QA accuracy. In the paper, we show that these evaluation metrics are well-correlated with human judgments.
+ASQA (https://arxiv.org/abs/2204.06092) is the first long-form question answering dataset that focuses on ambiguous factoid questions. Different from previous long-form answers datasets, each question is annotated with both long-form answers and extractive question-answer pairs, which should be answerable by the generated passage. A generated long-form answer will be evaluated using both ROUGE and QA accuracy. In the paper, we show that these evaluation metrics are well-correlated with human judgments.
 
 In this repostory, we release the ASQA dataset, together with the evaluation code.
+
+**Note**: We recently found a [bug](https://github.com/google-research/language/commit/60b3abae79a4199e19f28013754bd69f65ad670f) in the evaluation script in ASQA. The bug does
+ not influence the overall trend but the absolute score of RougeL and DR will be changed.
+The ROUGEL and DR numbers in Table 3 and 5 in the [paper](https://arxiv.org/abs/2204.06092), and in the [leaderboard]( https://ambigqa.github.io/asqa_leaderboard.html) are changed.
+We recommend you to sync the repository and rerun evaluation.
 
 
 ## ASQA Dataset
@@ -203,7 +208,7 @@ The script will create the `resuts_of_comparisons.tsv` file with the results of 
 
 
 ## Submission
-Checkout ASQA [leaderboard]( https://ambigqa.github.io/asqa_leaderboard.html).
+Checkout ASQA [leaderboard](https://ambigqa.github.io/asqa_leaderboard.html).
 
 Create a prediction file using the questions on NQ-open test data, and email it to Yi Luan (luanyi@google.com).
 
@@ -214,8 +219,6 @@ Please make sure you include the following in the email:
 * Dev prediction file and expected dev results. This is to double-check there is no unexpected problem.
 * [optional] The institution, and link to the paper/code/demo. They can be updated later.
 
-Notes
-
-Models will be sorted by DR performance.
+**Note**:Models will be sorted by DR performance.
 Please allow for up to one week ahead of time before getting the test numbers and/or your numbers appear on the leaderboard.
 We limit the number of submissions to be 20 per year and 3 per month.

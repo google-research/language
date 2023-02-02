@@ -917,7 +917,7 @@ class DataLoader(object):
                             (self.max_question_len - len(question)))
         question_entity_sketch = \
             self.cm_context.get_sketch(xs=[question_entity_id])
-        answers = np.zeros(self.num_facts, dtype=np.bool)
+        answers = np.zeros(self.num_facts, dtype=bool)
         answers[answer_fact_ids] = True
 
         yield (question, question_entity_id, question_entity_sketch, answers), 0

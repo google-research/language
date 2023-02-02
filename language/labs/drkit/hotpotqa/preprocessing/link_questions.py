@@ -171,7 +171,7 @@ def evaluate_entity_linking(questions, base_dir, num_hops):
   """Evaluate how often answers can be reached from linked entities."""
 
   def _check_answers(sp_vec, answers):
-    found_ans = np.zeros((len(answers),), dtype=np.bool)
+    found_ans = np.zeros((len(answers),), dtype=bool)
     for ii, ans in enumerate(answers):
       if sp_vec[0, ans] > 0.:
         found_ans[ii] = True

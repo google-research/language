@@ -285,8 +285,8 @@ class NumpyEncoder(json.JSONEncoder):
       return obj.tolist()
     if np.issubdtype(obj, np.integer):
       return int(obj)
-    if np.issubdtype(obj, np.float):
+    if np.issubdtype(obj, float):
       return float(obj)
-    if np.issubdtype(obj, np.bool):
+    if np.issubdtype(obj, bool):
       return bool(obj)
     return json.JSONEncoder.default(self, obj)

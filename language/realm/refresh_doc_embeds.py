@@ -148,22 +148,24 @@ def main(_):
 
       featurizer = load_featurizer()
       if FLAGS.use_tpu:
-        encoded = retrieval.embed_documents_using_multiple_tpu_workers(
+        encoded = retrieval.embed_documents_using_multiple_tpu_workers(  # pytype: disable=wrong-arg-types
             shard_paths=doc_shard_paths,
             shard_sizes=doc_shard_sizes,
             hub_module_spec=hub_module_spec,
             featurizer=featurizer,
             tpu_workers=tpu_workers,
             batch_size=FLAGS.predict_batch_size,
-            num_tpu_cores_per_worker=FLAGS.tpu_cores)
+            num_tpu_cores_per_worker=FLAGS.tpu_cores,
+        )
       else:
-        encoded = retrieval.embed_documents(
+        encoded = retrieval.embed_documents(  # pytype: disable=wrong-arg-types
             shard_paths=doc_shard_paths,
             shard_sizes=doc_shard_sizes,
             hub_module_spec=hub_module_spec,
             featurizer=featurizer,
             batch_size=FLAGS.predict_batch_size,
-            tpu_run_config=None)
+            tpu_run_config=None,
+        )
 
       # Save the document embeddings to disk.
       logging.info("Encoded shape: %s, dtype: %s", encoded.shape, encoded.dtype)
