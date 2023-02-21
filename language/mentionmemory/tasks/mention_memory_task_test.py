@@ -114,7 +114,7 @@ class MentionMemoryTaskTest(test_utils.TestCase):
     tmp_dir = self.create_tempdir()
     prefix = os.path.join(tmp_dir.full_path, name)
     for device_index in range(self.n_devices):
-      data_utils.save_sharded_array(array[device_index], prefix, self.n_devices,
+      data_utils.save_sharded_array(array[device_index], prefix, self.n_devices,  # pytype: disable=wrong-arg-types  # jax-ndarray
                                     self.n_devices, device_index, 1)
     return '%s-?????-of-%05d' % (prefix, self.n_devices)
 

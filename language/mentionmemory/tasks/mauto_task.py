@@ -154,7 +154,7 @@ class MautoTask(mention_encoder_task.MentionEncoderTask):
           'denominator': 1.0,
       }
 
-      return loss, metrics, {}
+      return loss, metrics, {}  # pytype: disable=bad-return-type  # jax-ndarray
 
     return loss_fn
 

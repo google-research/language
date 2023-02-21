@@ -326,7 +326,7 @@ class MentionMemoryTask(mention_encoder_task.MentionEncoderTask):
         auxiliary_output['second_top_memory_ids'] = loss_helpers[
             'second_top_memory_ids']
 
-      return loss, metrics, auxiliary_output
+      return loss, metrics, auxiliary_output  # pytype: disable=bad-return-type  # jax-ndarray
 
     return loss_fn
 

@@ -60,7 +60,7 @@ class RetrievalUpdateLayer(abc.ABC):
 
     Returns:
       Updated input.
-    """
+    """  # pytype: disable=bad-return-type  # jax-ndarray
 
 
 class AdditiveUpdate(nn.Module, RetrievalUpdateLayer):

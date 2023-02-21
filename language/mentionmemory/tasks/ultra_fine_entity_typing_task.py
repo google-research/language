@@ -77,7 +77,7 @@ def get_mrr(labels: Array, logits: Array) -> Array:
   mrr_per_sample = 1.0 / (ranks + 1)
   mrr_per_sample = (labels * mrr_per_sample).sum(-1) / (
       labels.sum(axis=-1) + 1e-5)
-  return {
+  return {  # pytype: disable=bad-return-type  # jax-ndarray
       'value': jnp.dot(mrr_per_sample, labels_exists),
       'denominator': labels_exists.sum(),
   }
@@ -130,7 +130,7 @@ def get_eval_metrics(labels: Array, logits: Array) -> MetricGroups:
   predictions = get_predictions(logits)
   metrics = get_prediction_recall_metrics(labels, predictions)
   metrics['agg_mrr'] = get_mrr(labels, logits)
-  return metrics
+  return metrics  # pytype: disable=bad-return-type  # jax-ndarray
 
 
 @task_registry.register_task('ultra_fine_entity_typing')
@@ -241,6 +241,6 @@ class UltraFineEntityTypingTask(mention_classifier_task.MentionClassifierTask):
           },
       }
       metrics.update(get_eval_metrics(classifier_labels, classifier_logits))
-      return loss, metrics, {}
+      return loss, metrics, {}  # pytype: disable=bad-return-type  # jax-ndarray
 
     return loss_fn

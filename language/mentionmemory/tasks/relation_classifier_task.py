@@ -174,7 +174,7 @@ class RelationClassifierTask(downstream_encoder_task.DownstreamEncoderTask):
       auxiliary_output = {'predictions': predictions}
       auxiliary_output.update(cls.get_auxiliary_output(loss_helpers))
 
-      return loss, metrics, auxiliary_output
+      return loss, metrics, auxiliary_output  # pytype: disable=bad-return-type  # jax-ndarray
 
     return loss_fn
 

@@ -107,4 +107,4 @@ class MemoryExtractionLayer(nn.Module):
         'local_memory_values': local_memory_values,
     }
 
-    return return_dict
+    return return_dict  # pytype: disable=bad-return-type  # jax-ndarray

@@ -331,7 +331,7 @@ class ProcessMetricsTest(absltest.TestCase):
         },
     }
 
-    processed_metrics = metric_utils.process_metrics(metric_dict)
+    processed_metrics = metric_utils.process_metrics(metric_dict)  # pytype: disable=wrong-arg-types  # jax-ndarray
     expected_result = {
         'cat1_key': 2.0,
         'cat1_denom': 1.0,
@@ -351,7 +351,7 @@ class ProcessMetricsTest(absltest.TestCase):
         },
     }
 
-    processed_metrics = metric_utils.process_metrics(metric_dict, prefix='pref')
+    processed_metrics = metric_utils.process_metrics(metric_dict, prefix='pref')  # pytype: disable=wrong-arg-types  # jax-ndarray
     expected_result = {
         'pref/cat1_key': 2.0,
         'pref/cat1_denom': 1.0,

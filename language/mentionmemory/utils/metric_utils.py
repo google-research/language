@@ -59,7 +59,7 @@ def compute_weighted_cross_entropy(
   loss = loss * weights
   normalizing_factor = weights.sum()
 
-  return loss.sum(), normalizing_factor
+  return loss.sum(), normalizing_factor  # pytype: disable=bad-return-type  # jax-ndarray
 
 
 def compute_weighted_accuracy(scores: Array, targets: Array,
@@ -81,7 +81,7 @@ def compute_weighted_accuracy(scores: Array, targets: Array,
   acc = acc * weights
   normalizing_factor = weights.sum()
 
-  return acc.sum(), normalizing_factor
+  return acc.sum(), normalizing_factor  # pytype: disable=bad-return-type  # jax-ndarray
 
 
 def compute_tp_fp_fn_weighted(
@@ -152,7 +152,7 @@ def compute_loss_and_prob_from_probs_with_duplicates(
   loss = -jnp.log(correct_probs + _SMALL_NUMBER)
   loss = loss * weights
 
-  return loss.sum(), avg_probs.sum(), weights.sum()
+  return loss.sum(), avg_probs.sum(), weights.sum()  # pytype: disable=bad-return-type  # jax-ndarray
 
 
 def compute_cross_entropy_loss_with_positives_and_negatives_masks(
@@ -264,7 +264,7 @@ def compute_cross_entropy_loss_with_positives_and_negatives_masks(
       'acc': correct_prediction.sum(),
       'denominator': weights.sum(),
   }
-  return loss, metrics, (correct_prediction, weights)
+  return loss, metrics, (correct_prediction, weights)  # pytype: disable=bad-return-type  # jax-ndarray
 
 
 def update_value_dtype(value: Any) -> Any:
@@ -298,4 +298,4 @@ def process_metrics(
       denom_key = prefix + '/' + denom_key
     processed_metrics[denom_key] = denom
 
-  return processed_metrics
+  return processed_metrics  # pytype: disable=bad-return-type  # jax-ndarray

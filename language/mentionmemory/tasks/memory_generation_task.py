@@ -62,7 +62,7 @@ class MemoryGenerationModel(nn.Module):
       loss_helpers['memory_generation']['keys'] = loss_helpers[
           self.memory_keys_feature]
 
-    return loss_helpers, logging_helpers
+    return loss_helpers, logging_helpers  # pytype: disable=bad-return-type  # jax-ndarray
 
 
 @task_registry.register_task('memory_generation')

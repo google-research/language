@@ -168,6 +168,6 @@ class MentionBasedEntityQATask(entity_qa_task.EntityQATask):
               loss_helpers['final_top_memory_ids'],
       }
 
-      return loss, metrics, auxiliary_output
+      return loss, metrics, auxiliary_output  # pytype: disable=bad-return-type  # jax-ndarray
 
     return loss_fn

@@ -481,7 +481,7 @@ def entity_linking_loss(mention_encodings: Array, entity_embeddings: Array,
       'cos_sim': cos_per_mention.sum(),
       'denominator': mention_target_weights.sum()
   }
-  return loss, metrics, (acc_per_mention, mention_target_weights)
+  return loss, metrics, (acc_per_mention, mention_target_weights)  # pytype: disable=bad-return-type  # jax-ndarray
 
 
 def get_batch_and_retrievals_entity_overlap(

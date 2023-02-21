@@ -194,4 +194,4 @@ def get_num_common_unique_items(batch_positions: Array, ids: Array,
   num_common_ids_between_mentions = jnp.einsum('gn,mg->mn',
                                                item2global_position,
                                                num_common_ids_between_mentions)
-  return num_common_ids_between_samples, num_common_ids_between_mentions
+  return num_common_ids_between_samples, num_common_ids_between_mentions  # pytype: disable=bad-return-type  # jax-ndarray
