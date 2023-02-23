@@ -97,7 +97,7 @@ class Executor(object):
 
     for i in range(num_workers):
       worker = create_worker(**worker_kwargs)
-      process = self._mp.Process(
+      process = self._mp.Process(  # pytype: disable=attribute-error  # re-none
           target=process_from_queue,
           name='worker-{}'.format(i),
           args=(self._input_queue, self._output_queue, worker,
@@ -136,7 +136,7 @@ class Executor(object):
 
   def submit_from_generator(self, generator_fn, **generator_kwargs):
     process_idx = len(self._submitter_processes)
-    process = self._mp.Process(
+    process = self._mp.Process(  # pytype: disable=attribute-error  # re-none
         target=submit_generator_to_queue,
         name='submitter-{}-{}'.format(generator_fn.__name__, process_idx),
         args=(self._input_queue, generator_fn, generator_kwargs,
