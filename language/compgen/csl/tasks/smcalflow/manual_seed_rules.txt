@@ -1,5 +1,0 @@
-NT_1 ### AttendeeListHasPeople :people ( NT_1 )
-NT_1 ### AttendeeListHasRecipient :recipient ( NT_1 )
-NT_1 ### Execute :intension ( refer ( extensionConstraint ( RecipientWithNameLike :constraint ( Constraint[Recipient] ) :name # ( NT_1 ) ) ) )
-NT_1 ### AttendeeListHasRecipient :recipient ( Execute :intension ( refer ( extensionConstraint ( RecipientWithNameLike :constraint ( Constraint[Recipient] ) :name # ( NT_1 ) ) ) ) )
-NT_1 ### Constraint[DateTime] :date ( ?= ( NextDOW :dow # ( NT_1 ) ) )

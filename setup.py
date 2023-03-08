@@ -14,12 +14,12 @@
 # limitations under the License.
 """Install projects from the Language Team."""
 import os
-from setuptools import find_packages
-from setuptools import setup
+
+from setuptools import find_packages, setup
 
 
 def read(fname):
-  return open(os.path.join(os.path.dirname(__file__), fname)).read()
+    return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
 setup(
@@ -31,12 +31,10 @@ setup(
     author="Google Inc.",
     url="https://github.com/google-research/language",
     license="Apache 2.0",
-    install_requires=[
-        "tensorflow-gpu~=1.15.0",
-    ],
     extras_require={
         "consistent-zero-shot-nmt": [
             "tensorflow-probability==0.6.0",
             "tensor2tensor==1.11.0",
         ],
-    })
+    },
+)

@@ -1,3 +1,0 @@
-rouge-score
-nltk
-datasets

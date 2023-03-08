@@ -1,5 +1,0 @@
-absl-py
-pytest
-sacrebleu
-six
-wheel

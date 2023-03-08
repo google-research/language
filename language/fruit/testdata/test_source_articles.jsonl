@@ -1,4 +1,0 @@
-{"title": "foo", "ns": "0", "id": 0, "redirect": "bar", "text": "not important."}
-{"title": "bar", "ns": "0", "id": 1, "text": "[[baz]] with an r."}
-{"title": "baz", "ns": "0", "id": 2, "text": "[[bar|Bar]] with a z."}
-{"title": "qux", "ns": "0", "id": 3, "redirect": "quux", "text": "not important"}

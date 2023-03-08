@@ -1,2 +1,0 @@
-create database advising;
-use advising;

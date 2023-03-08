@@ -1,9 +1,0 @@
-CREATE INDEX IF NOT EXISTS "cast_msid" ON "cast" ("msid");
-CREATE INDEX IF NOT EXISTS "directed_by_did" ON "directed_by" ("did");
-CREATE INDEX IF NOT EXISTS "directed_by_msid" ON "directed_by" ("msid");
-CREATE INDEX IF NOT EXISTS "made_by_msid" ON "made_by" ("msid");
-CREATE INDEX IF NOT EXISTS "made_by_pid" ON "made_by" ("pid");
-CREATE INDEX IF NOT EXISTS "cast_aid" ON "cast" ("aid");
-CREATE INDEX IF NOT EXISTS "actor_aid" ON "actor" ("aid");
-CREATE INDEX IF NOT EXISTS "actor_gender" ON "actor" ("gender");
-CREATE INDEX IF NOT EXISTS "movie_mid" ON "movie" ("mid");

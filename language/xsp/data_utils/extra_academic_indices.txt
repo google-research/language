@@ -1,2 +1,0 @@
-CREATE INDEX IF NOT EXISTS "author_oid" ON "author" ("oid");
-CREATE INDEX IF NOT EXISTS "cite_cited" ON "cite" ("cited");
