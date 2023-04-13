@@ -41,7 +41,7 @@ class MLMLayerTest(absltest.TestCase):
     mlm_target_positions = np.random.randint(
         self.seq_len, size=(self.bsz, self.n_mentions))
 
-    model = mlm_layer.MLMLayer(
+    model = mlm_layer.MLMLayer(  # pytype: disable=wrong-arg-types  # jax-types
         vocab_size=self.vocab_size,
         hidden_size=self.hidden_size,
         dtype=self.dtype,

@@ -150,7 +150,7 @@ def run_episode(
       initial_inference_cache.append(initial_inference_output)
 
     legal_actions = episode.legal_actions()
-    root = core.prepare_root_node(
+    root = core.prepare_root_node(  # pytype: disable=wrong-arg-types  # numpy-scalars
         config=mzconfig,
         legal_actions=legal_actions,
         initial_inference_output=initial_inference_output)

@@ -32,7 +32,6 @@ from six.moves import range
 from six.moves import zip
 import tensorflow.compat.v1 as tf
 from tensorflow.compat.v1 import estimator as tf_estimator
-from tensorflow.contrib import data as contrib_data
 
 flags.DEFINE_string("embeddings_path", None, "Path to pretrained embeddings.")
 flags.DEFINE_integer("max_vocab_size", 100000, "Maximum vocab size.")
@@ -271,7 +270,7 @@ def input_function(is_train, embeddings):
     bucket_batch_sizes.append(
         int(FLAGS.total_batch_size / FLAGS.max_context_len))
     dataset = dataset.apply(
-        contrib_data.bucket_by_sequence_length(
+        tf.data.experimental.bucket_by_sequence_length(
             element_length_func=lambda d: d["context_len"],
             bucket_boundaries=bucket_boundaries,
             bucket_batch_sizes=bucket_batch_sizes,

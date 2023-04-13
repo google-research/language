@@ -56,10 +56,9 @@ class Linear(object):
                bias_initializer=None):
     self._build_bias = build_bias
 
-    if args is None or (tf.contrib.framework.nest.is_sequence(args) and
-                        not args):
+    if args is None or (tf.contrib.framework.nest.is_nested(args) and not args):
       raise ValueError("`args` must be specified")
-    if not tf.contrib.framework.nest.is_sequence(args):
+    if not tf.contrib.framework.nest.is_nested(args):
       args = [args]
       self._is_sequence = False
     else:

@@ -22,8 +22,6 @@ from bert import optimization
 from bert import tokenization
 import tensorflow.compat.v1 as tf
 from tensorflow.compat.v1 import estimator as tf_estimator
-
-from tensorflow.contrib import data as contrib_data
 from tensorflow.contrib import tpu as contrib_tpu
 
 
@@ -783,7 +781,7 @@ def file_based_input_fn_builder(input_file,
       d = d.shuffle(buffer_size=100)
 
     d = d.apply(
-        contrib_data.map_and_batch(
+        tf.data.experimental.map_and_batch(
             lambda record: _decode_record(record, name_to_features),
             batch_size=batch_size,
             drop_remainder=drop_remainder))

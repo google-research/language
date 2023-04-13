@@ -158,7 +158,7 @@ def model_recall_by_position(
       recall.append(sys.maxsize)
   logging.info('N Empty Evidence: %s', n_missing_evidence)
 
-  return recall
+  return recall  # pytype: disable=bad-return-type  # always-use-return-annotations
 
 
 def partition_preds_by_scrape_type(verify_predictions,
@@ -405,7 +405,7 @@ class FeverMetricsCallback(tf.keras.callbacks.Callback):
           'epoch %s: %s=%s',
           epoch, name, value)
       if logs is not None:
-        logs[name] = value
+        logs[name] = value  # pytype: disable=container-type-mismatch  # always-use-return-annotations
 
   def _record_recall_metrics(self,
                              *,

@@ -13,13 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Contains custom type definitions."""
-from typing import Any, Callable, Dict, Iterable
+from typing import Any, Callable, Dict, Sequence
 
 import jax.numpy as jnp
 
 Array = jnp.ndarray
 PRNGKey = jnp.ndarray
 Dtype = Any
-Shape = Iterable[int]
+Shape = Sequence[int]
 InitType = Callable[[PRNGKey, Shape, Dtype], Array]
 MetricGroups = Dict[str, Dict[str, Array]]

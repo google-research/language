@@ -38,7 +38,9 @@ class L2Test(test_utils.TestCase):
     reference_distance = np.linalg.norm(
         np.expand_dims(a, 1) - np.expand_dims(b, 0), axis=-1)
 
-    self.assertArrayAlmostEqual(computed_distance, reference_distance, 5)
+    self.assertArrayAlmostEqual(
+        np.asarray(computed_distance), reference_distance, 5
+    )
 
 
 class KMeansTest(test_utils.TestCase):
@@ -73,8 +75,10 @@ class KMeansTest(test_utils.TestCase):
       reference_assignments[idx] = assignment
       reference_min_dist[idx] = distance
 
-    self.assertArrayEqual(assignments, reference_assignments)
-    self.assertArrayAlmostEqual(min_dist, reference_min_dist, places=5)
+    self.assertArrayEqual(np.asarray(assignments), reference_assignments)
+    self.assertArrayAlmostEqual(
+        np.asarray(min_dist), reference_min_dist, places=5
+    )
 
   def test_kmeans_step(self):
     centroids = np.random.rand(self.n_clusters, self.dim)

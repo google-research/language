@@ -34,7 +34,6 @@ import tensorflow.compat.v1 as tf
 from tensorflow.compat.v1 import estimator as tf_estimator
 from tqdm import tqdm
 from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver
-from tensorflow.contrib import data as contrib_data
 from tensorflow.contrib import layers as contrib_layers
 from tensorflow.contrib import tpu as contrib_tpu
 
@@ -1635,7 +1634,7 @@ def input_fn_builder(input_file, seq_length, qry_length, ent_length,
       d = d.shuffle(buffer_size=100)
 
     d = d.apply(
-        contrib_data.map_and_batch(
+        tf.data.experimental.map_and_batch(
             lambda record: _decode_record(record, name_to_features),
             batch_size=batch_size,
             drop_remainder=drop_remainder))

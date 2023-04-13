@@ -21,6 +21,7 @@ from typing import Any, Dict, Optional, Sequence, Tuple
 from absl import logging
 from clu import metric_writers
 from clu import periodic_actions
+import flax
 from flax import jax_utils
 from flax.training import checkpoints
 from flax.training import common_utils
@@ -184,7 +185,7 @@ def train(config: ml_collections.ConfigDict):
       model.init, 'batch', static_broadcasted_argnums=2)(init_rng, dummy_input,
                                                          True)
   logging.info('Finished initializing model.')
-  initial_variables = initial_variables.unfreeze()
+  initial_variables = flax.core.unfreeze(initial_variables)
 
   if config.load_weights is not None:
     logging.info('Loading model weights from file')
@@ -216,7 +217,7 @@ def train(config: ml_collections.ConfigDict):
                                               config.weight_decay_exclude)
   else:
     decay_mask = None
-  tx = optax.adamw(
+  tx = optax.adamw(  # pytype: disable=wrong-arg-types  # numpy-scalars
       learning_rate=learning_rate_fn,
       weight_decay=config.weight_decay,
       b1=0.9,

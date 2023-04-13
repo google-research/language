@@ -129,7 +129,7 @@ class GNMTAttentionMultiCell(tf.nn.rnn_cell.MultiRNNCell):
 
   def __call__(self, inputs, state, scope=None):
     """Run the cell with bottom layer's attention copied to all upper layers."""
-    if not contrib_framework.nest.is_sequence(state):
+    if not contrib_framework.nest.is_nested(state):
       raise ValueError(
           "Expected state to be a tuple of length %d, but received: %s"
           % (len(self.state_size), state))

@@ -30,7 +30,6 @@ from language.labs.drkit import evaluate
 import tensorflow.compat.v1 as tf
 from tensorflow.compat.v1 import estimator as tf_estimator
 from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver
-from tensorflow.contrib import data as contrib_data
 
 FLAGS = flags.FLAGS
 
@@ -748,7 +747,7 @@ def input_fn_builder(input_files, seq_length, qry_length, is_training,
       d = d.shuffle(buffer_size=100)
 
     d = d.apply(
-        contrib_data.map_and_batch(
+        tf.data.experimental.map_and_batch(
             lambda record: _decode_record(record, name_to_features),
             batch_size=batch_size,
             drop_remainder=drop_remainder))

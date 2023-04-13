@@ -22,7 +22,6 @@ from bert import tokenization
 
 import tensorflow.compat.v1 as tf
 from tqdm import tqdm
-from tensorflow.contrib import data as contrib_data
 
 
 class Example:
@@ -252,7 +251,7 @@ def input_fn_builder(input_file, is_training, drop_remainder,
       d = d.shuffle(buffer_size=100)
 
     d = d.apply(
-        contrib_data.map_and_batch(
+        tf.data.experimental.map_and_batch(
             lambda record: _decode_record(record, names_to_features),
             batch_size=batch_size,
             drop_remainder=drop_remainder))

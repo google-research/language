@@ -114,5 +114,13 @@ class TrainingUtilsTest(tf.test.TestCase):
     self.assertAllEqual(expected_emb_idx_list, batch_emb_idx_list)
 
 
+def setUpModule():
+  # Setup virtual CPUs.
+  cpus = tf.config.list_physical_devices("CPU")
+  tf.config.set_logical_device_configuration(
+      cpus[-1], [tf.config.LogicalDeviceConfiguration()] * 2
+  )
+
+
 if __name__ == "__main__":
   tf.test.main()
