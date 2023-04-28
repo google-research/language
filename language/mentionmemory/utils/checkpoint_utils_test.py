@@ -16,6 +16,7 @@
 
 from absl.testing import absltest
 from absl.testing import parameterized
+import flax
 import jax
 import jax.numpy as jnp
 from language.mentionmemory.tasks import example_task
@@ -61,8 +62,12 @@ class WeightTest(absltest.TestCase):
 
     arrayeq = lambda x, y: jnp.all(x == y)
     self.assertTrue(
-        jax.tree_map(arrayeq, loaded_params,
-                     initial_variables['params'].unfreeze()))
+        jax.tree_map(
+            arrayeq,
+            loaded_params,
+            flax.core.unfreeze(initial_variables['params']),
+        )
+    )
 
 
 class MergeNestedDictTest(parameterized.TestCase):

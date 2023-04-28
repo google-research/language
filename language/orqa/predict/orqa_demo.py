@@ -37,7 +37,7 @@ class MainHandler(tornado.web.RequestHandler):
   _tmpl = None
   _predictor = None
 
-  def initialize(self, env, predictor):
+  def initialize(self, env, predictor):  # pytype: disable=signature-mismatch  # overriding-parameter-count-checks
     self._tmpl = env.get_template("orqa.html")
     self._predictor = predictor
 

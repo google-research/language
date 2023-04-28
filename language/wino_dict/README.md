@@ -39,6 +39,11 @@ python3 create_new_words.py --output_path=$HOME/words.tsv
 python3 generate.py --output_path=$HOME/winodict
 ```
 
+## Download data
+
+You can download the data in CSV format [here](https://bit.ly/winodict-data) for
+each of the 5 sets of random new words.
+
 ## Feedback and questions
 
 Please send over any questions to
@@ -52,7 +57,8 @@ If you use this data please cite:
 @inproceedings{eisenschlos2022winodict,
 title = {WinoDict: Probing language models for in-context language acquisition},
 author = {Julian Martin Eisenschlos and Jeremy R. Cole and Fangyu Liu and William Weston Cohen},
+booktitle = "Proceedings of the 2023 Conference of the European Chapter of the Association for Computational Linguistics",
 url = {https://arxiv.org/abs/2209.12153},
-year = {2022},
+year = {2023},
 }
 ```

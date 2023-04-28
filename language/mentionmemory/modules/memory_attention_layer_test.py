@@ -19,6 +19,7 @@ import itertools
 
 from absl.testing import absltest
 from absl.testing import parameterized
+import flax
 import jax
 import jax.numpy as jnp
 from language.mentionmemory.modules import memory_attention_layer
@@ -479,7 +480,7 @@ class MemoryAttentionLayerTest(parameterized.TestCase):
         same_passage_memory_policy,
     )
 
-    params = params.unfreeze()['params']
+    params = flax.core.unfreeze(params)['params']
 
     mention_encodings = []
     for device_id in range(self.n_devices):

@@ -22,6 +22,8 @@ This can be useful for NQG, which can otherwise over-generate syntactically
 invalid targets as the grammars are restricted to a single non-terminal symbol.
 """
 
+import dataclasses
+
 from language.compgen.csl.cky import cfg_converter
 from language.compgen.csl.cky import cfg_parser
 from language.compgen.csl.cky import cfg_rule
@@ -35,12 +37,12 @@ ARROW = "=>"
 ROOT_SYMBOL = "ROOT"
 
 
-class TargetCfgRule(object):
+@dataclasses.dataclass(order=True, unsafe_hash=True)
+class TargetCfgRule:
   """Represents a rule."""
 
-  def __init__(self, lhs, rhs):
-    self.lhs = lhs  # String.
-    self.rhs = rhs  # String.
+  lhs: str
+  rhs: str
 
   def __str__(self):
     return "%s %s %s" % (self.lhs, ARROW, self.rhs)
@@ -80,8 +82,9 @@ def load_rules_from_file(filename):
   return rules
 
 
-def _populate_fn(unused_span_begin, unused_span_end, unused_parser_rule,
-                 unused_children):
+def _populate_fn(
+    unused_span_begin, unused_span_end, unused_parser_rule, unused_children
+):
   # We are only interested in the presence of a parse, not the parse itself.
   # So, we use `True` to simply indicate the presence of some parse.
   return [True]
@@ -95,10 +98,9 @@ def _postprocess_fn(nodes):
     return []
 
 
-def can_parse(target_string,
-              rules,
-              max_single_nt_applications=2,
-              verbose=False):
+def can_parse(
+    target_string, rules, max_single_nt_applications=2, verbose=False
+):
   """Returns True if there exists >=1 parse of target_string given rules."""
   tokens = target_string.split(" ")
 
@@ -111,7 +113,8 @@ def can_parse(target_string,
         rhs=rule.rhs.split(" "),
         rule_idx=rule_idx,
         nonterminal_prefix=NON_TERMINAL_PREFIX,
-        allowed_terminals=set(tokens))
+        allowed_terminals=set(tokens),
+    )
     if parser_rule:
       parser_rules.append(parser_rule)
 
@@ -121,7 +124,7 @@ def can_parse(target_string,
   input_symbols = []
   for token in tokens:
     if token.startswith(NON_TERMINAL_PREFIX):
-      idx = converter.nonterminals_to_ids[token[len(NON_TERMINAL_PREFIX):]]
+      idx = converter.nonterminals_to_ids[token[len(NON_TERMINAL_PREFIX) :]]
       input_symbols.append(cfg_rule.CFGSymbol(idx, cfg_rule.NON_TERMINAL))
     else:
       if token not in converter.terminals_to_ids:
@@ -133,11 +136,13 @@ def can_parse(target_string,
   parses = cfg_parser.parse_symbols(
       input_symbols,
       parser_rules,
-      nonterminals, {start_idx},
+      nonterminals,
+      {start_idx},
       _populate_fn,
       _postprocess_fn,
       verbose=verbose,
-      max_single_nt_applications=max_single_nt_applications)
+      max_single_nt_applications=max_single_nt_applications,
+  )
 
   if parses:
     return True

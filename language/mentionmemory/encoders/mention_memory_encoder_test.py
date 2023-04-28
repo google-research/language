@@ -19,6 +19,7 @@ import os
 
 from absl.testing import absltest
 from absl.testing import parameterized
+import flax
 from flax import jax_utils
 import jax
 import jax.numpy as jnp
@@ -266,29 +267,35 @@ class MentionMemoryEncoderTest(parameterized.TestCase):
     memory_text_entities_base = os.path.join(tempdir, 'memory_text_entities')
 
     unreplicated_variables = jax_utils.unreplicate(initial_variables)
-    unreplicated_variables['params'] = unreplicated_variables[
-        'params'].unfreeze()
+    unreplicated_variables['params'] = flax.core.unfreeze(
+        unreplicated_variables['params']
+    )
 
     if memory_only:
       load_weights = 'memory_only'
     else:
       load_weights = os.path.join(tempdir, 'weights')
-      checkpoint_utils.save_weights(load_weights,
-                                    unreplicated_variables['params'])
+      checkpoint_utils.save_weights(
+          load_weights, unreplicated_variables['params']
+      )
 
     memory_keys = initial_variables['constants']['memory_keys']
-    memory_keys = memory_keys.reshape(n_shards, -1,
-                                      encoder_config.memory_key_dim)
+    memory_keys = memory_keys.reshape(
+        n_shards, -1, encoder_config.memory_key_dim
+    )
     memory_values = initial_variables['constants']['memory_values']
-    memory_values = memory_values.reshape(n_shards, -1,
-                                          encoder_config.memory_key_dim)
+    memory_values = memory_values.reshape(
+        n_shards, -1, encoder_config.memory_key_dim
+    )
     memory_ids = initial_variables['constants']['memory_identifiers'].reshape(
-        n_shards, -1)
+        n_shards, -1
+    )
     memory_entity_ids = initial_variables['constants'][
-        'memory_entity_ids'].reshape(n_shards, -1)
+        'memory_entity_ids'
+    ].reshape(n_shards, -1)
     memory_text_entities = initial_variables['constants'][
-        'memory_text_entities'].reshape(n_shards, -1,
-                                        encoder_config.n_memory_text_entities)
+        'memory_text_entities'
+    ].reshape(n_shards, -1, encoder_config.n_memory_text_entities)
 
     for shard in range(n_shards):
       np.save(memory_key_base + str(shard), memory_keys[shard])
@@ -317,10 +324,13 @@ class MentionMemoryEncoderTest(parameterized.TestCase):
     }
     comparison_variables = {'constants': constants}
     if not memory_only:
-      comparison_variables['params'] = initial_variables['params'].unfreeze()
+      comparison_variables['params'] = flax.core.unfreeze(
+          initial_variables['params']
+      )
 
     self.assertTrue(
-        jax.tree_map(arrayeq, loaded_variables, comparison_variables))
+        jax.tree_map(arrayeq, loaded_variables, comparison_variables)
+    )
 
 
 if __name__ == '__main__':

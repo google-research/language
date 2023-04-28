@@ -80,9 +80,13 @@ def main(unused_argv):
     _ = (
         pipeline
         | "ImportExamples" >> beam.Create(examples)
+        | "Reshuffle" >> beam.Reshuffle()
         | "ConvertExamples" >> beam.ParDo(ConvertExampleFn(rules, config))
-        | "WriteExamples" >> beam.io.tfrecordio.WriteToTFRecord(
-            FLAGS.output, coder=beam.coders.ProtoCoder(tf.train.Example)))
+        | "WriteExamples"
+        >> beam.io.tfrecordio.WriteToTFRecord(
+            FLAGS.output, coder=beam.coders.ProtoCoder(tf.train.Example)
+        )
+    )
 
   pipeline_options = beam.options.pipeline_options.PipelineOptions(
       FLAGS.pipeline_options)
