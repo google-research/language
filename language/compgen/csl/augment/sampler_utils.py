@@ -178,6 +178,7 @@ class SamplerWrapper(object):
     """Sample an example."""
     if self.sampler is None:
       self.initialize()
+    assert self.sampler is not None
     source_tokens, target_tokens = self.sampler.sample(score_fn=self.score_fn)
     target = " ".join(target_tokens)
     source = " ".join(source_tokens)
