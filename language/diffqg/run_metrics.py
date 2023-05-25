@@ -15,7 +15,7 @@
 """Binary to read annotations and compute metrics over the predictions."""
 
 import json
-
+from typing import Sequence
 
 from absl import app
 from absl import flags
@@ -112,7 +112,7 @@ _SUBSETS = {
 }
 
 
-def main(unused_argv):
+def main(unused_argv: Sequence[str]) -> None:
   paired_annotations = annotation.make_paired_annotations(
       _GOLD_ANNOTATIONS.value, _PRED_ANNOTATIONS.value
   )

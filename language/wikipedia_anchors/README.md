@@ -1,14 +1,13 @@
-# Anchor Prediction: Automatic Refinement of Document Links
+# Anchor Prediction: Automatic Refinement of Internet Links
 
-This repository contains accompanying material for ["Anchor Prediction: Automatic Refinement of Document Links"](link).
+This repository contains accompanying material for ["Anchor Prediction: Automatic Refinement of Internet Links"](https://arxiv.org/abs/2305.14337).
 
-TODO(kristout): Fill in the above link to the paper when available.
 
-Document links enable users to deepen their understanding of a topic by providing convenient access to related information.
+Internet links enable users to deepen their understanding of a topic by providing convenient access to related information.
 However, the majority of links are _unanchored_---they link to a target document as a whole, and readers may expend considerable
-effort localizing the specific parts of the target document that enrich their understanding of the link's source context.
-To help readers effectively find information in linked documents, we introduce the task of _anchor prediction_, where the goal
-is to identify the specific part of the linked target document that is most related to the source linking context.
+effort localizing the specific parts of the target webpage that enrich their understanding of the link's source context.
+To help readers effectively find information in linked webpages, we introduce the task of _anchor prediction_, where the goal
+is to identify the specific part of the linked target webpage that is most related to the source linking context.
 These anchors serve as finer-grained destinations/previews for a link that may be more informative than the typical
 first-paragraph heuristic.
 
@@ -50,6 +49,20 @@ Each examples file contains newline-separated JSON dictionaries with the followi
 * `relevant_anchor_indices`: A list of integers with the set of correct anchors. Each integer represents is into the anchor candidate set `candidate_anchors`.
 * `example_id`: A unique example ID
 
+## Citation
+
+More details are available in [our paper](https://arxiv.org/abs/2305.14337), which can be cited as follows.
+
+```
+@misc{liu2023anchor,
+      title={Anchor Prediction: Automatic Refinement of Internet Links},
+      author={Nelson F. Liu and Kenton Lee and Kristina Toutanova},
+      year={2023},
+      eprint={2305.14337},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL}
+}
+```
 
 ## License
 AuthorAnchors and ReaderAnchors are released under the [Creative Commons Share-Alike 3.0](https://creativecommons.org/licenses/by-sa/3.0/) license.

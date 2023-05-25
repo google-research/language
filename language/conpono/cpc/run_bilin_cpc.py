@@ -32,7 +32,6 @@ from tensorflow.compat.v1 import estimator as tf_estimator
 
 
 from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver
-from tensorflow.contrib import data as contrib_data
 from tensorflow.contrib import lookup as contrib_lookup
 from tensorflow.contrib import tpu as contrib_tpu
 from tensorflow.contrib import training as contrib_training
@@ -599,10 +598,7 @@ def file_based_input_fn_builder(input_file, is_training, drop_remainder,
 
     # The window size will be for selecting negative samples
     # It equals the number of documents to sample from -1
-    d = d.apply(
-        contrib_data.sliding_window_batch(
-            window_size=FLAGS.data_window_size,
-            window_shift=FLAGS.data_window_shift))
+    d = d.window(size=FLAGS.data_window_size, shift=FLAGS.data_window_shift)
     d = d.apply(
         tf.data.experimental.map_and_batch(
             lambda record: _decode_record(record, name_to_features, vocab_table

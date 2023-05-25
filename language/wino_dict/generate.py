@@ -24,7 +24,7 @@ python -m spacy download en_core_web_md-3.0.0a1
 
 import functools
 import os
-
+from typing import Sequence, Mapping
 
 from absl import app
 from absl import flags
@@ -66,7 +66,7 @@ _SHOTS = flags.DEFINE_list(
     help='Number of examples to include in the prompt.')
 
 
-def _word_candidates(idx):
+def _word_candidates(idx: int) -> Sequence[Mapping[str, str]]:
   """Extracts word candidates with a certain probability bucket."""
   factor = _LL_BUCKETS.value / (_MAX_LL.value - _MIN_LL.value)
   candidates = []
@@ -85,7 +85,7 @@ def _word_candidates(idx):
   return candidates
 
 
-def main(argv):
+def main(argv: Sequence[str]) -> None:
   if len(argv) > 1:
     raise app.UsageError('Too many command-line arguments.')
 

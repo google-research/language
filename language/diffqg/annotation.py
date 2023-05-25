@@ -16,7 +16,7 @@
 import dataclasses
 import json
 
-
+from typing import Optional, Dict, Iterator, Any
 
 
 @dataclasses.dataclass
@@ -29,14 +29,14 @@ class Annotation:
   question: Optional[str]
   is_edited: Optional[bool] = None
 
-  def __init__(self, json_dic):
+  def __init__(self, json_dic: Dict[str, Any]) -> None:
     self.base_text = json_dic["base"]
     self.target_text = json_dic["target"]
     self.question = json_dic["q"] if json_dic["q"] else None
     self.answer_span = json_dic["a"]
     self.is_edited = json_dic["is_edited"] if "is_edited" in json_dic else None
 
-  def key_annotation(self):
+  def key_annotation(self) -> str:
     return f"{self.base_text}::{self.target_text}::{self.answer_span}"
 
 
@@ -51,7 +51,7 @@ class PairedAnnotation:
   gold_question: Optional[str]
   pred_question: Optional[str]
 
-  def __init__(self, gold_anno, pred_anno):
+  def __init__(self, gold_anno: Annotation, pred_anno: Annotation) -> None:
     if gold_anno.answer_span != pred_anno.answer_span:
       raise ValueError(
           "Invalid PairedAnnotation, mismatched answers: "
@@ -85,11 +85,11 @@ class PairedAnnotation:
   def __str__(self):
     return json.dumps(dataclasses.asdict(self))
 
-  def key_annotation(self):
+  def key_annotation(self) -> str:
     return f"{self.base_text}::{self.target_text}::{self.answer_span}"
 
 
-def _read_annotations(diffqg_fi):
+def _read_annotations(diffqg_fi: str) -> Dict[str, Annotation]:
   """Reads annotations from a file in either the gold or predicted format.
 
   Args:
@@ -118,8 +118,8 @@ def _read_annotations(diffqg_fi):
 
 
 def make_paired_annotations(
-    gold_generation_fi, pred_generation_fi
-):
+    gold_generation_fi: str, pred_generation_fi: str
+) -> Iterator[PairedAnnotation]:
   """Reads annotations from files and match them based on the text.
 
   Args:

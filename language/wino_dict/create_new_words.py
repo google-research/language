@@ -28,7 +28,7 @@ python create_new_words.py --output_path=$HOME/test_output.tsv
 """
 import collections
 import dataclasses
-
+from typing import Dict, List, Optional, Sequence, Set
 
 from absl import app
 from absl import flags
@@ -94,11 +94,11 @@ class ScoredMorphedNGram:
     return f"{self.scored_ngram}\t{morph_part}"
 
 
-def _build_all_examples(lexicon):
+def _build_all_examples(lexicon: Set[str]) -> List[List[str]]:
   return [list(word) for word in lexicon if word.islower()]
 
 
-def _train_ngram_model(n, lexicon):
+def _train_ngram_model(n: int, lexicon: Set[str]) -> lm.MLE:
   exs = _build_all_examples(lexicon)
   train, vocab = lm.preprocessing.padded_everygram_pipeline(n, exs)
   model = lm.MLE(n)
@@ -106,7 +106,7 @@ def _train_ngram_model(n, lexicon):
   return model
 
 
-def _prettyprint_ngrams(output):
+def _prettyprint_ngrams(output: List[str]) -> str:
   return "".join(c for c in output if "<" not in c)
 
 
@@ -123,12 +123,12 @@ class NGramGenerator:
   _ngram_size: int
   _lexicon: Set[str]
 
-  def __init__(self, ngram_size, lexicon):
+  def __init__(self, ngram_size: int, lexicon: Set[str]) -> None:
     self._ngram_size = ngram_size
     self._model = _train_ngram_model(ngram_size, lexicon)
     self._lexicon = lexicon
 
-  def score_word(self, word):
+  def score_word(self, word: str) -> float:
     """Scores a word as the sum of its n-letter sequences."""
     max_n = min(len(word), self._ngram_size)
     chars = ["<s>"] + list(word) + ["</s>"]
@@ -141,19 +141,19 @@ class NGramGenerator:
 
     return score
 
-  def make_word(self, max_length, seed = None):
+  def make_word(self, max_length: int, seed: Optional[int] = None) -> str:
     return _prettyprint_ngrams(
         self._model.generate(max_length, random_seed=seed))
 
   def make_scored_ngram(self,
-                        max_length,
-                        seed = None):
+                        max_length: int,
+                        seed: Optional[int] = None) -> ScoredNGram:
     word = self.make_word(max_length, seed)
     score = self.score_word(word)
     return ScoredNGram(word, score)
 
-  def validate_scored_ngram(self, scored_ngram, min_score,
-                            min_length):
+  def validate_scored_ngram(self, scored_ngram: ScoredNGram, min_score: float,
+                            min_length: int) -> bool:
     """Checks if the generated word follows all requirements on length and score.
 
     Note that the word also should not be an existing word.
@@ -177,8 +177,8 @@ class NGramGenerator:
     return True
 
 
-def _get_bucket(scored_ngram, min_score,
-                num_buckets):
+def _get_bucket(scored_ngram: ScoredNGram, min_score: float,
+                num_buckets: int) -> int:
   # Note that the max score is implicitly 0, so -min_score is equivalent to
   # max_score - min_score.
   valid_score_range = -min_score
@@ -186,13 +186,13 @@ def _get_bucket(scored_ngram, min_score,
   return int(-scored_ngram.score // bucket_score_range)
 
 
-def generate_ngram_examples(model,
-                            min_length,
-                            max_length,
-                            num_buckets,
-                            min_score,
-                            num_iterations,
-                            random_seed = 1):
+def generate_ngram_examples(model: NGramGenerator,
+                            min_length: int,
+                            max_length: int,
+                            num_buckets: int,
+                            min_score: float,
+                            num_iterations: int,
+                            random_seed: int = 1) -> List[ScoredNGram]:
   """Generates a sorted list of scored new words based on the requirements.
 
   Args:
@@ -230,8 +230,8 @@ def generate_ngram_examples(model,
 
 
 def add_morphology_to_examples(
-    examples,
-    morph_rules):
+    examples: List[ScoredNGram],
+    morph_rules: Dict[str, Dict[str, str]]) -> List[ScoredMorphedNGram]:
   """Adds morphology to generated words based on the provided rules.
 
   Args:
@@ -251,7 +251,8 @@ def add_morphology_to_examples(
 
 
 def _morph_by_rules(
-    word, morph_rules):
+    word: str, morph_rules: Dict[str, Dict[str,
+                                           str]]) -> Optional[Dict[str, str]]:
   """Creates the morphology dictionary for a word based on the rules.
 
   Note that this dictionary is from a part of speech to that word's conjugation
@@ -281,7 +282,7 @@ def _morph_by_rules(
   return morphs
 
 
-def read_morph_rules(file_path):
+def read_morph_rules(file_path: str) -> Dict[str, Dict[str, str]]:
   """Reads the suffix substitution rules from the file.
 
   Note that the file can be edited manually or created from scratch by a
@@ -308,7 +309,7 @@ def read_morph_rules(file_path):
   return pos_to_morph_rules
 
 
-def main(argv):
+def main(argv: Sequence[str]) -> None:
   if len(argv) > 1:
     raise app.UsageError("Too many command-line arguments.")
   nltk.download("words")

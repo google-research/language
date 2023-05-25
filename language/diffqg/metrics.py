@@ -16,7 +16,7 @@
 import dataclasses
 import enum
 import json
-
+from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
 from bleurt import score as bleurt_score
 from language.diffqg import annotation
@@ -30,7 +30,7 @@ class Label(enum.Enum):
   TRUE_POSITIVE = 3
   TRUE_NEGATIVE = 4
 
-  def is_positive(self):
+  def is_positive(self) -> bool:
     return self == Label.TRUE_POSITIVE or self == Label.FALSE_NEGATIVE
 
 
@@ -82,18 +82,18 @@ class QsimModel:
 
   def __init__(
       self,
-      model_name = "cross-encoder/quora-roberta-large",
-      threshold = 0.5,
-  ):
+      model_name: str = "cross-encoder/quora-roberta-large",
+      threshold: float = 0.5,
+  ) -> None:
     self.model = sentence_transformers.CrossEncoder(model_name)
     self.threshold = threshold
 
-  def is_sentence_duplicate(self, sentence1, sentence2):
+  def is_sentence_duplicate(self, sentence1: str, sentence2: str) -> bool:
     return self.are_sentences_duplicate([(sentence1, sentence2)])[0]
 
   def are_sentences_duplicate(
-      self, paired_sentences
-  ):
+      self, paired_sentences: List[Tuple[str, str]]
+  ) -> List[bool]:
     # Query similarity model does not return True for two empty strings.
     negative_preds = {}
     for i, (sentence1, sentence2) in enumerate(paired_sentences):
@@ -107,21 +107,21 @@ class QsimModel:
         for (i, score) in enumerate(scores)
     ]
 
-  def is_paired_anno_duplicate(self, paired_anno):
+  def is_paired_anno_duplicate(self, paired_anno: annotation.PairedAnnotation):
     return self.is_sentence_duplicate(
         paired_anno.gold_question, paired_anno.pred_question
     )
 
   def are_paired_annos_duplicate(
-      self, paired_annos
-  ):
+      self, paired_annos: List[annotation.PairedAnnotation]
+  ) -> List[bool]:
     paired_sentences = [
         (anno.gold_question, anno.pred_question) for anno in paired_annos
     ]
     return self.are_sentences_duplicate(paired_sentences)
 
 
-def _normalize_and_get_label(paired_anno):
+def _normalize_and_get_label(paired_anno: annotation.PairedAnnotation) -> Label:
   """Helper method to compute label of diff detection.
 
   Args:
@@ -158,9 +158,9 @@ class Scorer:
 
   def __init__(
       self,
-      bleurt_checkpoint = None,
-      qsim_model = None,
-  ):
+      bleurt_checkpoint: Optional[str] = None,
+      qsim_model: Optional[QsimModel] = None,
+  ) -> None:
     self.rouge_scorer = rouge_scorer.RougeScorer(["rougeL"])
     self.bleurt_scorer = (
         bleurt_score.BleurtScorer(bleurt_checkpoint)
@@ -170,8 +170,8 @@ class Scorer:
     self.qsim_model = qsim_model
 
   def score_batch(
-      self, paired_annos
-  ):
+      self, paired_annos: List[annotation.PairedAnnotation]
+  ) -> Iterable[ScoredPair]:
     """Scores multiple annotations at once, useful for batching model calls.
 
     Note this method does not handle batching, and the length of the list will
@@ -202,7 +202,7 @@ class Scorer:
       score = Score(rouge, f1, labels[i], bleurts[i], qsims[i])
       yield ScoredPair(score, paired_anno)
 
-  def score_pair(self, paired_anno):
+  def score_pair(self, paired_anno: annotation.PairedAnnotation) -> ScoredPair:
     """Scores paired annotation for standard metrics.
 
     Note that the query similarity based metrics are not included here.
@@ -228,7 +228,7 @@ class Scorer:
     return ScoredPair(score, paired_anno)
 
   # pylint: disable=invalid-name because L is more readable here.
-  def get_rouge_L(self, paired_anno):
+  def get_rouge_L(self, paired_anno: annotation.PairedAnnotation) -> float:
     if not paired_anno.pred_question and not paired_anno.gold_question:
       return 1.0
     elif not paired_anno.pred_question or not paired_anno.gold_question:
@@ -238,8 +238,8 @@ class Scorer:
     )["rougeL"].fmeasure
 
   def batch_bleurt(
-      self, paired_annos
-  ):
+      self, paired_annos: List[annotation.PairedAnnotation]
+  ) -> List[float]:
     """Batches calls to the wrapped BLEURT model for efficiency.
 
     Note this method does not handle batching and only a single batch should be
@@ -268,7 +268,7 @@ class Scorer:
         for (i, score) in enumerate(bleurt_scores)
     ]
 
-  def get_bleurt(self, paired_anno):
+  def get_bleurt(self, paired_anno: annotation.PairedAnnotation) -> float:
     if not paired_anno.pred_question and not paired_anno.gold_question:
       return 1.0
     elif not paired_anno.pred_question or not paired_anno.gold_question:
@@ -279,7 +279,7 @@ class Scorer:
         batch_size=1,
     )[0]
 
-  def get_f1(self, paired_anno):
+  def get_f1(self, paired_anno: annotation.PairedAnnotation) -> float:
     """Computes token-level overlap of the two questions.
 
     This is equivalent to Rouge-1's f-measure or the commonly reported
@@ -306,7 +306,7 @@ class Scorer:
     return f1
 
 
-def compute_f1_from_labels(labels):
+def compute_f1_from_labels(labels: List[Label]) -> Dict[str, float]:
   """Aggregates the metrics to overall change detection metrics.
 
   Args:
@@ -337,8 +337,8 @@ def compute_f1_from_labels(labels):
 
 
 def _aggregate_subset_scores(
-    subset, suffix
-):
+    subset: List[Score], suffix: str
+) -> Dict[str, float]:
   """Computes the average of each metric over the provided subset.
 
   Note that BLEURT and Query Similarity will be skipped if any of the values are
@@ -366,9 +366,9 @@ def _aggregate_subset_scores(
 
 
 def calculate_metrics(
-    scored_annotations,
-    subsets = None,
-):
+    scored_annotations: List[ScoredPair],
+    subsets: Optional[Dict[str, Callable[[ScoredPair], bool]]] = None,
+) -> Dict[str, float]:
   """Computes metrics for the scored_annotations for each subset.
 
   Standard subsets can include all of the data, only the true positives labeled
@@ -399,13 +399,13 @@ def calculate_metrics(
 
 
 def score_annotations(
-    paired_annotations,
-    qsim_model_name = None,
-    bleurt_checkpoint = None,
-    batch_size = 1,
-    qsim_threshold = 0.5,
-    num_batches = 0,
-):
+    paired_annotations: Iterable[annotation.PairedAnnotation],
+    qsim_model_name: Optional[str] = None,
+    bleurt_checkpoint: Optional[str] = None,
+    batch_size: int = 1,
+    qsim_threshold: float = 0.5,
+    num_batches: int = 0,
+) -> Iterable[ScoredPair]:
   """Computes scored annotations from the annotation pairs.
 
   Args:

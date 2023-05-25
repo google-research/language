@@ -22,7 +22,7 @@ import os
 import random
 import re
 import shutil
-
+from typing import Callable, Mapping, Sequence, Tuple, Union, Any, List, Iterator
 import zipfile
 
 from absl import logging
@@ -165,14 +165,14 @@ class WinoDictAnswer:
   fake_lemma: str  # Used for building definitions.
   fake_root: str  # Used for building k-shot instances without repetitions.
 
-  def get_definition(self):
+  def get_definition(self) -> str:
     return _DEFINITIONS[self.pos].format(
         definition=self.definition, lemma=self.fake_lemma)
 
-  def get_synonym(self):
+  def get_synonym(self) -> str:
     return _SYNONYM.format(lemma=self.fake_lemma, synonym=self.lemma)
 
-  def get_definition_synonym(self):
+  def get_definition_synonym(self) -> str:
     return f'{self.get_definition()} {self.get_synonym()}'
 
 
@@ -185,15 +185,15 @@ class WinoDictExample:
   answer1: WinoDictAnswer
   answer2: WinoDictAnswer
 
-  def get_id(self):
+  def get_id(self) -> Tuple[AnswerID, AnswerID]:
     return (self.answer1.idx, self.answer2.idx)
 
 
-def is_candidate_new(candidate):
+def is_candidate_new(candidate: Mapping[str, str]) -> bool:
   return all(not wordnet.synsets(candidate[tag]) for tag in ('VB', 'JJ', 'NN'))
 
 
-def get_winogrande(path):
+def get_winogrande(path: str) -> Iterator[WinogradExample]:
   """Fetches the Winogrande dataset from a storage bucket."""
   with tf.io.gfile.GFile(path, 'rb') as raw:
     with zipfile.ZipFile(raw) as zf:
@@ -213,7 +213,7 @@ def get_winogrande(path):
               pronoun='_')
 
 
-def get_winograd():
+def get_winograd() -> Iterator[WinogradExample]:
   """Fetches the Winograd dataset from TFDS."""
   for example in tfds.load('wsc273', split='test'):
     sentence = example['text'].numpy().decode()
@@ -233,7 +233,7 @@ def get_winograd():
         pronoun=example['pronoun_text'].numpy().decode())
 
 
-def _make_comparative(adj):
+def _make_comparative(adj: str) -> str:
   """"Heuristic function to build comparative adjectives."""
   if adj[-1] == 'y':
     return f'{adj[:-1]}ier'
@@ -245,12 +245,12 @@ def _make_comparative(adj):
 
 
 def create_word(
-    seed,
-    word,
-    lemma,
-    tag,
-    candidates,
-):
+    seed: int,
+    word: str,
+    lemma: str,
+    tag: str,
+    candidates: Sequence[Mapping[str, str]],
+) -> Tuple[str, str, str]:
   """Samples a new (word, lemma, root) tuple within a log likelihood bucket."""
   morphology = random.Random(seed).choice(candidates)
   root = morphology[ROOT]
@@ -271,25 +271,25 @@ def create_word(
 
 
 def _build_template(
-    sentence,
-    start_idx,
-    end_idx,
-    marker,
-):
+    sentence: str,
+    start_idx: int,
+    end_idx: int,
+    marker: str,
+) -> Tuple[str, str]:
   """Replaces a span in the text with a marker."""
   return sentence[:start_idx] + marker + sentence[end_idx:], sentence[
       start_idx:end_idx]
 
 
-def _normalize_spaces(sentence):
+def _normalize_spaces(sentence: str) -> str:
   return ' '.join(sentence.split())
 
 
 def _get_diff(
-    sentence1,
-    sentence2,
-    marker,
-):
+    sentence1: str,
+    sentence2: str,
+    marker: str,
+) -> Tuple[str, Tuple[str, str]]:
   """Replaces smalles substring difference between two sentences."""
   sentence1 = _normalize_spaces(sentence1)
   sentence2 = _normalize_spaces(sentence2)
@@ -320,13 +320,13 @@ def _get_diff(
 
 
 def _analyze(
-    nlp,
-    sentence,
-    word,
-    option,
-    opposite_word,
-    create_word_fn,
-):
+    nlp: spacy.Language,
+    sentence: str,
+    word: str,
+    option: str,
+    opposite_word: str,
+    create_word_fn: CreateWordFn,
+) -> Mapping[str, str]:
   """Analyzes the syntactic role of a word in a sentence."""
   # The 2 versions of the same example will share the fake word.
   seed = sentence
@@ -435,10 +435,10 @@ def _analyze(
 
 
 def get_winodict(
-    lines,
-    create_word_fn,
-    spacy_model,
-):
+    lines: Sequence[WinogradExample],
+    create_word_fn: CreateWordFn,
+    spacy_model: str,
+) -> Iterator[WinoDictExample]:
   """Builds WinoDict dataset based on Winograd examples."""
   nlp = spacy.load(spacy_model)
   # Examples are grouped by the option set and the group (original id prefix) if
@@ -518,9 +518,9 @@ def get_winodict(
 
 
 def _examples_compatible(
-    example1,
-    example2,
-):
+    example1: WinoDictExample,
+    example2: WinoDictExample,
+) -> bool:
   """Assesses whether to exampels are compatible for in-context learning."""
   if example1.get_id() == example2.get_id():
     return False
@@ -532,10 +532,10 @@ def _examples_compatible(
 
 
 def _build_few_shot_prompts(
-    example,
-    samples,
-    strategy,
-):
+    example: WinoDictExample,
+    samples: Sequence[WinoDictExample],
+    strategy: Callable[[WinoDictExample], Prompts],
+) -> Prompts:
   """Builds a few-shot prompt given samples."""
   # For each sample used for ICL, we add the 2 prompts coming from both words.
   sample_prompts = ([], [])
@@ -554,7 +554,7 @@ def _build_few_shot_prompts(
                for prompt_part, part in zip(prompt_parts, strategy(example)))
 
 
-def merge_files(output_path, files):
+def merge_files(output_path: str, files: Sequence[str]) -> None:
   for ext in ('.csv', '.txt'):
     with tf.io.gfile.GFile(output_path + ext, 'wb') as merged:
       for chunk_file in files:
@@ -562,7 +562,7 @@ def merge_files(output_path, files):
           shutil.copyfileobj(ef, merged)
 
 
-def _get_answer_row(example, answer_idx):
+def _get_answer_row(example: WinoDictExample, answer_idx: int) -> List[Any]:
   answer = example.answer2 if answer_idx else example.answer1
   return [
       answer.idx,
@@ -576,12 +576,12 @@ def _get_answer_row(example, answer_idx):
   ]
 
 
-def _highlight(haystack, needle):
+def _highlight(haystack: str, needle: str) -> str:
   return haystack.replace(needle, f'<strong>{needle}</strong>')
 
 
-def write_text_files(dataset_name, dataset,
-                     id_offset):
+def write_text_files(dataset_name: str, dataset: Sequence[WinoDictExample],
+                     id_offset: int):
   """Dumpts dataset to csv and text."""
   with tf.io.gfile.GFile(f'{dataset_name}.csv', 'w') as csv_file:
     with tf.io.gfile.GFile(f'{dataset_name}.txt', 'w') as txt_file:
@@ -622,12 +622,12 @@ def write_text_files(dataset_name, dataset,
 
 
 def write_prompt_files(
-    dataset_name,
-    dataset,
-    aux_dataset,
-    shots,
-    strategy,
-    seed,
+    dataset_name: str,
+    dataset: Sequence[WinoDictExample],
+    aux_dataset: Sequence[WinoDictExample],
+    shots: int,
+    strategy: Callable[[WinoDictExample], Prompts],
+    seed: int,
 ):
   """Creates in-context learning given a strategy to write the prompts."""
   with tf.io.gfile.GFile(f'{dataset_name}_inputs', 'w') as f_inputs:
@@ -656,8 +656,8 @@ def write_prompt_files(
           f_outputs.write(f'(({ids}, {index}), {index == 0}, 1.0)\n')
 
 
-def _template_strategy(template1, template2,
-                       example):
+def _template_strategy(template1: str, template2: str,
+                       example: WinoDictExample) -> Prompts:
   inputs1, targets1 = template1.format(
       word=example.answer1.fake_word).split(_FORMAT_OPTION)
   inputs1 += _FORMAT_OPTION
@@ -670,46 +670,46 @@ def _template_strategy(template1, template2,
           (inputs2.format(option=example.answer1.option), targets2.strip()))
 
 
-def no_definition_strategy(example):
+def no_definition_strategy(example: WinoDictExample) -> Prompts:
   return _template_strategy(example.sentence, example.sentence, example)
 
 
-def definition_first_strategy(example):
+def definition_first_strategy(example: WinoDictExample) -> Prompts:
   """Strategy to add the word definition to the beginning of the prompt."""
   return _template_strategy(
       f'{example.answer1.get_definition()} {example.sentence}',
       f'{example.answer2.get_definition()} {example.sentence}', example)
 
 
-def definition_last_strategy(example):
+def definition_last_strategy(example: WinoDictExample) -> Prompts:
   """Strategy to add the word definition to the end of the prompt."""
   return _template_strategy(
       f'{example.sentence} {example.answer1.get_definition()}',
       f'{example.sentence} {example.answer2.get_definition()}', example)
 
 
-def definition_synonym_first_strategy(example):
+def definition_synonym_first_strategy(example: WinoDictExample) -> Prompts:
   """Strategy to add the word definition to the beginning of the prompt."""
   return _template_strategy(
       f'{example.answer1.get_definition_synonym()} {example.sentence}',
       f'{example.answer2.get_definition_synonym()} {example.sentence}', example)
 
 
-def definition_synonym_last_strategy(example):
+def definition_synonym_last_strategy(example: WinoDictExample) -> Prompts:
   """Strategy to add the word definition to the end of the prompt."""
   return _template_strategy(
       f'{example.sentence} {example.answer1.get_definition_synonym()}',
       f'{example.sentence} {example.answer2.get_definition_synonym()}', example)
 
 
-def synonym_first_strategy(example):
+def synonym_first_strategy(example: WinoDictExample) -> Prompts:
   """Strategy to add the word definition to the beginning of the prompt."""
   return _template_strategy(
       f'{example.answer1.get_synonym()} {example.sentence}',
       f'{example.answer2.get_synonym()} {example.sentence}', example)
 
 
-def synonym_last_strategy(example):
+def synonym_last_strategy(example: WinoDictExample) -> Prompts:
   """Strategy to add the word definition to the end of the prompt."""
   return _template_strategy(
       f'{example.sentence} {example.answer1.get_synonym()}',
