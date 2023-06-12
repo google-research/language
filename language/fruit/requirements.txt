@@ -109,7 +109,7 @@ tokenizers==0.12.1
 toml==0.10.2
 torch==1.12.1
 tqdm==4.64.1
-transformers==4.21.3
+transformers==4.30.0
 typing==3.6.2
 typing_extensions==4.3.0
 urllib3==1.26.12
