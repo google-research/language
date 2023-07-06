@@ -85,7 +85,7 @@ rouge-score==0.1.2
 rsa==4.9
 sacrebleu==2.2.1
 scikit-learn==1.0.2
-scipy==1.7.3
+scipy==1.10.0
 sentencepiece==0.1.97
 seqio==0.0.10
 six==1.16.0
