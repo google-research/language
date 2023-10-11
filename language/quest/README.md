@@ -1,6 +1,6 @@
 # QUEST: A Retrieval Dataset of Entity-Seeking Queries with Implicit Set Operations
 
-TODO(petershaw): Add link to paper when available.
+Paper link: https://arxiv.org/abs/2305.11694
 
 # Dataset
 

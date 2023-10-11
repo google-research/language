@@ -40,7 +40,6 @@ import tensorflow.compat.v1 as tf
 from tensorflow.compat.v1 import estimator as tf_estimator
 import tensorflow_hub as hub
 from tensorflow.contrib import cluster_resolver as contrib_cluster_resolver
-from tensorflow.contrib import data as contrib_data
 from tensorflow.contrib import tpu as contrib_tpu
 
 flags = tf.flags
@@ -320,8 +319,10 @@ def input_fn_builder(input_file, seq_length, is_training, drop_remainder):
     # For eval, we want no shuffling and parallel reading doesn't matter.
     d = tf.data.Dataset.list_files(input_file, shuffle=False)
     d = d.apply(
-        contrib_data.parallel_interleave(
-            tf.data.TFRecordDataset, cycle_length=20, sloppy=is_training))
+        tf.data.experimental.parallel_interleave(
+            tf.data.TFRecordDataset, cycle_length=20, sloppy=is_training
+        )
+    )
     if is_training:
       d = d.repeat()
       d = d.shuffle(buffer_size=100)

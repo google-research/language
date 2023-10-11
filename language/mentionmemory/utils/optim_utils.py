@@ -49,7 +49,7 @@ def create_learning_rate_scheduler(
     if linear_decay:
       step_decay = (1.0 - decay_minimum_factor) / (max_steps - warmup_steps)
       factor *= jnp.minimum(1.0, 1.0 - step_decay * (step - warmup_steps))
-    return jnp.asarray(learning_rate * factor)
+    return jnp.asarray(learning_rate * factor)  # pytype: disable=bad-return-type  # jnp-type
 
   return step_fn
 

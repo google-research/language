@@ -71,7 +71,7 @@ class TransformerEmbeddings(nn.Module):
       pos_ids = jnp.tile(
           jnp.arange(seq_length, dtype=jnp.int32)[None, :], (batch_size, 1))
       if self.decode:
-        # cache position index for tracking decoding postiion.
+        # cache position index for tracking decoding position.
         is_initialized = self.has_variable('cache', 'cache_index')
         cache_index = self.variable('cache', 'cache_index',
                                     lambda: jnp.array(0, dtype=jnp.uint32))
@@ -150,8 +150,8 @@ class TransformerAttention(nn.Module):
         bias_init=self.bias_init,
         dropout_rate=self.attention_dropout_rate,
         decode=self.decode,
-        name='attention')(
-            inputs_q, inputs_kv, mask, deterministic=self.deterministic)
+        name='attention',
+    )(inputs_q, inputs_kv, mask=mask, deterministic=self.deterministic)
     output = TransformerOutput(
         hidden_size=self.hidden_size,
         hidden_dropout_rate=self.hidden_dropout_rate,

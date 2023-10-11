@@ -121,7 +121,7 @@ def compute_tp_fp_fn_weighted(
   n_false_positive = get_weighted_sum(false_positives)
   n_false_negative = get_weighted_sum(false_negatives)
 
-  return n_true_positive, n_false_positive, n_false_negative
+  return n_true_positive, n_false_positive, n_false_negative  # pytype: disable=bad-return-type  # jnp-type
 
 
 def compute_loss_and_prob_from_probs_with_duplicates(

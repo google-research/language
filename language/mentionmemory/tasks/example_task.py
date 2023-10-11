@@ -81,7 +81,7 @@ class ExampleTask(base_task.BaseTask):
           }
       }
 
-      return loss, metrics, {}
+      return loss, metrics, {}  # pytype: disable=bad-return-type  # jnp-type
 
     return loss_fn
 

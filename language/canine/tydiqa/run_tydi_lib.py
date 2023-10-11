@@ -350,16 +350,16 @@ class TyDiRunner(metaclass=abc.ABCMeta):
 
   def sharded_iterator(self, iterator, shard_size):
     """Returns an iterator of iterators of at most size `shard_size`."""
-    exhaused = False
-    while not exhaused:
+    exhausted = False
+    while not exhausted:
 
       def shard():
         for i, item in enumerate(iterator, 1):
           yield item
           if i == shard_size:
             return
-        nonlocal exhaused
-        exhaused = True
+        nonlocal exhausted
+        exhausted = True
 
       yield shard()
 
