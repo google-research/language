@@ -122,7 +122,7 @@ def main(unused_argv):
 
     # Add additional random negatives.
     if FLAGS.random_negatives > 0:
-      random_titles = random.sample(doc_titles, FLAGS.random_negatives)
+      random_titles = random.sample(list(doc_titles), FLAGS.random_negatives)
       for doc_title in random_titles:
         if doc_title not in relevant_titles:
           new_example = xattn_utils.get_example(

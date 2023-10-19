@@ -62,7 +62,9 @@ class RelationWorld(world.World):
     actual_available_positions = self.get_nearby_positions(
         position, exclude_locations=exclude_locations)
     if actual_available_positions:
-      sampled_position = random.sample(actual_available_positions, 1).pop()
+      sampled_position = random.sample(
+          list(actual_available_positions), 1
+      ).pop()
       return world.Position(column=sampled_position[0], row=sampled_position[1])
     return None
 
@@ -76,7 +78,9 @@ class RelationWorld(world.World):
                             for dir in DIR_TO_DIR_VEC.values()])
     actual_available_positions = available_positions - nearby_positions
     if actual_available_positions:
-      sampled_position = random.sample(actual_available_positions, 1).pop()
+      sampled_position = random.sample(
+          list(actual_available_positions), 1
+      ).pop()
       return world.Position(column=sampled_position[0], row=sampled_position[1])
     return None
 

@@ -24,7 +24,7 @@ import tensorflow.compat.v1 as tf
 
 def log_variables(name, var_names):
   tf.logging.info("%s (%d total): %s", name, len(var_names),
-                  random.sample(var_names, min(len(var_names), 5)))
+                  random.sample(list(var_names), min(len(var_names), 5)))
 
 
 def init_from_checkpoint(checkpoint_path,
