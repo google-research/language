@@ -56,7 +56,7 @@ mesh-tensorflow==0.1.21
 networkx==2.2
 nltk==3.7
 numpy==1.21.6
-oauthlib==3.2.1
+oauthlib==3.2.2
 opt-einsum==3.3.0
 orjson==3.8.0
 packaging==21.3
