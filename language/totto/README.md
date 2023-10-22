@@ -116,5 +116,5 @@ Please note that given the complexity of some of the tables in our dataset (e.g.
 A sample command is given below:
 
 ```
-python3 -m language.totto.baseline_preprocessing.preprocess_data_main --input_path="language/totto/sample/train_sample.jsonl" --output_path="./processed_train_sample.jsonl"
+python3 -m language.totto.baseline_preprocessing.preprocess_data_main --input_path="language/totto/sample/train_sample.jsonl" --output_path="./processed_train_sample.jsonl --max_lines 500000"
 ```
