@@ -108,7 +108,7 @@ thrift==0.11.0
 tokenizers==0.12.1
 toml==0.10.2
 torch==1.12.1
-tqdm==4.64.1
+tqdm==4.66.3
 transformers==4.21.3
 typing==3.6.2
 typing_extensions==4.3.0
