@@ -43,7 +43,7 @@ jax==0.3.17
 jaxlib==0.3.15
 joblib==1.1.0
 JPype1==0.7.5
-keras==2.10.0
+keras==2.13.1
 Keras-Preprocessing==1.1.2
 kiwisolver==1.4.4
 libclang==14.0.6
