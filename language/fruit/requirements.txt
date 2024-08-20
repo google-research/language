@@ -54,7 +54,7 @@ matplotlib==3.5.3
 memoized-property==1.0.3
 mesh-tensorflow==0.1.21
 networkx==2.2
-nltk==3.7
+nltk==3.9
 numpy==1.21.6
 oauthlib==3.2.1
 opt-einsum==3.3.0
