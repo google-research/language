@@ -23,8 +23,9 @@ python export_to_tfhub \
     --num_vec_passage=${NUM_DOC_VEC} \
     --projection_size=${PROJECTION_SIZE}
 
-tfhub publish-module $HUB_DIR/$MODEL_NAME.
+tfhub publish-module $HUB_DIR/$MODEL_NAME $HUB_HANDLE.
 """
+
 import os
 
 from absl import app

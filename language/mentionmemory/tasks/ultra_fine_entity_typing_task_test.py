@@ -140,12 +140,13 @@ class UltraFineEntityTypingMetricsTest(test_utils.TestCase):
       predictions = self.predictions[chunk_start:chunk_end]
       current_metrics = ultra_fine_entity_typing_task.get_prediction_recall_metrics(
           labels, predictions)
-      current_metrics = jax.tree_map(lambda x: jnp.expand_dims(x, 0),
-                                     current_metrics)
+      current_metrics = jax.tree.map(
+          lambda x: jnp.expand_dims(x, 0), current_metrics
+      )
       metrics.append(current_metrics)
 
     metrics = common_utils.get_metrics(metrics)
-    metrics_sum = jax.tree_map(jnp.sum, metrics)
+    metrics_sum = jax.tree.map(jnp.sum, metrics)
     processed_metrics = metric_utils.process_metrics(metrics_sum)
     self.assertAlmostEqual(
         processed_metrics['total_precision_value'], 0.481, places=3)
@@ -294,7 +295,7 @@ class UltraFineEntityTypingTaskTest(parameterized.TestCase):
         config)
 
     batch = collater_fn(raw_batch)
-    batch = jax.tree_map(jnp.asarray, batch)
+    batch = jax.tree.map(jnp.asarray, batch)
 
     self.assertSequenceEqual(batch['mention_target_weights'].shape,
                              [config.per_device_batch_size])

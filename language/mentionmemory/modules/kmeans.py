@@ -18,7 +18,6 @@ import functools
 from typing import Optional, Tuple
 
 import jax
-from jax.experimental import host_callback as hcb
 import jax.numpy as jnp
 
 from language.mentionmemory.utils.custom_types import Array
@@ -114,13 +113,13 @@ def kmeans_step(
     counts = jax.lax.psum(counts, axis_name='observations')
     mean_dist = jax.lax.pmean(mean_dist, axis_name='observations')
 
-  new_centroids = cluster_sums / counts[:, None].clip(a_min=1.)
+  new_centroids = cluster_sums / counts[:, None].clip(min=1.0)
 
-  hcb.id_print(step, what='step', tap_with_device=True)
-  hcb.id_print(mean_dist - prev_dist, what='dist_diff', tap_with_device=True)
+  jax.debug.print('step={}', step)
+  jax.debug.print('dist_diff={}', mean_dist - prev_dist)
   step += 1
 
-  return new_centroids, observations, mean_dist, prev_dist, step
+  return new_centroids, observations, mean_dist, prev_dist, step  # type: ignore
 
 
 def kmeans(

@@ -42,7 +42,7 @@ def remove_pad(x):
   """Remove padding examples."""
   if 'mask' in x:
     ind = jnp.where(jnp.array(x.pop('mask'), dtype=jnp.int32) > 0)
-    x = jax.tree_map(lambda v: v[ind], x)  # pylint: disable=cell-var-from-loop
+    x = jax.tree.map(lambda v: v[ind], x)  # pylint: disable=cell-var-from-loop
   return x
 
 
@@ -53,7 +53,7 @@ def tohost(x):
     n_device, n_batch, *remaining_dims = x.shape
     return np.array(x).reshape((n_device * n_batch,) + tuple(remaining_dims))
 
-  return jax.tree_map(single_tohost, x)
+  return jax.tree.map(single_tohost, x)
 
 
 def remove_special_tokens(tokens, eos_idx):
@@ -152,7 +152,7 @@ def evaluate_sequence_accuracy(p_pred_step,
     annotations = json.load(f)
 
   for step, batch in enumerate(ds):  # pytype: disable=wrong-arg-types
-    batch = jax.tree_map(np.asarray, batch)
+    batch = jax.tree.map(np.asarray, batch)
     cache = p_init_cache(batch)
     batch['predictions'] = p_pred_step(batch, state, cache, eos_idx)
     batch = remove_pad(tohost(batch))

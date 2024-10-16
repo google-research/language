@@ -42,9 +42,14 @@ Each examples file contains newline-separated json dictionaries with the followi
       attributions are a list of dictionaries mapping a query substring to a
       document substring.
 
+We also provide the set of atomic queries used to construct the dataset for
+analysis purposes:
+
+* https://storage.googleapis.com/gresearch/quest/all_categories_filtered.csv
+
 ## Document Corpus
 
-The document corpus is at https://storage.googleapis.com/gresearch/quest/documents.jsonl. Note that this file is quite large
+The document corpus is at https://storage.googleapis.com/gresearch/quest/documents.zip. Note that this file when uncompressed is quite large
 (899MB). The format is newline separated json dicts containing `title` and
 `text`.
 
@@ -60,3 +65,21 @@ Code and documentation for various baseline systems are in the following sub-dir
 * `t5xr/` - Dual encoder based on `t5x_retrieval` library.
 * `xattn/` - T5-based cross-attention classifier.
 
+# License
+
+All code *and* models are released under the Apache 2.0 license. See the
+[LICENSE](https://github.com/google-research/language/blob/master/LICENSE) file for more information.
+
+## Citing this work
+
+You can cite this work as:
+
+```
+@inproceedings{malaviya2023quest,
+  title={QUEST: A Retrieval Dataset of Entity-Seeking Queries with Implicit Set Operations},
+  author={Malaviya, Chaitanya and Shaw, Peter and Chang, Ming-Wei and Lee, Kenton and Toutanova, Kristina},
+  booktitle={Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)},
+  pages={14032--14047},
+  year={2023}
+}
+```

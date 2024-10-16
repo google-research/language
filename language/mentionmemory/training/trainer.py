@@ -97,7 +97,7 @@ def evaluate(
   eval_metrics = []
   eval_auxiliary = []
   for batch in eval_data:
-    batch = jax.tree_map(jnp.asarray, batch)
+    batch = jax.tree.map(jnp.asarray, batch)
     metrics, auxiliary_output = eval_step_fn(
         train_state,
         model_vars,
@@ -107,7 +107,7 @@ def evaluate(
     batch_auxiliary = (jax.device_get(batch), jax.device_get(auxiliary_output))
     eval_auxiliary.append(batch_auxiliary)
   eval_metrics = common_utils.get_metrics(eval_metrics)
-  eval_metrics_sums = jax.tree_map(jnp.sum, eval_metrics)
+  eval_metrics_sums = jax.tree.map(jnp.sum, eval_metrics)
   eval_summary = metric_utils.process_metrics(eval_metrics_sums, prefix='eval')
   return eval_summary, eval_auxiliary
 
@@ -351,7 +351,7 @@ def train(config: ml_collections.ConfigDict):
 
       # Shard data to devices and perform a training step.
       with jax.profiler.StepTraceAnnotation('train', step_num=step):
-        batch = jax.tree_map(jnp.asarray, train_iter.get_next())
+        batch = jax.tree.map(jnp.asarray, train_iter.get_next())
         train_state, metrics = p_train_step(
             train_state,
             model_vars,
@@ -370,7 +370,7 @@ def train(config: ml_collections.ConfigDict):
         with report_progress.timed('training_metrics'):
           logging.info('Gathering training metrics.')
           train_metrics = common_utils.get_metrics(train_metrics)
-          metrics_sums = jax.tree_map(jnp.sum, train_metrics)
+          metrics_sums = jax.tree.map(jnp.sum, train_metrics)
           summary = metric_utils.process_metrics(metrics_sums, prefix='train')
           summary['learning_rate'] = learning_rate_fn(step)
 

@@ -91,7 +91,7 @@ def get_num_total_memories(config):
   start_time = time.time()
   num_total_memories = 0
   for batch in data_iter:
-    batch_jax = jax.tree_map(np.asarray, batch)
+    batch_jax = jax.tree.map(np.asarray, batch)
     num_total_memories += batch_jax['mention_target_weights'].sum()
   logging.info('Found %d memories in %.2f seconds', num_total_memories,
                time.time() - start_time)
@@ -174,7 +174,7 @@ def generate(config: ml_collections.ConfigDict):
   logging.info('Start memory generation.')
   with metric_writers.ensure_flushes(writer):
     for step, batch in enumerate(data_iter):
-      batch = jax.tree_map(jnp.asarray, batch)
+      batch = jax.tree.map(jnp.asarray, batch)
       predictions = p_predict_step(
           model_params,
           model_vars,

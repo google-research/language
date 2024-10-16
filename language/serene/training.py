@@ -266,6 +266,8 @@ class Trainer:
 
   def _save_encoder(self):
     """Save only the text encoder to disk."""
+    if self._encoder is None:
+      raise ValueError('Encoder is not initialized.')
     self._encoder.save_to_file(
         os.path.join(self._model_config.model_checkpoint, 'text_encoder'))
 
@@ -282,7 +284,10 @@ class Trainer:
       if self._tpu is not None:
         resolver = distribute_utils.tpu_initialize(self._tpu)
         self._strategy = tf.distribute.experimental.TPUStrategy(resolver)
-      elif self._distribution_strategy is None or self._distribution_strategy == 'default':
+      elif (
+          self._distribution_strategy is None
+          or self._distribution_strategy == 'default'
+      ):
         self._strategy = tf.distribute.get_strategy()
       elif self._distribution_strategy == 'cpu':
         self._strategy = tf.distribute.OneDeviceStrategy('/device:cpu:0')
@@ -366,6 +371,7 @@ class Trainer:
     """Compile the keras model using the correct scope."""
     # pylint: disable=protected-access
     self._init_strategy()
+    assert self._strategy is not None
     with self._strategy.scope():
       if self._model_config.model == 'two_tower':
         module_model = model.TwoTowerRanker(
@@ -390,6 +396,8 @@ class Trainer:
             classify_claim=self._model_config.classify_claim,
         )
         self._inner_model = module_model
+        if self._encoder is None:
+          raise ValueError('Encoder is not initialized.')
         # This hackery is necessary since keras doesn't handle dictionary inputs
         # well, so we have to manually specify input/output output shapes. Since
         # this is dependent on the model (e.g., bert vs other), let the encoder
@@ -437,9 +445,9 @@ class Trainer:
             tf.keras.metrics.SparseCategoricalAccuracy(name='accuracy'),
         ]
         metrics['claim_classification'] = claim_metrics
-        loss[
-            'claim_classification'] = tf.keras.losses.SparseCategoricalCrossentropy(
-                from_logits=False)
+        loss['claim_classification'] = (
+            tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False)
+        )
       else:
         loss['claim_classification'] = losses.ZeroLoss()
         metrics['claim_classification'] = []
@@ -504,6 +512,8 @@ class Trainer:
     if epochs is None:
       epochs = self._model_config.max_epochs
 
+    if self._model is None:
+      raise ValueError('Model is not initialized.')
     self._model.fit(
         train_batched,
         validation_data=val_batched,
@@ -531,6 +541,8 @@ class Trainer:
       val_batched: The batched validation set.
     """
     unbatched = val_batched.unbatch()
+    if self._model is None:
+      raise ValueError('Model is not initialized.')
     model_predictions = self._model.predict(val_batched)
     claim_probs = model_predictions['claim_classification']
     evidence_probs = model_predictions['evidence_matching']
@@ -761,6 +773,8 @@ class Trainer:
     Returns:
       A batched dataset with correct padding shapes.
     """
+    if self._encoder is None:
+      raise ValueError('Cannot batch dataset without an encoder.')
     return dataset.padded_batch(
         batch_size=self._model_config.batch_size,
         padded_shapes=(
@@ -776,6 +790,8 @@ class Trainer:
                       filter_claims=True,
                       filter_evidence=True):
     """Convert the tfds dataset to numbers by tokenizing/embedding."""
+    if self._encoder is None:
+      raise ValueError('Cannot encode dataset without an encoder.')
     encode = self._encoder.build_encoder_fn()
     encoded_data = dataset.map(
         encode, num_parallel_calls=tf.data.experimental.AUTOTUNE)
@@ -833,6 +849,8 @@ class Trainer:
     return vocab
 
   def _tokenize_example(self, example):
+    if self._tokenizer is None:
+      raise ValueError('Cannot tokenize example without a tokenizer.')
     tokenized_claim = self._tokenizer.tokenize(
         example['claim_text'].numpy().decode('utf8'))
     tokenized_evidence = self._tokenizer.tokenize(

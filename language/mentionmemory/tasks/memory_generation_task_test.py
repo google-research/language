@@ -122,7 +122,7 @@ class MemoryGenerationTaskTest(parameterized.TestCase):
         for key, value in processed_example.items()
     }
     batch = collater_fn(batch)
-    batch = jax.tree_map(np.asarray, batch)
+    batch = jax.tree.map(np.asarray, batch)
 
     predict_fn = memory_generation_task.MemoryGenerationTask.make_prediction_fn(
         config)

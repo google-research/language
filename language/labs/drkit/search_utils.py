@@ -136,7 +136,7 @@ def write_sparse_to_checkpoint(var_name, sp_mat, checkpoint_path):
   sp_mat = sp_mat.tocoo()
   # Sort the indices lexicographically.
   sort_i = np.lexsort((sp_mat.col, sp_mat.row))
-  indices = np.mat([sp_mat.row[sort_i], sp_mat.col[sort_i]]).transpose()
+  indices = np.asmatrix([sp_mat.row[sort_i], sp_mat.col[sort_i]]).transpose()
   data = sp_mat.data[sort_i]
   with tf.Graph().as_default():
     init_data = tf.py_func(

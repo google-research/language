@@ -214,7 +214,7 @@ class RelationClassifierTaskTest(parameterized.TestCase):
         config)
 
     batch = collater_fn(raw_batch)
-    batch = jax.tree_map(jnp.asarray, batch)
+    batch = jax.tree.map(jnp.asarray, batch)
 
     self.assertSequenceEqual(batch['mention_target_weights'].shape,
                              [2 * config.per_device_batch_size])

@@ -199,13 +199,13 @@ def compute_metrics(logits, targets, weights):
 
 def metrics_summary(metrics, prefix):
   """Gather metrics summary."""
-  metrics_sums = jax.tree_map(jnp.sum, metrics)
+  metrics_sums = jax.tree.map(jnp.sum, metrics)
   weight_sum = metrics_sums.pop('weight_sum')
   example_sum = metrics_sums.pop('example_sum')
   exact_match = metrics_sums.pop('exact_match')
   summary = {
       f'{prefix}_{k}': v
-      for k, v in jax.tree_map(lambda x: x / weight_sum, metrics_sums).items()
+      for k, v in jax.tree.map(lambda x: x / weight_sum, metrics_sums).items()
   }
   summary[f'{prefix}_exact_match'] = exact_match / example_sum
   return summary

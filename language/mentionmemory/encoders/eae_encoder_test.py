@@ -121,7 +121,7 @@ class EaEEncoderTest(parameterized.TestCase):
         for key, value in processed_example.items()
     }
     batch = collater_fn(batch)
-    batch = jax.tree_map(np.asarray, batch)
+    batch = jax.tree.map(np.asarray, batch)
 
     model = eae_encoder.EaEEncoder(**model_config.encoder_config)
     init_rng = jax.random.PRNGKey(0)

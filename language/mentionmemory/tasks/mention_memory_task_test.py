@@ -250,7 +250,7 @@ class MentionMemoryTaskTest(test_utils.TestCase):
         True,
     )
 
-    metrics_per_first_device = jax.tree_map(lambda x: x[0], metrics)
+    metrics_per_first_device = jax.tree.map(lambda x: x[0], metrics)
     self.assertEqual(metrics_per_first_device['mlm']['denominator'],
                      batch['mlm_target_weights'][0].sum())
 

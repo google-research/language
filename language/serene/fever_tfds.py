@@ -136,9 +136,9 @@ class ExtractEvidenceForClaim(beam.DoFn):
     self._ukp_docs_dev_path = ukp_docs_dev
     self._ukp_docs_test_path = ukp_docs_test
     self._max_inference_sentence_id = max_inference_sentence_id
-    self._wiki_db: Optional[wiki_db.WikiDatabase] = None
-    self._wiki_titles: Optional[Set[Text]] = None
-    self._matcher: Optional[text_matcher.TextMatcher] = None
+    self._wiki_db: wiki_db.WikiDatabase = None
+    self._wiki_titles: Tuple[Text, Ellipsis] = None
+    self._matcher: text_matcher.TextMatcher = None
     self._drqa_scrape_table: Optional[collections.ChainMap] = None
     self._lucene_scrape_table: Optional[collections.ChainMap] = None
     self._name_to_scrape: Optional[Text, collections.ChainMap] = None  # pytype: disable=invalid-annotation  # attribute-variable-annotations
@@ -162,7 +162,7 @@ class ExtractEvidenceForClaim(beam.DoFn):
       self._claim_to_fold[claim['id']] = 'test'
 
     self._wiki_db = wiki_db.WikiDatabase.from_local(self._wiki_db_path)
-    self._wiki_titles = set(self._wiki_db.get_wikipedia_urls())
+    self._wiki_titles = tuple(set(self._wiki_db.get_wikipedia_urls()))
     self._matcher = text_matcher.TextMatcher()
     self._matcher.load(self._text_matcher_params_path)
 
@@ -340,7 +340,6 @@ class ExtractEvidenceForClaim(beam.DoFn):
     while True:
       if len(background_candidates) >= self._n_background_negatives:
         break
-      # sample works on sets, choice does not
       wikipedia_url = random.sample(self._wiki_titles, 1)[0]
       if wikipedia_url in used_wikipedia_urls:
         continue

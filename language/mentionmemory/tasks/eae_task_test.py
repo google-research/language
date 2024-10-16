@@ -124,7 +124,7 @@ class EaETaskTest(test_utils.TestCase):
         for key, value in processed_example.items()
     }
     batch = collater_fn(batch)
-    batch = jax.tree_map(np.asarray, batch)
+    batch = jax.tree.map(np.asarray, batch)
 
     loss_fn = eae_task.EaETask.make_loss_fn(config)
     _, metrics, auxiliary_output = loss_fn(

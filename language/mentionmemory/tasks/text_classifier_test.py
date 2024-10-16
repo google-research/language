@@ -164,7 +164,7 @@ class TextClassifierTest(test_utils.TestCase):
     config['model_config']['apply_mlp'] = apply_mlp
     raw_batch = self._gen_raw_batch(n_mentions)
     batch = self.collater_fn(raw_batch)
-    batch = jax.tree_map(np.asarray, batch)
+    batch = jax.tree.map(np.asarray, batch)
 
     loss_fn = text_classifier.TextClassifier.make_loss_fn(config)
     _, metrics, auxiliary_output = loss_fn(

@@ -228,8 +228,8 @@ class ReadTwiceTaskTest(test_utils.TestCase):
     )
 
     take_first = lambda x: x[0]
-    metrics = jax.tree_map(take_first, metrics)
-    np_batch = jax.tree_map(take_first, batch)
+    metrics = jax.tree.map(take_first, metrics)
+    np_batch = jax.tree.map(take_first, batch)
 
     # mlm losses
     expected_mlm_denom = np_batch['mlm_target_weights'].sum()

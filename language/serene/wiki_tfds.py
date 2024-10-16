@@ -29,7 +29,7 @@ class ExtractSentences(beam.DoFn):
     super().__init__()
     self._max_sentence_id = max_sentence_id
     self._wiki_db_path = wiki_db_path
-    self._db: Optional[wiki_db.WikiDatabase] = None
+    self._db: wiki_db.WikiDatabase = None
 
   def setup(self):
     self._db = wiki_db.WikiDatabase.from_local(self._wiki_db_path)

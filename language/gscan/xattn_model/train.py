@@ -98,7 +98,7 @@ def evaluate(p_eval_step, state, eval_ds, num_eval_steps = -1):
   logging.info('Starting evaluating.')
   eval_metrics = []
   for step, batch in enumerate(eval_ds):
-    batch = jax.tree_map(np.asarray, batch)
+    batch = jax.tree.map(np.asarray, batch)
     metrics = p_eval_step(batch=batch, state=state)
     eval_metrics.append(metrics)
     if num_eval_steps > 0 and step + 1 == num_eval_steps:
@@ -204,7 +204,7 @@ def train_and_evaluate(config, workdir):
     for step in range(initial_step, num_train_steps + 1):
       is_last_step = step == num_train_steps
       with jax.profiler.StepTraceAnnotation('train', step_num=step):
-        batch = jax.tree_map(np.asarray, next(train_iter))
+        batch = jax.tree.map(np.asarray, next(train_iter))
         state, metrics = p_train_step(batch=batch, rng=train_rngs, state=state)
         train_metrics.append(metrics)
 

@@ -218,7 +218,7 @@ class MentionLossesTest(test_utils.TestCase):
       expected_unnorm_avg_scores += total_unnorm_avg_scores[i]
       expected_avg_norms += np.linalg.norm(self.mention_encodings_stacked[i])
 
-    metrics_sharded = jax.tree_map(jnp.sum, metrics_sharded)
+    metrics_sharded = jax.tree.map(jnp.sum, metrics_sharded)
     metrics_sharded_masked = metrics_sharded[self.metrics_prefix +
                                              'coref_resolution_masked']
     metrics_sharded_non_masked = metrics_sharded[self.metrics_prefix +
@@ -277,7 +277,7 @@ class MentionLossesTest(test_utils.TestCase):
         self.mention_target_ids_stacked, self.mention_target_is_masked_stacked)
 
     loss_sharded = jnp.sum(loss_sharded)
-    metrics_sharded = jax.tree_map(jnp.sum, metrics_sharded)
+    metrics_sharded = jax.tree.map(jnp.sum, metrics_sharded)
 
     self.assertAlmostEqual(loss_sharded, loss_stacked, places=2)
     for metric_group_name in metrics_stacked:
@@ -424,7 +424,7 @@ class MentionLossesTest(test_utils.TestCase):
       expected_unnorm_avg_scores += total_unnorm_avg_scores[i]
       expected_avg_norms += np.linalg.norm(self.mention_encodings_stacked[i])
 
-    metrics_sharded = jax.tree_map(jnp.sum, metrics_sharded)
+    metrics_sharded = jax.tree.map(jnp.sum, metrics_sharded)
     metrics_sharded_masked = metrics_sharded[self.metrics_prefix + 'mtb_masked']
     metrics_sharded_non_masked = metrics_sharded[self.metrics_prefix +
                                                  'mtb_non_masked']
@@ -486,7 +486,7 @@ class MentionLossesTest(test_utils.TestCase):
         'dot', self.mention_target_is_masked_stacked, self.metrics_prefix)
 
     loss_sharded = jnp.sum(loss_sharded)
-    metrics_sharded = jax.tree_map(jnp.sum, metrics_sharded)
+    metrics_sharded = jax.tree.map(jnp.sum, metrics_sharded)
 
     self.assertAlmostEqual(loss_sharded, loss_stacked, places=2)
     for metric_group_name in metrics_stacked:

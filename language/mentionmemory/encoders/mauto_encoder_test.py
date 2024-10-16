@@ -130,7 +130,7 @@ class MautoEncoderTest(absltest.TestCase):
     collate_fn = mauto_task.MautoTask.make_collater_fn(self.config)
 
     batch = collate_fn(self.raw_batch)
-    batch = jax.tree_map(np.asarray, batch)
+    batch = jax.tree.map(np.asarray, batch)
 
     model = mauto_task.MautoTask.build_model(self.model_config)
 

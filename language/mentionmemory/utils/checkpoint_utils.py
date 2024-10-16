@@ -40,7 +40,7 @@ def load_weights(weight_path: str) -> Dict[str, Any]:
     logging.info('Loading weights from %s', weight_path)
     with gfile.GFile(weight_path, 'rb') as fp:
       params = serialization.from_bytes(None, fp.read())
-    return jax.tree_map(jnp.asarray, params)
+    return jax.tree.map(jnp.asarray, params)
 
 
 def flatten_nested_dict(x: Dict[str, Any],

@@ -62,7 +62,7 @@ class WeightTest(absltest.TestCase):
 
     arrayeq = lambda x, y: jnp.all(x == y)
     self.assertTrue(
-        jax.tree_map(
+        jax.tree.map(
             arrayeq,
             loaded_params,
             flax.core.unfreeze(initial_variables['params']),

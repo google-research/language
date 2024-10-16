@@ -329,7 +329,7 @@ class MentionMemoryEncoderTest(parameterized.TestCase):
       )
 
     self.assertTrue(
-        jax.tree_map(arrayeq, loaded_variables, comparison_variables)
+        jax.tree.map(arrayeq, loaded_variables, comparison_variables)
     )
 
 

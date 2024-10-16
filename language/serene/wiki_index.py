@@ -319,6 +319,8 @@ class Index:
       Top ranked wikipedia sentences per claim
     """
     logging.info('TF Initializing')
+    if self._claim_embeddings is None:
+      raise ValueError('Claim embeddings are not loaded')
     with tf.device(self._device):
       idx = 0
       top_idx = []

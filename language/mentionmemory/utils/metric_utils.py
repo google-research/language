@@ -277,7 +277,7 @@ def update_value_dtype(value: Any) -> Any:
 def update_metrics_dtype(
     metrics: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
   """Convert metrics to more precise types."""
-  return jax.tree_map(update_value_dtype, metrics)
+  return jax.tree.map(update_value_dtype, metrics)
 
 
 def process_metrics(
