@@ -55,7 +55,7 @@ memoized-property==1.0.3
 mesh-tensorflow==0.1.21
 networkx==2.2
 nltk==3.7
-numpy==1.21.6
+numpy==1.22.0
 oauthlib==3.2.1
 opt-einsum==3.3.0
 orjson==3.8.0
