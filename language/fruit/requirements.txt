@@ -3,7 +3,7 @@ apache-beam==2.41.0
 astunparse==1.6.3
 Babel==2.10.3
 boto==2.49.0
-bottle==0.12.18
+bottle==0.12.20
 cachetools==5.2.0
 certifi @ file:///opt/conda/conda-bld/certifi_1655968806487/work/certifi
 charset-normalizer==2.1.1
