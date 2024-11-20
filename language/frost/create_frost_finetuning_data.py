@@ -63,7 +63,7 @@ def main(_):
   dataset, info = tfds.load(FLAGS.dataset, split=FLAGS.splits, with_info=True)
   logging.info("Dataset info: %s", info)
 
-  # Spacy Forst annotator function
+  # Spacy Frost annotator function
   frost_processor_fn = spacy_frost_annotator_lib.get_spacy_frost_processor_fn()
 
   for split, dataset_split in zip(FLAGS.splits, dataset):
