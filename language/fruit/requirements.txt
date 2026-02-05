@@ -65,7 +65,7 @@ Pillow==9.2.0
 portalocker==2.5.1
 promise==2.3
 proto-plus==1.22.1
-protobuf==3.19.5
+protobuf==5.29.6
 pyarrow==7.0.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
