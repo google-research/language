@@ -47,7 +47,7 @@ download the data from the Natural Questions cloud bucket:
 
 ```bash
 mkdir original_nq
-gsutil -m cp -R gs://natural_questions/v1.0 original_nq
+gcloud storage cp --recursive gs://natural_questions/v1.0 original_nq
 cd original_nq
 export ORIG_NQ_PATH=$(pwd)
 ```

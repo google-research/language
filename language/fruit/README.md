@@ -17,7 +17,7 @@ To download the FRUIT-Wiki dataset, run:
 
 ```
 mkdir fruit_dataset
-gsutil cp -R gs://gresearch/FRUIT/dataset fruit_dataset
+gcloud storage cp --recursive gs://gresearch/FRUIT/dataset fruit_dataset
 ```
 
 Note: this requires [gsutil](https://cloud.google.com/storage/docs/gsutil).

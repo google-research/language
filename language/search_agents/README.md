@@ -67,24 +67,24 @@ To download the MuZero checkpoints, execute:
 
 ```
 mkdir -p saved_model/muzero/initial_inference/variables
-gsutil cp gs://search_agents/muzero/saved_model/initial_inference/saved_model.pb saved_model/muzero/initial_inference/.
-gsutil cp gs://search_agents/muzero/saved_model/initial_inference/variables/variables.data-00000-of-00001 saved_model/muzero/initial_inference/variables/.
-gsutil cp gs://search_agents/muzero/saved_model/initial_inference/variables/variables.index saved_model/muzero/initial_inference/variables/.
+gcloud storage cp gs://search_agents/muzero/saved_model/initial_inference/saved_model.pb saved_model/muzero/initial_inference/.
+gcloud storage cp gs://search_agents/muzero/saved_model/initial_inference/variables/variables.data-00000-of-00001 saved_model/muzero/initial_inference/variables/.
+gcloud storage cp gs://search_agents/muzero/saved_model/initial_inference/variables/variables.index saved_model/muzero/initial_inference/variables/.
 
 mkdir -p saved_model/muzero/recurrent_inference/variables
-gsutil cp gs://search_agents/muzero/saved_model/recurrent_inference/saved_model.pb saved_model/muzero/recurrent_inference/.
-gsutil cp gs://search_agents/muzero/saved_model/recurrent_inference/variables/variables.data-00000-of-00001 saved_model/muzero/recurrent_inference/variables/.
-gsutil cp gs://search_agents/muzero/saved_model/recurrent_inference/variables/variables.index saved_model/muzero/recurrent_inference/variables/.
+gcloud storage cp gs://search_agents/muzero/saved_model/recurrent_inference/saved_model.pb saved_model/muzero/recurrent_inference/.
+gcloud storage cp gs://search_agents/muzero/saved_model/recurrent_inference/variables/variables.data-00000-of-00001 saved_model/muzero/recurrent_inference/variables/.
+gcloud storage cp gs://search_agents/muzero/saved_model/recurrent_inference/variables/variables.index saved_model/muzero/recurrent_inference/variables/.
 ```
 
 To download the T5 checkpoints, execute:
 
 ```
 mkdir -p saved_model/t5/variables
-gsutil cp gs://search_agents/t5/saved_model/saved_model.pb saved_model/t5/.
-gsutil cp gs://search_agents/t5/saved_model/variables/variables.data-00000-of-00002 saved_model/t5/variables/.
-gsutil cp gs://search_agents/t5/saved_model/variables/variables.data-00001-of-00002 saved_model/t5/variables/.
-gsutil cp gs://search_agents/t5/saved_model/variables/variables.index saved_model/t5/variables/.
+gcloud storage cp gs://search_agents/t5/saved_model/saved_model.pb saved_model/t5/.
+gcloud storage cp gs://search_agents/t5/saved_model/variables/variables.data-00000-of-00002 saved_model/t5/variables/.
+gcloud storage cp gs://search_agents/t5/saved_model/variables/variables.data-00001-of-00002 saved_model/t5/variables/.
+gcloud storage cp gs://search_agents/t5/saved_model/variables/variables.index saved_model/t5/variables/.
 ```
 
 [Apache Beam](https://beam.apache.org/) is required to run the evaluation
@@ -109,11 +109,11 @@ To download all other data dependencies for running the eval pipeline, execute:
 
 ```
 mkdir data
-gsutil cp gs://search_agents/sample_input.jsonl data/.
-gsutil cp gs://search_agents/bert/bert_config.json .
-gsutil cp gs://search_agents/bert/bert_model.ckpt.data-00000-of-00001 .
-gsutil cp gs://search_agents/bert/bert_model.ckpt.index .
-gsutil cp gs://search_agents/bert/vocab.txt .
+gcloud storage cp gs://search_agents/sample_input.jsonl data/.
+gcloud storage cp gs://search_agents/bert/bert_config.json .
+gcloud storage cp gs://search_agents/bert/bert_model.ckpt.data-00000-of-00001 .
+gcloud storage cp gs://search_agents/bert/bert_model.ckpt.index .
+gcloud storage cp gs://search_agents/bert/vocab.txt .
 ```
 
 The MuZero checkpoints need to be served through

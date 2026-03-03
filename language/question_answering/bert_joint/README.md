@@ -16,7 +16,7 @@ pip install bert-tensorflow natural-questions
 You should then download our model and preprocessed training set with:
 
 ```
-gsutil cp -R gs://bert-nq/bert-joint-baseline .
+gcloud storage cp --recursive gs://bert-nq/bert-joint-baseline .
 ```
 
 This should give you the preprocessed training set, the model config,
@@ -56,7 +56,7 @@ We suggest evaluating our pretrained model on the "tiny" dev set to verify that
 everything is working correctly. You can download the tiny NQ dev set with:
 
 ```
-gsutil cp -R gs://bert-nq/tiny-dev .
+gcloud storage cp --recursive gs://bert-nq/tiny-dev .
 ```
 
 You can then evaluate our model on this data with:

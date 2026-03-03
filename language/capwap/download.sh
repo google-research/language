@@ -38,7 +38,7 @@ mkdir -p "${ROOT}"
 
 # gsutil download
 function gsutil_download() {
-  gsutil cp -r ${1} .
+  gcloud storage cp --recursive ${1} .
 }
 GET="gsutil_download"
 

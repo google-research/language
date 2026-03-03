@@ -9,7 +9,7 @@ mkdir -p $DATA_DIR
 **Download the Natural Questions data:**
 
 ```
-gsutil -m cp -r gs://natural_questions $DATA_DIR
+gcloud storage cp --recursive gs://natural_questions $DATA_DIR
 export NQ_DATA_DIR=$DATA_DIR/natural_questions/v1.0
 ```
 

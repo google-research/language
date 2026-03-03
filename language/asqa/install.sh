@@ -26,4 +26,4 @@ pip install .
 # Download Roberta checkpoint.
 cd ../
 mkdir roberta
-gsutil cp -R gs://gresearch/ASQA/ckpts/roberta-squad roberta/
+gcloud storage cp --recursive gs://gresearch/ASQA/ckpts/roberta-squad roberta/

@@ -69,7 +69,7 @@ Alternatively in terminal, follow the instructions and install
 
 ```
 mkdir frost_composition_sampling
-gsutil cp -r gs://gresearch/frost_composition_sampling frost_composition_sampling/
+gcloud storage cp --recursive gs://gresearch/frost_composition_sampling frost_composition_sampling/
 ```
 
 ### FROST Pretrained Checkpoint
@@ -161,4 +161,3 @@ The script generated shareded TFRecords annotated with FROST-style plans. Please
 see
 [here](https://github.com/google-research/pegasus#add-new-finetuning-dataset) to
 use them to finetune FROST models.
-

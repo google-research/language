@@ -18,7 +18,7 @@ To download the ASQA dataset, run:
 
 ```
 mkdir dataset
-gsutil cp -R gs://gresearch/ASQA/data/ASQA.json dataset
+gcloud storage cp --recursive gs://gresearch/ASQA/data/ASQA.json dataset
 ```
 
 Note: this requires [gsutil](https://cloud.google.com/storage/docs/gsutil).
@@ -71,7 +71,7 @@ First, save your system output into key-value pairs in json format. Refer to the
 
 ```
 mkdir outputs
-gsutil cp -R gs://gresearch/ASQA/outputs/t5_predictions.json outputs
+gcloud storage cp --recursive gs://gresearch/ASQA/outputs/t5_predictions.json outputs
 RESULTS_PATH=./outputs/t5_predictions.json
 
 EXP_NAME=t5

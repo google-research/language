@@ -153,7 +153,7 @@ python -m language.multivec.utils.data_processor \
 ```
 
 ### STEP-5: Encode passages & queries
-Works with CPU, GPU and TPU. If use TPU inference, we recommend to use v3-8. Also upload passage and query tfr files to gs directory (use gsutil cp command) since TPU can't read from local files.
+Works with CPU, GPU and TPU. If use TPU inference, we recommend to use v3-8. Also upload passage and query tfr files to gs directory (use gcloud storage cp command) since TPU can't read from local files.
 
 ```bash
 INFERENCE_OUTPUT_DIR=<LOCAL_DIR>
