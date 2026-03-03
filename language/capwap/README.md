@@ -274,7 +274,7 @@ python evaluation/score_captions.py \
 You can download all the pre-trained captioning models here:
 
 ```bash
-gsutil cp gs://capwap/models.zip .
+gcloud storage cp gs://capwap/models.zip .
 unzip models.zip && rm models.zip
 ```
 

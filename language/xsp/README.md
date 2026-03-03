@@ -65,7 +65,7 @@ sh language/xsp/data_download.sh train_only
 
 You must also download resources for training the models (e.g., a pre-trained BERT model). Clone the [official BERT repository](https://github.com/google-research/bert) and download the BERT-Large, uncased model. We didn't use the original BERT-Large model in our main experimental results, but performance using BERT-Large is slightly behind BERT-Large+ on the Spider development set (see Table 3 in the main paper). You can ignore the vocabulary file in the zipped directory.
 
-Finally, for the input training vocabulary, please download the text file from [this link](https://storage.googleapis.com/xsp-files/input_bert_vocabulary.txt) or `gs://xsp-files/input_bert_vocabulary.txt` via `gsutils`. We recommend to save it in the `assets` directory for each run.
+Finally, for the input training vocabulary, please download the text file from [this link](https://storage.googleapis.com/xsp-files/input_bert_vocabulary.txt) or `gs://xsp-files/input_bert_vocabulary.txt` via `gcloud storage`. We recommend to save it in the `assets` directory for each run.
 
 ### For evaluation
 
@@ -273,4 +273,3 @@ An example of running this:
 ```
 python -m language.xsp.evaluation.filter_results dataset_predictions.txt
 ```
-
