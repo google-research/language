@@ -48,7 +48,7 @@ Keras-Preprocessing==1.1.2
 kiwisolver==1.4.4
 libclang==14.0.6
 lxml==4.9.1
-Markdown==3.4.1
+Markdown==3.8.1
 MarkupSafe==2.1.1
 matplotlib==3.5.3
 memoized-property==1.0.3
