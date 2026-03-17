@@ -67,7 +67,7 @@ promise==2.3
 proto-plus==1.22.1
 protobuf==3.19.5
 pyarrow==7.0.0
-pyasn1==0.4.8
+pyasn1==0.6.3
 pyasn1-modules==0.2.8
 pydot==1.4.2
 pymongo==3.12.3
