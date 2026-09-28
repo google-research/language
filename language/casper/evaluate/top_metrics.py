@@ -25,7 +25,14 @@ def _safe_divide(x, y):
 def top_metrics(targets: List[str],
                 predictions: List[str],
                 error_on_invalid_target: bool = True) -> Dict[str, float]:
-  """Returns eval metrics for TOP and MTOP datasets."""
+  """Returns eval metrics for TOP and MTOP datasets.
+
+  Raises:
+    ValueError: If targets and predictions contain different numbers of parses.
+  """
+  if len(targets) != len(predictions):
+    raise ValueError("Unequal number of parses: gold = {}, pred = {}".format(
+        len(targets), len(predictions)))
   num_correct = 0
   num_total = 0
   num_invalid = 0
